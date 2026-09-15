@@ -2,7 +2,7 @@
   "name": "paid-pain-assessment",
   "private": true,
   "scripts": {
-    "lint:html": "htmlhint index.html upperbodyscan.html lowerbodyscan.html"
+    "lint:html": "htmlhint src/index.html src/upperbodyscan.html src/lowerbodyscan.html"
   },
   "devDependencies": {
     "htmlhint": "^1.9.0"
