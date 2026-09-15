@@ -29,19 +29,26 @@ jobs:
         run: npm ci
 
       - name: Validate HTML
-        run: npm run lint:html
+        run: |
+          source_dir=.
+          if [ -f src/index.html ]; then source_dir=src; fi
+          npx htmlhint "$source_dir/index.html" "$source_dir/upperbodyscan.html" "$source_dir/lowerbodyscan.html"
 
       - name: Check JavaScript syntax
         run: |
-          node --check script.js
-          node --check viewer.js
+          source_dir=.
+          if [ -f src/script.js ]; then source_dir=src; fi
+          node --check "$source_dir/script.js"
+          node --check "$source_dir/viewer.js"
 
       - name: Verify required site files
         run: |
-          test -s index.html
-          test -s upperbodyscan.html
-          test -s lowerbodyscan.html
-          test -s styles.css
-          test -s script.js
-          test -s viewer.js
-          test -s assets/human-body2.glb
+          source_dir=.
+          if [ -f src/index.html ]; then source_dir=src; fi
+          test -s "$source_dir/index.html"
+          test -s "$source_dir/upperbodyscan.html"
+          test -s "$source_dir/lowerbodyscan.html"
+          test -s "$source_dir/styles.css"
+          test -s "$source_dir/script.js"
+          test -s "$source_dir/viewer.js"
+          test -s "$source_dir/assets/human-body2.glb"
