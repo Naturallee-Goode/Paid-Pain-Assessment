@@ -41,6 +41,9 @@ jobs:
           node --check "$source_dir/script.js"
           node --check "$source_dir/viewer.js"
 
+      - name: Verify body-map source ownership
+        run: npm run test:body-map
+
       - name: Verify required site files
         run: |
           source_dir=.

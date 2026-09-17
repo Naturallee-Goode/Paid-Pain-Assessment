@@ -2,7 +2,8 @@
   "name": "paid-pain-assessment",
   "private": true,
   "scripts": {
-    "lint:html": "htmlhint index.html upperbodyscan.html lowerbodyscan.html"
+    "lint:html": "htmlhint index.html upperbodyscan.html lowerbodyscan.html",
+    "test:body-map": "node --test tests/body-map-source.test.js"
   },
   "devDependencies": {
     "htmlhint": "^1.9.0"
