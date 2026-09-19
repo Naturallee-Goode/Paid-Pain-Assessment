@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { getSupportedBodyAreaForRegion } from "./body-areas.js";
+import { buildMuscleCatalog, parseAnatomyName } from "./muscle-catalog.js";
 
 const scene = new THREE.Scene()
 
@@ -86,6 +87,8 @@ const bodyMeshes = []
 const meshVolume = new Map()
 const meshMatName = new Map()
 const meshLabelIndex = new Map()
+const meshSourceName = new Map()
+const muscleCatalog = []
 
 const searchInput = document.getElementById("searchInput")
 const searchResults = document.getElementById("searchResults")
@@ -168,17 +171,31 @@ const MATERIAL_COLORS = {
 }
 const DEFAULT_MUSCLE = { color: 0xc03828, roughness: 0.62, metalness: 0.05 }
 
+function getSourceNodeName(gltf, object) {
+  // Read the original glTF node name before sanitization.
+  for (let current = object; current; current = current.parent) {
+    const nodeIndex = gltf.parser.associations.get(current)?.nodes
+    const sourceName = gltf.parser.json.nodes[nodeIndex]?.name
+    if (sourceName) return sourceName
+  }
+  return object.name
+}
+
 const loader = new GLTFLoader()
 loader.load(
   "https://SamBillante.github.io/Paid-Pain-Assessment/assets/human-body2.glb", // If running locally, change this link to the path of the GLB file on your machine, e.g. "models/human-body2.glb"
   (gltf) => {
     scene.add(gltf.scene)
+    const catalogEntries = []
     gltf.scene.traverse((child) => {
       if(!child.isMesh) return
       child.castShadow = true
       child.receiveShadow = true
       const mat = child.material
       const matName = Array.isArray(mat) ? mat[0]?.name : mat?.name
+      const sourceName = getSourceNodeName(gltf, child)
+      meshSourceName.set(child.uuid, sourceName)
+      catalogEntries.push({ mesh: child, sourceName, materialName: matName })
       if(matName === "Text"){
         const t = (m) => { m.transparent=true; m.opacity=0; m.depthWrite=false; m.needsUpdate=true }
         Array.isArray(mat) ? mat.forEach(t) : t(mat)
@@ -200,13 +217,14 @@ loader.load(
       const size = new THREE.Vector3()
       box.getSize(size)
       meshVolume.set(child.uuid, size.x * size.y * size.z)
+    })
 
-      const label = cleanMeshName(child.name)
-      const key = label.toLowerCase()
-      if (!meshLabelIndex.has(key)) {
-        meshLabelIndex.set(key, [])
-      }
-      meshLabelIndex.get(key).push(child)
+    muscleCatalog.push(...buildMuscleCatalog(catalogEntries))
+    muscleCatalog.forEach(record => {
+      const key = record.displayName.toLowerCase()
+      const entry = meshLabelIndex.get(key) ?? { label: record.displayName, meshes: [] }
+      entry.meshes.push(record.mesh)
+      meshLabelIndex.set(key, entry)
     })
 
     // Hide loading overlay
@@ -288,45 +306,13 @@ function getZoomOutPosition(horizDir) {
   }
 }
 
-function cleanMeshName(raw) {
-  return raw
-    .replace(/_+\d+$/, "")
-    .replace(/([a-z])l$/i, "$1")
-    .replace(/_/g, " ")
-    .replace(/\bmusclel\b/gi, "muscle")
-    .replace(/\bmuscler\b/gi, "muscle")
-    .replace(/\bmusclek\b/gi, "muscle")
-    .replace(/\bwristl\b/gi, "wrist")
-    .replace(/\bwristr\b/gi, "wrist")
-    .replace(/\bhandl\b/gi, "hand")
-    .replace(/\bhandr\b/gi, "hand")
-    .replace(/\bbursall?\b/gi, "bursal")
-    .replace(/\bbursalr\b/gi, "bursal")
-    .replace(/\bligamentl\b/gi, "ligament")
-    .replace(/\bligamentr\b/gi, "ligament")
-    .replace(/\btendonl\b/gi, "tendon")
-    .replace(/\btendonr\b/gi, "tendon")
-    .replace(/\bfascial\b/gi, "fascia")
-    .replace(/\bfasciar\b/gi, "fascia")
-    .replace(/\bnervel\b/gi, "nerve")
-    .replace(/\bnervesr\b/gi, "nerves")
-    .replace(/\bveinl\b/gi, "vein")
-    .replace(/\bveinr\b/gi, "vein")
-    .replace(/\barteryl\b/gi, "artery")
-    .replace(/\arteryр\b/gi, "artery")
-    .replace(/\bSupinatorl\b/gi, "Supinator")
-    .replace(/\bSupinatorr\b/gi, "Supinator")
-    .replace(/\b\w/g, c => c.toUpperCase())
-    .replace(/\s+/g, " ")
-    .trim()
-}
-
 function getSearchMatches(query) {
   const normalized = query.trim().toLowerCase()
   if (!normalized) return []
-  return [...meshLabelIndex.keys()]
-    .filter(label => label.includes(normalized))
-    .sort((a, b) => a.localeCompare(b))
+  return [...meshLabelIndex.entries()]
+    .filter(([key]) => key.includes(normalized))
+    .map(([, entry]) => entry)
+    .sort((a, b) => a.label.localeCompare(b.label))
     .slice(0, 10)
 }
 
@@ -346,12 +332,11 @@ function renderSearchResults(query) {
     return
   }
 
-  matches.forEach(label => {
+  matches.forEach(({ label, meshes }) => {
     const item = document.createElement('li')
     item.className = 'search-result-item'
     item.textContent = label
     item.addEventListener('click', () => {
-      const meshes = meshLabelIndex.get(label.toLowerCase())
       if (meshes && meshes.length) {
         selectBodyMesh(meshes[0])
         if (searchInput) searchInput.value = label
@@ -413,10 +398,10 @@ function selectBodyMesh(mesh) {
 function selectSearchResult(query) {
   const matches = getSearchMatches(query)
   if (!matches.length) return
-  const meshes = meshLabelIndex.get(matches[0])
+  const { label, meshes } = matches[0]
   if (meshes && meshes.length) {
     selectBodyMesh(meshes[0])
-    if (searchInput) searchInput.value = matches[0]
+    if (searchInput) searchInput.value = label
     clearSearchResults()
   }
 }
@@ -454,7 +439,7 @@ function updateInfoPanel(mesh, matName) {
   console.log("Material:", matName)
   console.log("Area:", area, `| y:${center.y.toFixed(3)} x:${center.x.toFixed(3)} z:${center.z.toFixed(3)}`)
 
-  const displayName = cleanMeshName(mesh.name)
+  const displayName = parseAnatomyName(meshSourceName.get(mesh.uuid) ?? mesh.name).displayName
   document.getElementById("partTitle").textContent = displayName
 
   const descEl = document.getElementById("partDescription")
@@ -466,7 +451,7 @@ function updateInfoPanel(mesh, matName) {
   }
 
   updateSelectedBodyInput(area)
-  document.dispatchEvent(new CustomEvent('bodyAreaSelected', { detail: { area, label: areaLabel, meshName: cleanMeshName(mesh.name) } }))
+  document.dispatchEvent(new CustomEvent('bodyAreaSelected', { detail: { area, label: areaLabel, meshName: displayName } }))
 }
 
 function handleViewerClick(e) {

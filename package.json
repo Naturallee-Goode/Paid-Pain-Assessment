@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "lint:html": "htmlhint index.html upperbodyscan.html lowerbodyscan.html",
-    "test:body-map": "node --test tests/body-map-source.test.js"
+    "test:body-map": "node --test"
   },
   "devDependencies": {
     "htmlhint": "^1.9.0"
