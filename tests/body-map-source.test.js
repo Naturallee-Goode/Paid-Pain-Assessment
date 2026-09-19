@@ -6,6 +6,23 @@ const path = require('node:path')
 const sourceDirectory = path.resolve(__dirname, '..', 'src')
 const indexHtml = fs.readFileSync(path.join(sourceDirectory, 'index.html'), 'utf8')
 const viewerJavaScript = fs.readFileSync(path.join(sourceDirectory, 'viewer.js'), 'utf8')
+const bodyAreasJavaScript = fs.readFileSync(path.join(sourceDirectory, 'body-areas.js'), 'utf8')
+
+// Load the browser module without changing the CommonJS test setup.
+const bodyAreasModule = import(`data:text/javascript;base64,${Buffer.from(bodyAreasJavaScript).toString('base64')}`)
+
+const expectedBodyAreas = [
+  { id: 'neck', label: 'Neck' },
+  { id: 'shoulder', label: 'Shoulder' },
+  { id: 'upper-back', label: 'Upper Back' },
+  { id: 'lower-back', label: 'Lower Back' },
+  { id: 'elbow', label: 'Elbow' },
+  { id: 'wrist-hand', label: 'Wrist/Hand' },
+  { id: 'hip', label: 'Hip' },
+  { id: 'knee', label: 'Knee' },
+  { id: 'ankle', label: 'Ankle' },
+  { id: 'foot', label: 'Foot' },
+]
 
 test('index.html loads the canonical body-map module exactly once', () => {
   assert.match(indexHtml, /<script type="module" src="viewer\.js"><\/script>/)
@@ -19,4 +36,29 @@ test('viewer.js retains the body-map dependencies and interactions', () => {
   assert.match(viewerJavaScript, /new THREE\.Raycaster\(\)/)
   assert.match(viewerJavaScript, /function selectBodyMesh\(/)
   assert.match(viewerJavaScript, /function animate\(/)
+  assert.match(viewerJavaScript, /import \{ getSupportedBodyAreaForRegion \} from ["']\.\/body-areas\.js["']/)
+  assert.match(viewerJavaScript, /getSupportedBodyAreaForRegion\(detectedRegion, center\.y\)/)
+})
+
+test('body-map data defines the ten supported areas with stable IDs and labels', async () => {
+  const { SUPPORTED_BODY_AREAS } = await bodyAreasModule
+
+  assert.deepEqual(SUPPORTED_BODY_AREAS, expectedBodyAreas)
+  assert.equal(new Set(SUPPORTED_BODY_AREAS.map(area => area.id)).size, expectedBodyAreas.length)
+})
+
+test('body-area lookup preserves IDs while selections change', async () => {
+  const { getSupportedBodyArea, getSupportedBodyAreaForRegion } = await bodyAreasModule
+
+  const neckSelection = getSupportedBodyArea('neck')
+
+  assert.equal(neckSelection.id, 'neck')
+  assert.equal(getSupportedBodyArea('hip').id, 'hip')
+  assert.strictEqual(getSupportedBodyArea('neck'), neckSelection)
+  assert.equal(getSupportedBodyArea('unsupported'), null)
+  assert.strictEqual(getSupportedBodyAreaForRegion('knee', 0.45), getSupportedBodyArea('knee'))
+  assert.strictEqual(getSupportedBodyAreaForRegion('wrist', 0.8), getSupportedBodyArea('wrist-hand'))
+  assert.strictEqual(getSupportedBodyAreaForRegion('hand', 0.7), getSupportedBodyArea('wrist-hand'))
+  assert.strictEqual(getSupportedBodyAreaForRegion('back', 1.3), getSupportedBodyArea('upper-back'))
+  assert.strictEqual(getSupportedBodyAreaForRegion('back', 1.2), getSupportedBodyArea('lower-back'))
 })
