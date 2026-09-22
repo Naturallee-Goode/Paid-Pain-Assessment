@@ -277,9 +277,10 @@ function focusBodyArea(id) {
     return
   }
   const bounds = new THREE.Box3()
+  const mappedMeshes = area.mapped ? new Set(getMusclesForArea(id).map(record => record.mesh)) : null
   for (const mesh of bodyMeshes) {
     const box = new THREE.Box3().setFromObject(mesh)
-    if (!isWithinArea(box.getCenter(new THREE.Vector3()), area)) continue
+    if (mappedMeshes ? !mappedMeshes.has(mesh) : !isWithinArea(box.getCenter(new THREE.Vector3()), area)) continue
     // A long back muscle can have its center near the pelvis while extending
     // far above the hip. Keep it out of the hip highlight.
     if (id === 'hip' && box.max.y > 1.17) continue

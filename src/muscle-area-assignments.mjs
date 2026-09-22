@@ -2,6 +2,9 @@
 // Original GLB base names; side suffix removed. Anatomical review is pending.
 // See docs/testing/muscle-area-review.md, especially regional-boundary questions.
 export const MUSCLE_AREA_ASSIGNMENTS = {
+  "(Adductor minimus)": [
+    "leg"
+  ],
   "(Opponens digiti minimi muscle of foot)": [
     "foot"
   ],
@@ -17,8 +20,20 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
   "Abductor pollicis brevis": [
     "wrist-hand"
   ],
+  "Abductor pollicis longus": [
+    "arm"
+  ],
   "Acromial part of deltoid muscle": [
     "shoulder"
+  ],
+  "Adductor brevis": [
+    "leg"
+  ],
+  "Adductor longus": [
+    "leg"
+  ],
+  "Adductor magnus": [
+    "leg"
   ],
   "Anconeus muscle": [
     "elbow"
@@ -32,11 +47,23 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
   "Ascending part of trapezius muscle": [
     "upper-back"
   ],
+  "Brachialis muscle": [
+    "arm"
+  ],
+  "Brachioradialis muscle": [
+    "arm"
+  ],
   "Clavicular part of deltoid muscle": [
     "shoulder"
   ],
+  "Coracobrachialis muscle": [
+    "arm"
+  ],
   "Deep head of flexor pollicis brevis": [
     "wrist-hand"
+  ],
+  "Deep head of pronator teres": [
+    "arm"
   ],
   "Descending part of trapezius muscle": [
     "neck",
@@ -51,17 +78,54 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
   "Dorsal parts of lateral intertransversarii lumborum muscles": [
     "lower-back"
   ],
+  "Extensor carpi radialis brevis": [
+    "arm"
+  ],
+  "Extensor carpi radialis longus": [
+    "arm"
+  ],
+  "Extensor digiti minimi": [
+    "arm"
+  ],
+  "Extensor digitorum": [
+    "arm"
+  ],
   "Extensor digitorum brevis": [
     "foot"
+  ],
+  "Extensor digitorum longus": [
+    "leg"
   ],
   "Extensor hallucis brevis": [
     "foot"
   ],
+  "Extensor hallucis longus": [
+    "leg"
+  ],
+  "Extensor indicis": [
+    "arm"
+  ],
+  "Extensor pollicis brevis": [
+    "arm"
+  ],
+  "Extensor pollicis longus": [
+    "arm"
+  ],
   "External part of thyro-arytenoid muscle": [
     "neck"
   ],
+  "Fibularis brevis muscle": [
+    "leg"
+  ],
+  "Fibularis longus muscle": [
+    "leg"
+  ],
   "Fibularis tertius muscle": [
-    "ankle"
+    "ankle",
+    "leg"
+  ],
+  "Flexor carpi radialis": [
+    "arm"
   ],
   "Flexor digiti minimi of foot": [
     "foot"
@@ -71,6 +135,18 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
   ],
   "Flexor digitorum brevis": [
     "foot"
+  ],
+  "Flexor digitorum longus": [
+    "leg"
+  ],
+  "Flexor digitorum profundus": [
+    "arm"
+  ],
+  "Flexor hallucis longus": [
+    "leg"
+  ],
+  "Flexor pollicis longus": [
+    "arm"
   ],
   "Geniohyoid muscle": [
     "neck"
@@ -83,6 +159,18 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
   ],
   "Gluteus minimus muscle": [
     "hip"
+  ],
+  "Gracilis muscle": [
+    "leg"
+  ],
+  "Humeral head of extensor carpi ulnaris": [
+    "arm"
+  ],
+  "Humeral head of flexor carpi ulnaris": [
+    "arm"
+  ],
+  "Humero-ulnar head of flexor digitorum superficialis": [
+    "arm"
   ],
   "Iliacus muscle": [
     "hip"
@@ -120,6 +208,12 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
   "Lateral head of flexor hallucis brevis": [
     "foot"
   ],
+  "Lateral head of gastrocnemius": [
+    "leg"
+  ],
+  "Lateral head of triceps brachii": [
+    "arm"
+  ],
   "Latissimus dorsi muscle": [
     "upper-back"
   ],
@@ -132,6 +226,15 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
   ],
   "Levatores longi costarum": [
     "upper-back"
+  ],
+  "Long head of biceps brachii": [
+    "arm"
+  ],
+  "Long head of biceps femoris": [
+    "leg"
+  ],
+  "Long head of triceps brachii": [
+    "arm"
   ],
   "Longissimus capitis muscle": [
     "neck"
@@ -156,6 +259,12 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
   ],
   "Medial head of flexor hallucis brevis": [
     "foot"
+  ],
+  "Medial head of gastrocnemius": [
+    "leg"
+  ],
+  "Medial head of triceps brachii": [
+    "arm"
   ],
   "Middle pharyngeal constrictor": [
     "neck"
@@ -208,11 +317,20 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
   "Palmar interossei muscles": [
     "wrist-hand"
   ],
+  "Palmaris longus muscle": [
+    "arm"
+  ],
+  "Pectineus muscle": [
+    "leg"
+  ],
   "Piriformis muscle": [
     "hip"
   ],
   "Plantar interossei muscles": [
     "foot"
+  ],
+  "Plantaris muscle": [
+    "leg"
   ],
   "Platysma": [
     "neck"
@@ -227,7 +345,8 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
     "neck"
   ],
   "Pronator quadratus": [
-    "wrist-hand"
+    "wrist-hand",
+    "arm"
   ],
   "Quadratus femoris muscle": [
     "hip"
@@ -238,8 +357,14 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
   "Quadratus plantae muscle": [
     "foot"
   ],
+  "Radial head of flexor digitorum superficialis": [
+    "arm"
+  ],
   "Rectus anterior capitis muscle": [
     "neck"
+  ],
+  "Rectus femoris muscle": [
+    "leg"
   ],
   "Rectus lateralis capitis muscle": [
     "neck"
@@ -256,6 +381,9 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
   "Rhomboid minor muscle": [
     "upper-back"
   ],
+  "Sartorius muscle": [
+    "leg"
+  ],
   "Scalenus anterior muscle": [
     "neck"
   ],
@@ -268,17 +396,32 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
   "Scapular spinal part of deltoid muscle": [
     "shoulder"
   ],
+  "Semimembranosus muscle": [
+    "leg"
+  ],
   "Semispinalis colli muscle": [
     "neck"
   ],
   "Semispinalis thoracis muscle": [
     "upper-back"
   ],
+  "Semitendinosus muscle": [
+    "leg"
+  ],
   "Serratus posterior inferior muscle": [
     "lower-back"
   ],
   "Serratus posterior superior muscle": [
     "upper-back"
+  ],
+  "Short head of biceps brachii": [
+    "arm"
+  ],
+  "Short head of biceps femoris": [
+    "leg"
+  ],
+  "Soleus muscle": [
+    "leg"
   ],
   "Spinalis capitis muscle": [
     "neck"
@@ -322,17 +465,24 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
   "Superficial head of flexor pollicis brevis": [
     "wrist-hand"
   ],
+  "Superficial head of pronator teres": [
+    "arm"
+  ],
   "Superior gemellus muscle": [
     "hip"
   ],
   "Superior pharyngeal constrictor": [
     "neck"
   ],
+  "Supinator": [
+    "arm"
+  ],
   "Supraspinatus muscle": [
     "shoulder"
   ],
   "Tensor fasciae latae": [
-    "hip"
+    "hip",
+    "leg"
   ],
   "Teres major muscle": [
     "shoulder"
@@ -346,6 +496,12 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
   "Thyrohyoid muscle": [
     "neck"
   ],
+  "Tibialis anterior muscle": [
+    "leg"
+  ],
+  "Tibialis posterior muscle": [
+    "leg"
+  ],
   "Transverse arytenoid muscle": [
     "neck"
   ],
@@ -357,6 +513,21 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
   ],
   "Transverse part of trapezius muscle": [
     "upper-back"
+  ],
+  "Ulnar head of extensor carpi ulnaris": [
+    "arm"
+  ],
+  "Ulnar head of flexor carpi ulnaris": [
+    "arm"
+  ],
+  "Vastus intermedius muscle": [
+    "leg"
+  ],
+  "Vastus lateralis muscle": [
+    "leg"
+  ],
+  "Vastus medialis muscle": [
+    "leg"
   ],
   "Ventral parts of lateral intertransversarii lumborum muscles": [
     "lower-back"

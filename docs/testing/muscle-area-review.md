@@ -2,7 +2,7 @@
 
 Status: anatomical and sponsor review pending. Do not close #45 yet.
 
-The explicit table in src/muscle-area-assignments.mjs uses original GLB base names, shared by the left and right catalog records. The mapper preserves the original records and mesh references. A muscle may appear in more than one area. The user selected physical location only. Muscles are not assigned to a distant joint simply because they move it. Some muscles span regions, so shared membership still needs anatomical review. It is not a diagnosis or a pain-source prediction.
+The explicit table in src/muscle-area-assignments.mjs uses original GLB base names, shared by the left and right catalog records. The mapper preserves the original records and mesh references. A muscle may appear in more than one area. Grouping uses physical location only. Arm covers the upper arm and forearm; Leg covers the thigh and lower leg. Muscles are not assigned to a distant joint simply because they move it. Some muscles span regions, so shared membership still needs anatomical review. It is not a diagnosis or a pain-source prediction.
 
 General anatomy references used for orientation (the product-specific assignments are a draft interpretation, not a classification prescribed by these sources):
 
@@ -13,16 +13,16 @@ General anatomy references used for orientation (the product-specific assignment
 ## Review required
 
 - Confirm the membership lists below, including muscles assigned to multiple areas.
-- Review every unassigned name. Decide whether to map it or explicitly document it as outside this version's ten areas. No exclusions have been silently inferred for those muscle records.
+- Review every unassigned name. Decide whether to map it or explicitly document it as outside this version's twelve areas. No exclusions have been silently inferred for those muscle records.
 - Resolve generic names such as Rotatores and internal head/neck/trunk structures rather than guessing from model coordinates.
 - Confirm physical region boundaries, particularly whether Anconeus counts as Elbow, Popliteus as Knee, Pronator quadratus as Wrist/Hand, and distal Fibularis tertius as Ankle. The ankle candidate lies in the distal leg near the ankle; if the product defines ankle strictly at the joint, remove it rather than force a nonempty list.
 - Confirm which internal pharyngeal/laryngeal muscles belong in the client-facing Neck area.
-- Thigh, proximal forearm, calf, face, abdomen, and pelvic-floor muscles without a supported physical region remain unassigned; these are not silently deleted or labeled as non-muscle anatomy.
+- Face, chest, abdomen, and pelvic-floor muscles without a supported physical region remain unassigned; these are not silently deleted or labeled as non-muscle anatomy.
 - The previous coordinate zones are not used here: model bounds can put nearby hand objects into a hip zone. #47's visual boundaries need a separate review.
 
 ## Implementation and tests
 
-The viewer builds these groups from Girwan's muscle-only catalog after loading. getMusclesForArea(areaId) returns a copy of the area's array for future list UI (#48); this change does not implement that UI or change #47's spatial highlights. One aggregate console warning lists unmapped records. Unknown assignment area IDs throw a configuration error. Tests check exclusions through the catalog pipeline, side preservation, real-model name coverage, nonempty lists, ordering, deduplication, and unknown/unmapped handling.
+The viewer builds these groups from Girwan's muscle-only catalog after loading. getMusclesForArea(areaId) returns a copy of the area's array for future list UI (#48); this change does not implement that UI. Arm and Leg focus uses the mapped meshes; the original ten areas retain spatial highlights. One aggregate console warning lists unmapped records. Unknown assignment area IDs throw a configuration error. Tests check exclusions through the catalog pipeline, side preservation, real-model name coverage, nonempty lists, ordering, deduplication, and unknown/unmapped handling.
 
 Run npm run report:muscle-areas to display current counts. Regenerate this review worksheet with npm run report:muscle-areas -- --write (overwrites this generated worksheet; keep reviewer decisions separately). Run npm run test:body-map, npm run lint:html, and npm run test:browser (see body-area-progress.md for Chrome setup). Tests demonstrate software behavior, not anatomical approval.
 
@@ -117,6 +117,39 @@ Run npm run report:muscle-areas to display current counts. Regenerate this revie
 - [ ] Serratus Posterior Inferior Muscle
 - [ ] Ventral Parts Of Lateral Intertransversarii Lumborum Muscles
 
+## arm (60 side-specific records)
+
+- [ ] Abductor Pollicis Longus
+- [ ] Brachialis Muscle
+- [ ] Brachioradialis Muscle
+- [ ] Coracobrachialis Muscle
+- [ ] Deep Head Of Pronator Teres
+- [ ] Extensor Carpi Radialis Brevis
+- [ ] Extensor Carpi Radialis Longus
+- [ ] Extensor Digiti Minimi
+- [ ] Extensor Digitorum
+- [ ] Extensor Indicis
+- [ ] Extensor Pollicis Brevis
+- [ ] Extensor Pollicis Longus
+- [ ] Flexor Carpi Radialis
+- [ ] Flexor Digitorum Profundus
+- [ ] Flexor Pollicis Longus
+- [ ] Humeral Head Of Extensor Carpi Ulnaris
+- [ ] Humeral Head Of Flexor Carpi Ulnaris
+- [ ] Humero-Ulnar Head Of Flexor Digitorum Superficialis
+- [ ] Lateral Head Of Triceps Brachii
+- [ ] Long Head Of Biceps Brachii
+- [ ] Long Head Of Triceps Brachii
+- [ ] Medial Head Of Triceps Brachii
+- [ ] Palmaris Longus Muscle
+- [ ] Pronator Quadratus
+- [ ] Radial Head Of Flexor Digitorum Superficialis
+- [ ] Short Head Of Biceps Brachii
+- [ ] Superficial Head Of Pronator Teres
+- [ ] Supinator
+- [ ] Ulnar Head Of Extensor Carpi Ulnaris
+- [ ] Ulnar Head Of Flexor Carpi Ulnaris
+
 ## elbow (2 side-specific records)
 
 - [ ] Anconeus Muscle
@@ -151,6 +184,38 @@ Run npm run report:muscle-areas to display current counts. Regenerate this revie
 - [ ] Superior Gemellus Muscle
 - [ ] Tensor Fasciae Latae
 
+## leg (58 side-specific records)
+
+- [ ] (Adductor Minimus)
+- [ ] Adductor Brevis
+- [ ] Adductor Longus
+- [ ] Adductor Magnus
+- [ ] Extensor Digitorum Longus
+- [ ] Extensor Hallucis Longus
+- [ ] Fibularis Brevis Muscle
+- [ ] Fibularis Longus Muscle
+- [ ] Fibularis Tertius Muscle
+- [ ] Flexor Digitorum Longus
+- [ ] Flexor Hallucis Longus
+- [ ] Gracilis Muscle
+- [ ] Lateral Head Of Gastrocnemius
+- [ ] Long Head Of Biceps Femoris
+- [ ] Medial Head Of Gastrocnemius
+- [ ] Pectineus Muscle
+- [ ] Plantaris Muscle
+- [ ] Rectus Femoris Muscle
+- [ ] Sartorius Muscle
+- [ ] Semimembranosus Muscle
+- [ ] Semitendinosus Muscle
+- [ ] Short Head Of Biceps Femoris
+- [ ] Soleus Muscle
+- [ ] Tensor Fasciae Latae
+- [ ] Tibialis Anterior Muscle
+- [ ] Tibialis Posterior Muscle
+- [ ] Vastus Intermedius Muscle
+- [ ] Vastus Lateralis Muscle
+- [ ] Vastus Medialis Muscle
+
 ## knee (2 side-specific records)
 
 - [ ] Popliteus Muscle
@@ -180,49 +245,20 @@ Run npm run report:muscle-areas to display current counts. Regenerate this revie
 ## Unassigned names
 
 - [ ] (Abdominal Part Of Pectoralis Major Muscle)
-- [ ] (Adductor Minimus)
-- [ ] Abductor Pollicis Longus
-- [ ] Adductor Brevis
-- [ ] Adductor Longus
-- [ ] Adductor Magnus
-- [ ] Brachialis Muscle
-- [ ] Brachioradialis Muscle
 - [ ] Bucinator
 - [ ] Clavicular Head Of Pectoralis Major Muscle
 - [ ] Coccygeus Muscle
-- [ ] Coracobrachialis Muscle
 - [ ] Corrugator Supercilii
-- [ ] Deep Head Of Pronator Teres
 - [ ] Deep Part Of Masseter
 - [ ] Depressor Anguli Oris
 - [ ] Depressor Labii Inferioris
 - [ ] Depressor Septi Nasi
 - [ ] Diaphragm
-- [ ] Extensor Carpi Radialis Brevis
-- [ ] Extensor Carpi Radialis Longus
-- [ ] Extensor Digiti Minimi
-- [ ] Extensor Digitorum
-- [ ] Extensor Digitorum Longus
-- [ ] Extensor Hallucis Longus
-- [ ] Extensor Indicis
-- [ ] Extensor Pollicis Brevis
-- [ ] Extensor Pollicis Longus
 - [ ] External Abdominal Oblique Muscle
 - [ ] External Anal Sphincter
 - [ ] External Intercostal Muscles
-- [ ] Fibularis Brevis Muscle
-- [ ] Fibularis Longus Muscle
-- [ ] Flexor Carpi Radialis
-- [ ] Flexor Digitorum Longus
-- [ ] Flexor Digitorum Profundus
-- [ ] Flexor Hallucis Longus
-- [ ] Flexor Pollicis Longus
 - [ ] Frontalis Muscle
 - [ ] Genioglossus Muscle
-- [ ] Gracilis Muscle
-- [ ] Humeral Head Of Extensor Carpi Ulnaris
-- [ ] Humeral Head Of Flexor Carpi Ulnaris
-- [ ] Humero-Ulnar Head Of Flexor Digitorum Superficialis
 - [ ] Hyoglossus Muscle
 - [ ] Iliococcygeus Muscle
 - [ ] Inferior Head Of Lateral Pterygoid Muscle
@@ -231,18 +267,11 @@ Run npm run report:muscle-areas to display current counts. Regenerate this revie
 - [ ] Innermost Intercostal Muscles
 - [ ] Internal Abdominal Oblique Muscle
 - [ ] Internal Intercostal Muscles
-- [ ] Lateral Head Of Gastrocnemius
-- [ ] Lateral Head Of Triceps Brachii
 - [ ] Lateral Rectus Muscle
 - [ ] Levator Anguli Oris
 - [ ] Levator Labii Superioris
 - [ ] Levator Nasolabialis
 - [ ] Levator Palpebrae Superioris
-- [ ] Long Head Of Biceps Brachii
-- [ ] Long Head Of Biceps Femoris
-- [ ] Long Head Of Triceps Brachii
-- [ ] Medial Head Of Gastrocnemius
-- [ ] Medial Head Of Triceps Brachii
 - [ ] Medial Pterygoid Muscle
 - [ ] Medial Rectus Muscle
 - [ ] Mentalis Muscle
@@ -250,45 +279,25 @@ Run npm run report:muscle-areas to display current counts. Regenerate this revie
 - [ ] Occipitalis Muscle
 - [ ] Orbicularis Oris Muscle
 - [ ] Orbital Part Of Orbicularis Oculi
-- [ ] Palmaris Longus Muscle
 - [ ] Palpebral Part Of Orbicularis Oculi
-- [ ] Pectineus Muscle
 - [ ] Pectoralis Minor Muscle
-- [ ] Plantaris Muscle
 - [ ] Procerus Muscle
 - [ ] Psoas Major
 - [ ] Pubo-Analis Muscle
 - [ ] Pubococcygeus Muscle
 - [ ] Pyramidalis Muscle
-- [ ] Radial Head Of Flexor Digitorum Superficialis
 - [ ] Rectus Abdominis Muscle
-- [ ] Rectus Femoris Muscle
 - [ ] Risorius Muscle
 - [ ] Rotatores
-- [ ] Sartorius Muscle
-- [ ] Semimembranosus Muscle
-- [ ] Semitendinosus Muscle
 - [ ] Serratus Anterior Muscle
-- [ ] Short Head Of Biceps Brachii
-- [ ] Short Head Of Biceps Femoris
-- [ ] Soleus Muscle
 - [ ] Sternocostal Head Of Pectoralis Major Muscle
-- [ ] Superficial Head Of Pronator Teres
 - [ ] Superficial Part Of Masseter
 - [ ] Superior Head Of Lateral Pterygoid Muscle
 - [ ] Superior Oblique Muscle
 - [ ] Superior Rectus Muscle
-- [ ] Supinator
 - [ ] Temporalis Muscle
 - [ ] Temporoparietalis Muscle
-- [ ] Tibialis Anterior Muscle
-- [ ] Tibialis Posterior Muscle
 - [ ] Transversus Abdominis Muscle
 - [ ] Transversus Thoracis Muscle
-- [ ] Ulnar Head Of Extensor Carpi Ulnaris
-- [ ] Ulnar Head Of Flexor Carpi Ulnaris
-- [ ] Vastus Intermedius Muscle
-- [ ] Vastus Lateralis Muscle
-- [ ] Vastus Medialis Muscle
 - [ ] Zygomaticus Major Muscle
 - [ ] Zygomaticus Minor Muscle

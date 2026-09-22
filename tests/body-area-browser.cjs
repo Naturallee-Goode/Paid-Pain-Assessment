@@ -61,6 +61,13 @@ const server = http.createServer(async (req, res) => {
       });
       assert(state.count > 0, `No highlighted region: ${id}`);
       assert(state.restored, `Stale highlight after switching to ${id}`);
+      if (id === 'arm' || id === 'leg') {
+        assert(await page.evaluate(areaId => {
+          const v = window.__viewerTest;
+          const meshes = v.getMusclesForArea(areaId).map(record => record.mesh);
+          return meshes.length === v.areaHighlights.size && meshes.every(mesh => v.areaHighlights.has(mesh));
+        }, id), `${id} must highlight its mapped muscles only`);
+      }
       if (['neck', 'lower-back', 'hip'].includes(id)) {
         const names = await page.evaluate(() => window.__viewerTest.muscleCatalog
           .filter(record => window.__viewerTest.areaHighlights.has(record.mesh))
@@ -155,7 +162,7 @@ const server = http.createServer(async (req, res) => {
       assert.equal(await isolated.locator('#selectedBodyArea').inputValue(), '');
       await isolated.close();
     }
-    console.log('PASS: area highlights, distinct back targets, restoration, rotation/zoom, all ten areas, viewer cleanup, Change/Clear, keyboard, reset, three layouts, delayed/failed model, and unavailable viewer. No form submitted.');
+    console.log('PASS: area highlights, distinct back targets, restoration, rotation/zoom, all twelve areas, viewer cleanup, Change/Clear, keyboard, reset, three layouts, delayed/failed model, and unavailable viewer. No form submitted.');
   } finally {
     if (browser) await browser.close();
     await new Promise(resolve => server.close(resolve));

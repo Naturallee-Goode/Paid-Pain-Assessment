@@ -12,10 +12,10 @@ function setup() {
   return { dom, doc, buttons: [...doc.querySelectorAll('[data-area]')], input: doc.getElementById('selectedBodyArea') }
 }
 
-test('all ten controls work without a viewer, select exclusively, and never submit', () => {
+test('all twelve controls work without a viewer, select exclusively, and never submit', () => {
   const { doc, buttons, input } = setup()
-  assert.equal(buttons.length, 10)
-  assert.equal(new Set(BODY_AREAS.map(a => a.id)).size, 10)
+  assert.equal(buttons.length, 12)
+  assert.equal(new Set(BODY_AREAS.map(a => a.id)).size, 12)
   let submissions = 0
   let detail
   doc.getElementById('intakeForm').addEventListener('submit', e => { e.preventDefault(); submissions++ })
