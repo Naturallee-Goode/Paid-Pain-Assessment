@@ -2,9 +2,6 @@ name: Static Site CI
 
 on:
   pull_request:
-    branches:
-      - main
-      - "feat/**"
   push:
     branches:
       - main

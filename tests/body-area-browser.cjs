@@ -61,6 +61,17 @@ const server = http.createServer(async (req, res) => {
       });
       assert(state.count > 0, `No highlighted region: ${id}`);
       assert(state.restored, `Stale highlight after switching to ${id}`);
+      if (['neck', 'lower-back', 'hip'].includes(id)) {
+        const names = await page.evaluate(() => window.__viewerTest.muscleCatalog
+          .filter(record => window.__viewerTest.areaHighlights.has(record.mesh))
+          .map(record => record.displayName));
+        const excluded = {
+          neck: /labii|orbicularis|zygomaticus/i,
+          'lower-back': /gluteus/i,
+          hip: /of hand/i,
+        }[id];
+        assert(!names.some(name => excluded.test(name)), `${id} highlighted a muscle outside the area`);
+      }
       if (id.endsWith('back')) {
         backTargets[id]=state.target;
         assert(state.camera[2] < state.target[2], 'Back areas must be viewed from behind');

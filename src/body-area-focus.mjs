@@ -2,13 +2,13 @@ import { SUPPORTED_BODY_AREAS } from './body-areas.js'
 
 // Spatial regions for the current GLB; these are not anatomical muscle mappings.
 const regions = [
-  { id: 'neck', y: [1.42, 1.55], x: [0, .14] },
+  { id: 'neck', y: [1.31, 1.46], x: [0, .14] },
   { id: 'shoulder', y: [1.25, 1.55], x: [.14, 1] },
   { id: 'upper-back', y: [1.25, 1.42], x: [0, .14], back: true },
-  { id: 'lower-back', y: [.84, 1.25], x: [0, .14], back: true },
+  { id: 'lower-back', y: [1.04, 1.25], x: [0, .14], back: true },
   { id: 'elbow', y: [1.02, 1.14], x: [.14, 1] },
   { id: 'wrist-hand', y: [.62, 1.02], x: [.26, 1] },
-  { id: 'hip', y: [.62, .90], x: [0, .26] },
+  { id: 'hip', y: [.75, 1.04], x: [0, .20] },
   { id: 'knee', y: [.40, .50], x: [0, 1] },
   { id: 'ankle', y: [.08, .18], x: [0, 1] },
   { id: 'foot', y: [-.10, .08], x: [0, 1] },

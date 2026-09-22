@@ -280,6 +280,9 @@ function focusBodyArea(id) {
   for (const mesh of bodyMeshes) {
     const box = new THREE.Box3().setFromObject(mesh)
     if (!isWithinArea(box.getCenter(new THREE.Vector3()), area)) continue
+    // A long back muscle can have its center near the pelvis while extending
+    // far above the hip. Keep it out of the hip highlight.
+    if (id === 'hip' && box.max.y > 1.17) continue
     areaHighlights.set(mesh, { material: mesh.material, renderOrder: mesh.renderOrder })
     mesh.material = highlightMat
     mesh.renderOrder = 999

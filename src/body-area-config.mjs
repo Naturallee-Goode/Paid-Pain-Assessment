@@ -1,2 +1,2 @@
-// Use the shared area definitions from #43; retained as the controls' import path.
+// Use the shared body-area IDs and labels from issue #43.
 export { SUPPORTED_BODY_AREAS as BODY_AREAS } from './body-areas.js'
