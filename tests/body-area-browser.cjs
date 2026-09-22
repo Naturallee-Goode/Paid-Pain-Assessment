@@ -31,7 +31,7 @@ const server = http.createServer(async (req, res) => {
     await page.route('**/*.glb', route => route.fulfill({ body: model, contentType: 'model/gltf-binary' }));
     await page.route('**/viewer.js', async route => {
       const response = await route.fetch();
-      await route.fulfill({ response, body: await response.text() + '\nwindow.__viewerTest = { bodyMeshes, muscleCatalog, selectBodyMesh, clearSelection, camera, controls, areaHighlights, animating: () => animating, selected: () => selectedMesh };' });
+      await route.fulfill({ response, body: await response.text() + '\nwindow.__viewerTest = { bodyMeshes, muscleCatalog, getMusclesForArea, selectBodyMesh, clearSelection, camera, controls, areaHighlights, animating: () => animating, selected: () => selectedMesh };' });
     });
     await page.goto(url);
     await page.waitForFunction(() => window.__viewerTest?.bodyMeshes.length > 0, null, { timeout: 60000 });
@@ -41,6 +41,8 @@ const server = http.createServer(async (req, res) => {
       return ['left', 'right', null].map(side => catalog.filter(record => record.side === side).length);
     });
     assert.deepEqual(sides, [229, 230, 3], 'The loaded catalog must preserve model sides');
+    const mappedCounts = await page.evaluate(() => [...document.querySelectorAll('[data-area]')].map(button => window.__viewerTest.getMusclesForArea(button.dataset.area).length));
+    assert(mappedCounts.every(count => count > 0), 'Every area needs a loaded muscle list');
     await page.evaluate(() => {
       window.__originalMaterials = new Map(window.__viewerTest.bodyMeshes.map(mesh => [mesh, {material: mesh.material, order: mesh.renderOrder}]));
     });
@@ -59,6 +61,13 @@ const server = http.createServer(async (req, res) => {
       });
       assert(state.count > 0, `No highlighted region: ${id}`);
       assert(state.restored, `Stale highlight after switching to ${id}`);
+      if (id === 'arm' || id === 'leg') {
+        assert(await page.evaluate(areaId => {
+          const v = window.__viewerTest;
+          const meshes = v.getMusclesForArea(areaId).map(record => record.mesh);
+          return meshes.length === v.areaHighlights.size && meshes.every(mesh => v.areaHighlights.has(mesh));
+        }, id), `${id} must highlight its mapped muscles only`);
+      }
       if (['neck', 'lower-back', 'hip'].includes(id)) {
         const names = await page.evaluate(() => window.__viewerTest.muscleCatalog
           .filter(record => window.__viewerTest.areaHighlights.has(record.mesh))
@@ -153,7 +162,7 @@ const server = http.createServer(async (req, res) => {
       assert.equal(await isolated.locator('#selectedBodyArea').inputValue(), '');
       await isolated.close();
     }
-    console.log('PASS: area highlights, distinct back targets, restoration, rotation/zoom, all ten areas, viewer cleanup, Change/Clear, keyboard, reset, three layouts, delayed/failed model, and unavailable viewer. No form submitted.');
+    console.log('PASS: area highlights, distinct back targets, restoration, rotation/zoom, all twelve areas, viewer cleanup, Change/Clear, keyboard, reset, three layouts, delayed/failed model, and unavailable viewer. No form submitted.');
   } finally {
     if (browser) await browser.close();
     await new Promise(resolve => server.close(resolve));

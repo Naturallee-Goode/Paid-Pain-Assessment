@@ -16,9 +16,11 @@ const expectedBodyAreas = [
   { id: 'shoulder', label: 'Shoulder' },
   { id: 'upper-back', label: 'Upper Back' },
   { id: 'lower-back', label: 'Lower Back' },
+  { id: 'arm', label: 'Arm' },
   { id: 'elbow', label: 'Elbow' },
   { id: 'wrist-hand', label: 'Wrist/Hand' },
   { id: 'hip', label: 'Hip' },
+  { id: 'leg', label: 'Leg' },
   { id: 'knee', label: 'Knee' },
   { id: 'ankle', label: 'Ankle' },
   { id: 'foot', label: 'Foot' },
@@ -42,7 +44,7 @@ test('viewer.js retains the body-map dependencies and interactions', () => {
   assert.match(viewerJavaScript, /buildMuscleCatalog\(catalogEntries\)/)
 })
 
-test('body-map data defines the ten supported areas with stable IDs and labels', async () => {
+test('body-map data defines the twelve supported areas with stable IDs and labels', async () => {
   const { SUPPORTED_BODY_AREAS } = await bodyAreasModule
 
   assert.deepEqual(SUPPORTED_BODY_AREAS, expectedBodyAreas)

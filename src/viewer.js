@@ -6,6 +6,8 @@ import { buildMuscleCatalog, getSourceNodeName, parseAnatomyName } from "./muscl
 
 import { AREA_FOCUS_REGIONS, isWithinArea, getAreaCameraDistance } from "./body-area-focus.mjs";
 
+import { mapMusclesToAreas } from "./muscle-area-mapping.mjs";
+
 const scene = new THREE.Scene()
 
 const viewerContainer = document.getElementById("viewer")
@@ -91,6 +93,11 @@ const meshMatName = new Map()
 const meshLabelIndex = new Map()
 const meshSourceName = new Map()
 const muscleCatalog = []
+let bodyAreaMuscles = {}
+// Follow-up muscle-list UI can consume this without changing catalog ownership.
+export function getMusclesForArea(areaId) {
+  return Object.hasOwn(bodyAreaMuscles, areaId) ? [...bodyAreaMuscles[areaId]] : []
+}
 
 const searchInput = document.getElementById("searchInput")
 const searchResults = document.getElementById("searchResults")
@@ -212,6 +219,7 @@ loader.load(
     })
 
     muscleCatalog.push(...buildMuscleCatalog(catalogEntries))
+    bodyAreaMuscles = mapMusclesToAreas(muscleCatalog).byArea
     muscleCatalog.forEach(record => {
       const key = record.displayName.toLowerCase()
       const entry = meshLabelIndex.get(key) ?? { label: record.displayName, meshes: [] }
@@ -269,9 +277,10 @@ function focusBodyArea(id) {
     return
   }
   const bounds = new THREE.Box3()
+  const mappedMeshes = area.mapped ? new Set(getMusclesForArea(id).map(record => record.mesh)) : null
   for (const mesh of bodyMeshes) {
     const box = new THREE.Box3().setFromObject(mesh)
-    if (!isWithinArea(box.getCenter(new THREE.Vector3()), area)) continue
+    if (mappedMeshes ? !mappedMeshes.has(mesh) : !isWithinArea(box.getCenter(new THREE.Vector3()), area)) continue
     // A long back muscle can have its center near the pelvis while extending
     // far above the hip. Keep it out of the hip highlight.
     if (id === 'hip' && box.max.y > 1.17) continue
