@@ -36,6 +36,7 @@ Key application files are:
 - `index.html` - main landing page and intake form
 - `styles.css` - visual design and page layout
 - `script.js` - form behavior, EmailJS integration, Calendly injection, submission flow
+- `body-areas.js` - authoritative supported body-area IDs and display labels
 - `viewer.js` - 3D body map implementation using Three.js
 - `upperbodyscan.html` / `lowerbodyscan.html` - MediaPipe webcam scanner pages
 - `assets/human-body2.glb` - local 3D model asset
