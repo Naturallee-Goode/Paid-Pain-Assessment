@@ -6,7 +6,7 @@ The controls run independently of the 3D viewer so they remain usable while the 
 
 ## Scope and integration
 
-The area labels follow #46. The IDs in `src/body-area-config.mjs` must be coordinated with the shared area data from #43 before those changes are integrated. The configuration contains only IDs and labels. Muscle mappings (#45) and area highlighting/camera framing (#47) are not part of this change. Selecting an area does not select a muscle. No EmailJS configuration or model URL was changed.
+The controls now import the shared IDs and labels from `src/body-areas.js` through `src/body-area-config.mjs`. Muscle mappings (#45) and area highlighting/camera framing (#47) are not part of this change. Selecting an area does not select a muscle. No EmailJS configuration or model URL was changed.
 
 ## Verification
 
@@ -34,6 +34,10 @@ The browser suite checks all ten choices, previous mesh-material restoration, se
 
 On `feat/47-body-area-focus`, a separate focus module defines spatial regions for the current model. Area selection restores old materials, highlights matching model objects, and frames their bounds using both vertical field of view and viewport aspect ratio. Upper Back and Lower Back have separate posterior regions; neither automatically selects an individual muscle. Change/Clear, form reset, or selecting an individual mesh removes region highlights. A choice made before the model loads is applied when loading completes.
 
-The expanded unit suite contains ten passing tests. Browser checks additionally verify nonempty highlights for every area, old-material restoration, distinct back camera targets, and continued user rotation/zoom. The browser suite still checks the controls on phone/tablet/desktop layouts and loading/failure cases. The CI workflow checks the new module's syntax.
+The integrated unit suite contains sixteen passing tests. Browser checks additionally verify nonempty highlights for every area, old-material restoration, distinct back camera targets, and continued user rotation/zoom. The browser suite still checks the controls on phone/tablet/desktop layouts and loading/failure cases. The CI workflow checks the new module's syntax.
 
-This branch builds on the unmerged #46 branch. Integrate the shared area IDs after #43 merges. Spatial focus is independent of the #44 side-labeling bug, and does not implement #45's muscle catalog mappings. The bounds are specific to the current GLB and match whole objects by their bounding-box centers, so objects crossing a region boundary may extend beyond that area. Human visual acceptance of each highlighted region is still needed before closing #47. The production model URL and EmailJS remain unchanged.
+This branch builds on #46 and locally integrates Girwan’s reviewed #58 snapshot (`2775d2b`), which includes #43. This local integration does not merge his GitHub PRs. Spatial focus is independent of the #44 side-labeling bug, and does not implement #45's muscle catalog mappings. The bounds are specific to the current GLB and match whole objects by their bounding-box centers, so objects crossing a region boundary may extend beyond that area. Human visual acceptance of each highlighted region is still needed before closing #47. The production model URL and EmailJS remain unchanged.
+
+### Combined verification
+
+The browser suite now asserts 229 left, 230 right, and 3 unspecified records from the loaded Three.js catalog, in addition to the focus/selection interactions. This guards the previously observed shared-clone side-labeling bug while testing the integrated viewer. The unit suite runs all of Girwan’s tests plus the controls and focus tests. #45 still needs real source-name-to-area assignments and anatomical review; coordinate-based highlights are not used as muscle mappings.

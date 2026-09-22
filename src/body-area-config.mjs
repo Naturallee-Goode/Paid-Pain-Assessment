@@ -1,13 +1,2 @@
-// Labels required by #46. Reconcile IDs with the shared data introduced in #43.
-export const BODY_AREAS = [
-  { id: 'neck', label: 'Neck' },
-  { id: 'shoulder', label: 'Shoulder' },
-  { id: 'upper-back', label: 'Upper Back' },
-  { id: 'lower-back', label: 'Lower Back' },
-  { id: 'elbow', label: 'Elbow' },
-  { id: 'wrist-hand', label: 'Wrist/Hand' },
-  { id: 'hip', label: 'Hip' },
-  { id: 'knee', label: 'Knee' },
-  { id: 'ankle', label: 'Ankle' },
-  { id: 'foot', label: 'Foot' },
-]
+// Use the shared area definitions from #43; retained as the controls' import path.
+export { SUPPORTED_BODY_AREAS as BODY_AREAS } from './body-areas.js'

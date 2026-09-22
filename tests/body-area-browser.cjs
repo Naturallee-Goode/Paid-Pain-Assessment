@@ -31,11 +31,16 @@ const server = http.createServer(async (req, res) => {
     await page.route('**/*.glb', route => route.fulfill({ body: model, contentType: 'model/gltf-binary' }));
     await page.route('**/viewer.js', async route => {
       const response = await route.fetch();
-      await route.fulfill({ response, body: await response.text() + '\nwindow.__viewerTest = { bodyMeshes, selectBodyMesh, clearSelection, camera, controls, areaHighlights, animating: () => animating, selected: () => selectedMesh };' });
+      await route.fulfill({ response, body: await response.text() + '\nwindow.__viewerTest = { bodyMeshes, muscleCatalog, selectBodyMesh, clearSelection, camera, controls, areaHighlights, animating: () => animating, selected: () => selectedMesh };' });
     });
     await page.goto(url);
     await page.waitForFunction(() => window.__viewerTest?.bodyMeshes.length > 0, null, { timeout: 60000 });
     await page.locator('#loadingOverlay').waitFor({ state: 'hidden' });
+    const sides = await page.evaluate(() => {
+      const catalog = window.__viewerTest.muscleCatalog;
+      return ['left', 'right', null].map(side => catalog.filter(record => record.side === side).length);
+    });
+    assert.deepEqual(sides, [229, 230, 3], 'The loaded catalog must preserve model sides');
     await page.evaluate(() => {
       window.__originalMaterials = new Map(window.__viewerTest.bodyMeshes.map(mesh => [mesh, {material: mesh.material, order: mesh.renderOrder}]));
     });
