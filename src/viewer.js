@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { getSupportedBodyAreaForRegion } from "./body-areas.js";
-import { buildMuscleCatalog, parseAnatomyName } from "./muscle-catalog.js";
+import { buildMuscleCatalog, getSourceNodeName, parseAnatomyName } from "./muscle-catalog.js";
 
 const scene = new THREE.Scene()
 
@@ -170,16 +170,6 @@ const MATERIAL_COLORS = {
   "Bursa":                   { color: 0xc8d8e8, roughness: 0.40, metalness: 0.10, opacity: 0.75 },
 }
 const DEFAULT_MUSCLE = { color: 0xc03828, roughness: 0.62, metalness: 0.05 }
-
-function getSourceNodeName(gltf, object) {
-  // Read the original glTF node name before sanitization.
-  for (let current = object; current; current = current.parent) {
-    const nodeIndex = gltf.parser.associations.get(current)?.nodes
-    const sourceName = gltf.parser.json.nodes[nodeIndex]?.name
-    if (sourceName) return sourceName
-  }
-  return object.name
-}
 
 const loader = new GLTFLoader()
 loader.load(

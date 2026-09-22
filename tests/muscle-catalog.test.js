@@ -37,6 +37,33 @@ test('muscle names are readable while left and right stay available internally',
   assert.strictEqual(right.mesh, rightMesh)
 })
 
+test('source names stay side-specific for shared GLTF mesh clones', async () => {
+  const { getSourceNodeName } = await catalogModule
+  const sharedAssociation = { nodes: 578 }
+  const leftNode = {
+    userData: { name: 'Long head of biceps brachii.l' },
+    parent: null,
+  }
+  const rightNode = {
+    userData: { name: 'Long head of biceps brachii.r' },
+    parent: null,
+  }
+  const leftMesh = { userData: {}, name: 'Long_head_of_biceps_brachii', parent: leftNode }
+  const rightMesh = { userData: {}, name: 'Long_head_of_biceps_brachii', parent: rightNode }
+  const gltf = {
+    parser: {
+      associations: new Map([
+        [leftNode, sharedAssociation],
+        [rightNode, sharedAssociation],
+      ]),
+      json: { nodes: Array.from({ length: 579 }, () => ({})) },
+    },
+  }
+
+  assert.equal(getSourceNodeName(gltf, leftMesh), 'Long head of biceps brachii.l')
+  assert.equal(getSourceNodeName(gltf, rightMesh), 'Long head of biceps brachii.r')
+})
+
 test('non-muscle materials and grouped objects are excluded', async () => {
   const { createMuscleRecord } = await catalogModule
   const mesh = { isMesh: true }

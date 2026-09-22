@@ -11,6 +11,20 @@ const EXCLUDED_MATERIALS = new Set([
 
 const SIDE_NAMES = { l: 'left', r: 'right' }
 
+// GLTFLoader preserves the original node name in userData. Prefer it over
+// parser associations, whose mapping object can be shared by cloned meshes.
+export function getSourceNodeName(gltf, object) {
+  for (let current = object; current; current = current.parent) {
+    const userDataName = current.userData?.name
+    if (userDataName) return userDataName
+
+    const nodeIndex = gltf.parser.associations.get(current)?.nodes
+    const sourceName = gltf.parser.json.nodes[nodeIndex]?.name
+    if (sourceName) return sourceName
+  }
+  return object?.name
+}
+
 // Remove model suffixes while retaining side data.
 export function parseAnatomyName(sourceName) {
   const name = String(sourceName ?? '').trim()

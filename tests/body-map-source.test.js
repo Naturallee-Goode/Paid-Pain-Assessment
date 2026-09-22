@@ -37,7 +37,7 @@ test('viewer.js retains the body-map dependencies and interactions', () => {
   assert.match(viewerJavaScript, /function selectBodyMesh\(/)
   assert.match(viewerJavaScript, /function animate\(/)
   assert.match(viewerJavaScript, /import \{ getSupportedBodyAreaForRegion \} from ["']\.\/body-areas\.js["']/)
-  assert.match(viewerJavaScript, /import \{ buildMuscleCatalog, parseAnatomyName \} from ["']\.\/muscle-catalog\.js["']/)
+  assert.match(viewerJavaScript, /import \{ buildMuscleCatalog, getSourceNodeName, parseAnatomyName \} from ["']\.\/muscle-catalog\.js["']/)
   assert.match(viewerJavaScript, /getSupportedBodyAreaForRegion\(detectedRegion, center\.y\)/)
   assert.match(viewerJavaScript, /buildMuscleCatalog\(catalogEntries\)/)
 })
