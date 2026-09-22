@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { getSupportedBodyAreaForRegion } from "./body-areas.js";
 
 const scene = new THREE.Scene()
 
@@ -442,9 +443,12 @@ function updateInfoPanel(mesh, matName) {
   const center = new THREE.Vector3()
   box.getCenter(center)
 
-  const area = getBodyArea(center)
-  const diagnoses = DIAGNOSES[area]
-  const areaLabel = area ? area.charAt(0).toUpperCase() + area.slice(1) : null
+  const detectedRegion = getBodyArea(center)
+  const supportedArea = getSupportedBodyAreaForRegion(detectedRegion, center.y)
+  const area = supportedArea?.id ?? detectedRegion
+  const diagnoses = DIAGNOSES[detectedRegion]
+  const areaLabel = supportedArea?.label ??
+    detectedRegion.charAt(0).toUpperCase() + detectedRegion.slice(1)
 
   console.log("Selected mesh:", mesh.name)
   console.log("Material:", matName)
