@@ -1293,6 +1293,7 @@
       }
     }
     </script>
+    <link rel="stylesheet" href="body-area-controls.css">
 </head>
 
 <body>
@@ -1340,8 +1341,16 @@
             <!-- Section 2: Interactive Body Map -->
             <fieldset>
                 <legend>2. Interactive Body Map</legend>
-                <p class="field-description">Click or tap a body part to select it. Your selection will appear below.
+                <p class="field-description">Choose a body area below, or select a part on the model. Your selection will appear below.
                 </p>
+
+                <div id="bodyAreaControls" class="body-area-controls">
+                    <p id="bodyAreaInstruction">Choose a body area</p>
+                    <div id="bodyAreaChoices" class="body-area-choices" role="group" aria-labelledby="bodyAreaInstruction"></div>
+                    <p id="bodyAreaStatus" role="status" aria-live="polite">No body area selected.</p>
+                    <button type="button" id="changeBodyArea" disabled>Change Area</button>
+                    <button type="button" id="clearBodyArea" disabled>Clear Selection</button>
+                </div>
 
                 <!-- 3D Viewer -->
                 <div class="viewer-wrapper">
@@ -2164,6 +2173,7 @@
                 });
             }
         });</script>
+    <script type="module" src="body-area-controls.mjs"></script>
     <script type="module" src="viewer.js"></script>
 </body>
 

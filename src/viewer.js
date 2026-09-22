@@ -347,14 +347,25 @@ function restoreSelectedMesh() {
 }
 
 function clearSelection() {
-  if (!selectedMesh) return
   restoreSelectedMesh()
   const { camPos, target } = getZoomOutPosition(lastHorizDir)
   startCameraAnim(camPos, target, ZOOM_OUT_DURATION)
   document.getElementById("partTitle").textContent = "Select a body part"
   document.getElementById("partDescription").textContent = ""
   updateSelectedBodyInput('')
+  document.dispatchEvent(new CustomEvent('bodyAreaCleared'))
 }
+
+// Area controls work independently of model loading. Discard any previous
+// muscle selection without selecting a new mesh or applying area focus (#47).
+document.addEventListener('bodyAreaChanged', ({ detail }) => {
+  restoreSelectedMesh()
+  clearSearchResults()
+  if (searchInput) searchInput.value = ''
+  startCameraAnim(defaultCamPos, defaultTarget, ZOOM_OUT_DURATION)
+  document.getElementById('partTitle').textContent = detail.label || 'Select a body part'
+  document.getElementById('partDescription').textContent = ''
+})
 
 function getSelectableHit(hits) {
   return hits.find(hit => {

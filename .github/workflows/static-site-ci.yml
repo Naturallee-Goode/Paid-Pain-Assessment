@@ -42,6 +42,8 @@ jobs:
           node --check "$source_dir/body-areas.js"
           node --check "$source_dir/muscle-catalog.js"
           node --check "$source_dir/viewer.js"
+          node --check "$source_dir/body-area-config.mjs"
+          node --check "$source_dir/body-area-controls.mjs"
 
       - name: Verify body-map source ownership
         run: npm run test:body-map
