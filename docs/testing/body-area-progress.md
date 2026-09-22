@@ -29,3 +29,11 @@ CHROME_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npm r
 ```
 
 The browser suite checks all ten choices, previous mesh-material restoration, search cleanup, keyboard Enter/Space, reset, phone/tablet/desktop widths, touch-target height, delayed and failed model loading, and unavailable viewer code. The checked-in GLB is served as a test fixture in place of the existing remote model URL. CDN JavaScript dependencies still require network access. Viewer test hooks exist only in intercepted browser-test responses. No form submissions or live emails are sent. Browser checks are run separately from CI.
+
+## Follow-up work: issue #47
+
+On `feat/47-body-area-focus`, a separate focus module defines spatial regions for the current model. Area selection restores old materials, highlights matching model objects, and frames their bounds using both vertical field of view and viewport aspect ratio. Upper Back and Lower Back have separate posterior regions; neither automatically selects an individual muscle. Change/Clear, form reset, or selecting an individual mesh removes region highlights. A choice made before the model loads is applied when loading completes.
+
+The expanded unit suite contains ten passing tests. Browser checks additionally verify nonempty highlights for every area, old-material restoration, distinct back camera targets, and continued user rotation/zoom. The browser suite still checks the controls on phone/tablet/desktop layouts and loading/failure cases. The CI workflow checks the new module's syntax.
+
+This branch builds on the unmerged #46 branch. Integrate the shared area IDs after #43 merges. Spatial focus is independent of the #44 side-labeling bug, and does not implement #45's muscle catalog mappings. The bounds are specific to the current GLB and match whole objects by their bounding-box centers, so objects crossing a region boundary may extend beyond that area. Human visual acceptance of each highlighted region is still needed before closing #47. The production model URL and EmailJS remain unchanged.
