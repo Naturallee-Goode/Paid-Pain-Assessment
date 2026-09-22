@@ -6,6 +6,8 @@ import { buildMuscleCatalog, getSourceNodeName, parseAnatomyName } from "./muscl
 
 import { AREA_FOCUS_REGIONS, isWithinArea, getAreaCameraDistance } from "./body-area-focus.mjs";
 
+import { mapMusclesToAreas } from "./muscle-area-mapping.mjs";
+
 const scene = new THREE.Scene()
 
 const viewerContainer = document.getElementById("viewer")
@@ -91,6 +93,11 @@ const meshMatName = new Map()
 const meshLabelIndex = new Map()
 const meshSourceName = new Map()
 const muscleCatalog = []
+let bodyAreaMuscles = {}
+// Follow-up muscle-list UI can consume this without changing catalog ownership.
+export function getMusclesForArea(areaId) {
+  return Object.hasOwn(bodyAreaMuscles, areaId) ? [...bodyAreaMuscles[areaId]] : []
+}
 
 const searchInput = document.getElementById("searchInput")
 const searchResults = document.getElementById("searchResults")
@@ -212,6 +219,7 @@ loader.load(
     })
 
     muscleCatalog.push(...buildMuscleCatalog(catalogEntries))
+    bodyAreaMuscles = mapMusclesToAreas(muscleCatalog).byArea
     muscleCatalog.forEach(record => {
       const key = record.displayName.toLowerCase()
       const entry = meshLabelIndex.get(key) ?? { label: record.displayName, meshes: [] }

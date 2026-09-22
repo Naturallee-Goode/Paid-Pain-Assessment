@@ -31,7 +31,7 @@ const server = http.createServer(async (req, res) => {
     await page.route('**/*.glb', route => route.fulfill({ body: model, contentType: 'model/gltf-binary' }));
     await page.route('**/viewer.js', async route => {
       const response = await route.fetch();
-      await route.fulfill({ response, body: await response.text() + '\nwindow.__viewerTest = { bodyMeshes, muscleCatalog, selectBodyMesh, clearSelection, camera, controls, areaHighlights, animating: () => animating, selected: () => selectedMesh };' });
+      await route.fulfill({ response, body: await response.text() + '\nwindow.__viewerTest = { bodyMeshes, muscleCatalog, getMusclesForArea, selectBodyMesh, clearSelection, camera, controls, areaHighlights, animating: () => animating, selected: () => selectedMesh };' });
     });
     await page.goto(url);
     await page.waitForFunction(() => window.__viewerTest?.bodyMeshes.length > 0, null, { timeout: 60000 });
@@ -41,6 +41,8 @@ const server = http.createServer(async (req, res) => {
       return ['left', 'right', null].map(side => catalog.filter(record => record.side === side).length);
     });
     assert.deepEqual(sides, [229, 230, 3], 'The loaded catalog must preserve model sides');
+    const mappedCounts = await page.evaluate(() => [...document.querySelectorAll('[data-area]')].map(button => window.__viewerTest.getMusclesForArea(button.dataset.area).length));
+    assert(mappedCounts.every(count => count > 0), 'Every area needs a loaded muscle list');
     await page.evaluate(() => {
       window.__originalMaterials = new Map(window.__viewerTest.bodyMeshes.map(mesh => [mesh, {material: mesh.material, order: mesh.renderOrder}]));
     });
