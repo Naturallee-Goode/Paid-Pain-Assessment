@@ -39,6 +39,8 @@ jobs:
           source_dir=.
           if [ -f src/script.js ]; then source_dir=src; fi
           node --check "$source_dir/script.js"
+          node --check "$source_dir/body-areas.js"
+          node --check "$source_dir/muscle-catalog.js"
           node --check "$source_dir/viewer.js"
 
       - name: Verify body-map source ownership
@@ -53,5 +55,7 @@ jobs:
           test -s "$source_dir/lowerbodyscan.html"
           test -s "$source_dir/styles.css"
           test -s "$source_dir/script.js"
+          test -s "$source_dir/body-areas.js"
+          test -s "$source_dir/muscle-catalog.js"
           test -s "$source_dir/viewer.js"
           test -s "$source_dir/assets/human-body2.glb"
