@@ -23,7 +23,7 @@ const server = http.createServer(async (req, res) => {
   try {
     browser = await chromium.launch({ ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}), headless: true });
     const url = `http://127.0.0.1:${server.address().port}`;
-    const page = await browser.newPage();
+    const page = await browser.newPage({ reducedMotion: 'reduce' });
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     // Use the checked-in model as a fixture without changing the production URL.
@@ -31,11 +31,12 @@ const server = http.createServer(async (req, res) => {
     await page.route('**/*.glb', route => route.fulfill({ body: model, contentType: 'model/gltf-binary' }));
     await page.route('**/viewer.js', async route => {
       const response = await route.fetch();
-      await route.fulfill({ response, body: await response.text() + '\nwindow.__viewerTest = { THREE, bodyMeshes, muscleCatalog, getMusclesForArea, focusRegions: AREA_FOCUS_REGIONS, isWithinArea, selectBodyMesh, clearSelection, camera, controls, areaHighlights, animating: () => animating, selected: () => selectedMesh };' });
+      await route.fulfill({ response, body: await response.text() + '\nwindow.__viewerTest = { THREE, bodyMeshes, muscleCatalog, getMusclesForArea, focusRegions: AREA_FOCUS_REGIONS, isWithinArea, selectBodyMesh, clearSelection, camera, controls, areaHighlights, animating: () => animating, selected: () => selectedMesh, setRenderLoopPaused: setViewerRenderLoopPaused };' });
     });
     await page.goto(url);
     await page.waitForFunction(() => window.__viewerTest?.bodyMeshes.length > 0, null, { timeout: 60000 });
     await page.locator('#loadingOverlay').waitFor({ state: 'hidden' });
+    await page.evaluate(() => window.__viewerTest.setRenderLoopPaused(true));
     const sides = await page.evaluate(() => {
       const catalog = window.__viewerTest.muscleCatalog;
       return ['left', 'right', null].map(side => catalog.filter(record => record.side === side).length);
@@ -114,7 +115,12 @@ const server = http.createServer(async (req, res) => {
     await page.locator('[data-area="hip"]').focus();
     await page.keyboard.press('Space');
     assert.equal(await page.locator('#selectedBodyArea').inputValue(), 'hip');
-    await page.evaluate(() => document.querySelector('#intakeForm').reset());
+    page.once('dialog', dialog => dialog.dismiss());
+    await page.locator('#intakeForm [type="reset"]').click();
+    assert.equal(await page.locator('#selectedBodyArea').inputValue(), 'hip');
+    assert.equal(await page.locator('[data-area="hip"]').getAttribute('aria-pressed'), 'true');
+    page.once('dialog', dialog => dialog.accept());
+    await page.locator('#intakeForm [type="reset"]').click();
     assert.equal(await page.locator('#selectedBodyArea').inputValue(), '');
     assert.equal(await page.locator('[aria-pressed="true"]').count(), 0);
     for (const width of [390, 768, 1280]) {
@@ -145,10 +151,17 @@ const server = http.createServer(async (req, res) => {
 
     // Controls must not depend on model availability or even successful viewer startup.
     for (const scenario of ['delayed', 'failed', 'viewer-unavailable']) {
-      const isolated = await browser.newPage();
+      const isolated = await browser.newPage({ reducedMotion: 'reduce' });
       let release;
       const gate = new Promise(resolve => { release = resolve; });
-      if (scenario === 'viewer-unavailable') await isolated.route('**/viewer.js', route => route.abort());
+      if (scenario === 'viewer-unavailable') {
+        await isolated.route('**/viewer.js', route => route.abort());
+      } else {
+        await isolated.route('**/viewer.js', async route => {
+          const response = await route.fetch();
+          await route.fulfill({ response, body: await response.text() + '\nsetViewerRenderLoopPaused(true);' });
+        });
+      }
       await isolated.route('**/*.glb', async route => {
         if (scenario === 'delayed') { await gate; await route.fulfill({ body: model, contentType: 'model/gltf-binary' }); }
         else await route.abort();

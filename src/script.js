@@ -1,3 +1,5 @@
+import { bodyMapStore } from './body-map-store.mjs';
+
 /**
  * Pain Assessment Intake Form - JavaScript
  * Refactored to avoid long-term storage of form data.
@@ -298,7 +300,7 @@ async function handleFormSubmit(event) {
             throw new Error('EmailJS configuration is incomplete.');
         }
 
-        emailjs.init(EMAILJS_CONFIG.publicKey);
+        window.emailjs.init(EMAILJS_CONFIG.publicKey);
 
         const emailParams = {
             to_email: 'goode@naturalleegoode.com',
@@ -318,7 +320,7 @@ async function handleFormSubmit(event) {
             submitted_at: data.submitted_at
         };
 
-        await emailjs.send(
+        await window.emailjs.send(
             EMAILJS_CONFIG.serviceId,
             EMAILJS_CONFIG.templateId,
             emailParams
@@ -452,6 +454,12 @@ function handleFormReset(event) {
     if (!confirmed) {
         event.preventDefault();
     }
+
+    queueMicrotask(() => {
+        if (!event.defaultPrevented) {
+            bodyMapStore.reset();
+        }
+    });
 }
 
 // ==============================================================================
