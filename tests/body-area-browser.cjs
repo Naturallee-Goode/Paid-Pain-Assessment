@@ -115,14 +115,22 @@ const server = http.createServer(async (req, res) => {
     await page.locator('[data-area="hip"]').focus();
     await page.keyboard.press('Space');
     assert.equal(await page.locator('#selectedBodyArea').inputValue(), 'hip');
+    await page.locator('#painLevel').evaluate(element => {
+      element.value = '8';
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    assert.equal(await page.locator('#painLevelValue').textContent(), '8');
     page.once('dialog', dialog => dialog.dismiss());
     await page.locator('#intakeForm [type="reset"]').click();
     assert.equal(await page.locator('#selectedBodyArea').inputValue(), 'hip');
     assert.equal(await page.locator('[data-area="hip"]').getAttribute('aria-pressed'), 'true');
+    assert.equal(await page.locator('#painLevelValue').textContent(), '8');
     page.once('dialog', dialog => dialog.accept());
     await page.locator('#intakeForm [type="reset"]').click();
+    await page.waitForFunction(() => document.querySelector('#selectedBodyArea').value === '' && document.querySelector('#painLevelValue').textContent === '5');
     assert.equal(await page.locator('#selectedBodyArea').inputValue(), '');
     assert.equal(await page.locator('[aria-pressed="true"]').count(), 0);
+    assert.equal(await page.locator('#painLevelValue').textContent(), '5');
     for (const width of [390, 768, 1280]) {
       await page.setViewportSize({ width, height: 844 });
       await page.locator('[data-area="wrist-hand"]').click();

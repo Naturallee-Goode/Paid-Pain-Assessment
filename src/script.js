@@ -453,13 +453,18 @@ function handleFormReset(event) {
     const confirmed = confirm('Are you sure you want to clear the form?');
     if (!confirmed) {
         event.preventDefault();
+        return;
     }
 
-    queueMicrotask(() => {
-        if (!event.defaultPrevented) {
-            bodyMapStore.reset();
+    bodyMapStore.reset();
+    // Native reset applies default form values after this handler returns.
+    setTimeout(() => {
+        const painLevel = document.getElementById('painLevel');
+        const painLevelValue = document.getElementById('painLevelValue');
+        if (painLevel && painLevelValue) {
+            painLevelValue.textContent = painLevel.value;
         }
-    });
+    }, 0);
 }
 
 // ==============================================================================
