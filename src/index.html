@@ -75,7 +75,7 @@
                 </div>
 
                 <section id="visualSelection" class="visual-selection" aria-labelledby="visualSelectionHeading" hidden>
-                    <h3 id="visualSelectionHeading">Show us where it hurts</h3>
+                    <h3 id="visualSelectionHeading" tabindex="-1">Show us where it hurts</h3>
                     <div class="form-group side-selector">
                         <span class="side-selector-label">Which side?</span>
                         <div class="radio-group" role="group" aria-label="Pain side">
@@ -92,7 +92,7 @@
                     </div>
                     <p id="visualSelectionStatus" class="visual-selection-status" role="status" aria-live="polite"></p>
                     <button type="button" id="clearSpot" class="clear-spot" disabled hidden>Clear Spot</button>
-                    <p class="visual-selection-optional">Not sure of the exact spot? You can continue with just the body area and side selected.</p>
+                    <p id="visualSelectionOptional" class="visual-selection-optional">The 3D map is optional. You can continue with just the body area and side selected.</p>
                 </section>
 
                 <!-- 3D Viewer -->
@@ -106,7 +106,7 @@
                             <div id="loadingPercent" class="loading-percent">0%</div>
                         </div>
                     </div>
-                    <div id="viewer" role="img" aria-label="Optional interactive 3D body map. Drag to rotate, pinch or scroll to zoom, and tap to select a spot."></div>
+                    <div id="viewer" role="img" aria-label="Optional interactive 3D body map. Drag to rotate, pinch or scroll to zoom, and tap to select a spot." aria-describedby="visualSelectionOptional"></div>
                     <div id="infoPanel" class="viewer-info-panel">
                         <div class="viewer-info-content">
                             <div id="partTitle" class="viewer-part-title">Choose a body area</div>

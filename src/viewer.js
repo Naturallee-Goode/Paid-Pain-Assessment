@@ -1,13 +1,12 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { getSupportedBodyAreaForRegion } from "./body-areas.js";
 import { buildMuscleCatalog, getSourceNodeName } from "./muscle-catalog.js";
 
 import { AREA_FOCUS_REGIONS, isWithinArea, getAreaCameraDistance } from "./body-area-focus.mjs";
 
 import { mapMusclesToAreas } from "./muscle-area-mapping.mjs";
-import { buildMuscleOptions } from "./muscle-options.mjs";
+import { buildMuscleOptions, resolveMuscleRecords } from "./muscle-options.mjs";
 import { bodyMapStore } from "./body-map-store.mjs";
 import { easeInOutQuad, getAnimationProgress } from "./animation-timing.mjs";
 
@@ -91,41 +90,14 @@ renderer.domElement.addEventListener('wheel', () => {
 const raycaster = new THREE.Raycaster()
 const pointer = new THREE.Vector2()
 const bodyMeshes = []
-const meshVolume = new Map()
-const meshMatName = new Map()
 const muscleCatalog = []
 let bodyAreaMuscles = {}
 let muscleRecordsById = new Map()
+const muscleIdByMesh = new Map()
+const muscleRecordByMesh = new Map()
 // Follow-up muscle-list UI can consume this without changing catalog ownership.
 export function getMusclesForArea(areaId) {
   return Object.hasOwn(bodyAreaMuscles, areaId) ? [...bodyAreaMuscles[areaId]] : []
-}
-
-const SPINE_X = 0
-const SPINE_Z = 0
-
-const ARM_X_THRESHOLD = 0.14
-
-function getBodyArea(center) {
-  const { x, y, z } = center
-  const absX = Math.abs(x)
-  const isArm = absX > ARM_X_THRESHOLD
-  const isHandWidth = absX > 0.26
-  const isLateralHip = absX > 0.11
-
-  if(y > 1.55)  return "head"
-  if(y > 1.42)  return isArm ? "shoulder" : "neck"
-  if(y > 1.25)  return isArm ? "shoulder" : (z > 0 ? "chest" : "back")
-  if(y > 1.10)  return isArm ? "upperarm" : (z > 0 ? "chest" : "back")
-  if(y > 1.06)  return isArm ? "elbow" : (z > 0 ? "abdomen" : "back")
-  if(y > 0.84)  return isArm ? (isHandWidth ? "wrist" : "forearm") : (!isLateralHip && z > 0.02 ? "abdomen" : "hip")
-  if(y > 0.70)  return isArm ? (isHandWidth ? "hand" : "wrist") : (!isLateralHip && z > 0.02 ? "abdomen" : "hip")
-  if(y > 0.62)  return isArm ? "hand" : "hip"
-  if(y > 0.50)  return "thigh"
-  if(y > 0.40)  return "knee"
-  if(y > 0.18)  return z > -0.03 ? "lowerleg" : "calf"
-  if(y > 0.08)  return "ankle"
-  return "foot"
 }
 
 const MATERIAL_COLORS = {
@@ -179,7 +151,6 @@ loader.load(
         child.receiveShadow = false
         return
       }
-      meshMatName.set(child.uuid, matName)
       const preset = MATERIAL_COLORS[matName] || DEFAULT_MUSCLE
       child.material = new THREE.MeshPhysicalMaterial({
         color: preset.color, roughness: preset.roughness, metalness: preset.metalness,
@@ -189,16 +160,18 @@ loader.load(
       })
       bodyMeshes.push(child)
       child.geometry.computeBoundingBox()
-      const box = child.geometry.boundingBox
-      const size = new THREE.Vector3()
-      box.getSize(size)
-      meshVolume.set(child.uuid, size.x * size.y * size.z)
     })
 
     muscleCatalog.push(...buildMuscleCatalog(catalogEntries))
     bodyAreaMuscles = mapMusclesToAreas(muscleCatalog).byArea
     const muscleOptions = buildMuscleOptions(bodyAreaMuscles)
     muscleRecordsById = muscleOptions.recordsById
+    for (const [muscleId, records] of muscleRecordsById) {
+      for (const record of records) {
+        muscleIdByMesh.set(record.mesh, muscleId)
+        muscleRecordByMesh.set(record.mesh, record)
+      }
+    }
     bodyMapStore.setCatalog(muscleOptions.optionsByArea)
     // Hide loading overlay
     const overlay = document.getElementById("loadingOverlay")
@@ -235,7 +208,7 @@ function restoreAreaHighlights() {
 }
 
 function focusBodyArea(id) {
-  restoreSelectedMesh()
+  restoreMuscleHighlights()
   restoreAreaHighlights()
   const area = AREA_FOCUS_REGIONS.find(item => item.id === id)
   if (!area) {
@@ -274,7 +247,7 @@ function focusBodyArea(id) {
   startCameraAnim(new THREE.Vector3(center.x, center.y, center.z + direction * Math.max(distance, .15)), center, ZOOM_IN_DURATION)
 }
 
-let selectedMesh = null, originalMat = null, originalRenderOrder = 0
+const muscleHighlights = new Map()
 
 const ZOOM_IN_DURATION  = 650
 const ZOOM_OUT_DURATION = 450
@@ -311,115 +284,105 @@ function startCameraAnim(toPos, toTarget, duration) {
   animating = true
 }
 
-function getCameraPositionForMesh(mesh) {
-  const box = new THREE.Box3().setFromObject(mesh)
-  const meshCenter = new THREE.Vector3()
-  box.getCenter(meshCenter)
-  const meshSize = new THREE.Vector3()
-  box.getSize(meshSize)
-  const maxDim = Math.max(meshSize.x, meshSize.y, meshSize.z)
-  const horizDir = new THREE.Vector3(meshCenter.x - SPINE_X, 0, meshCenter.z - SPINE_Z)
-  if(horizDir.length() < 0.001) horizDir.set(0, 0, 1)
-  else horizDir.normalize()
-  const zoomDist = Math.max(maxDim * 3, 0.08)
-  const camPos = new THREE.Vector3(
-    meshCenter.x + horizDir.x * zoomDist, meshCenter.y, meshCenter.z + horizDir.z * zoomDist
-  )
-  return { camPos, meshCenter, horizDir }
-}
-
-function getZoomOutPosition(horizDir) {
-  return {
-    camPos: new THREE.Vector3(SPINE_X + horizDir.x * DEFAULT_DIST, defaultCamPos.y, SPINE_Z + horizDir.z * DEFAULT_DIST),
-    target: new THREE.Vector3(SPINE_X, defaultTarget.y, SPINE_Z)
+function restoreMuscleHighlights() {
+  for (const [mesh, original] of muscleHighlights) {
+    mesh.material = original.material
+    mesh.renderOrder = original.renderOrder
   }
+  muscleHighlights.clear()
 }
 
-function restoreSelectedMesh() {
-  if (!selectedMesh || !originalMat) return
-  selectedMesh.material = originalMat
-  selectedMesh.renderOrder = originalRenderOrder
-  selectedMesh = null
-  originalMat = null
+function getSelectedOption(state) {
+  return (state.optionsByArea[state.areaId] ?? []).find(option => option.id === state.muscleId) ?? null
+}
+
+function frameMuscleBounds(bounds) {
+  const center = bounds.getCenter(new THREE.Vector3())
+  const size = bounds.getSize(new THREE.Vector3())
+  const direction = new THREE.Vector3(center.x, 0, center.z)
+  if (direction.length() < 0.001) direction.copy(lastHorizDir)
+  else direction.normalize()
+  lastHorizDir.copy(direction)
+  const distance = getAreaCameraDistance(size, camera.fov, camera.aspect)
+  const position = center.clone().addScaledVector(direction, Math.max(distance, .15))
+  startCameraAnim(position, center, ZOOM_IN_DURATION)
+}
+
+function showMuscleSelection(state) {
+  restoreAreaHighlights()
+  restoreMuscleHighlights()
+  const option = getSelectedOption(state)
+  if (!option) return
+  const records = resolveMuscleRecords(muscleRecordsById.get(option.id) ?? [], state.side)
+  const bounds = new THREE.Box3()
+  for (const record of records) {
+    const mesh = record.mesh
+    muscleHighlights.set(mesh, { material: mesh.material, renderOrder: mesh.renderOrder })
+    mesh.material = highlightMat
+    mesh.renderOrder = 999
+    bounds.union(new THREE.Box3().setFromObject(mesh))
+  }
+  document.getElementById('partTitle').textContent = 'Spot selected'
+  if (bounds.isEmpty()) {
+    document.getElementById('partDescription').textContent = `That exact spot is not available on the ${state.side} side of the model.`
+    return
+  }
+  const explicitSides = new Set(records.map(record => record.side).filter(Boolean))
+  document.getElementById('partDescription').textContent = state.side === 'both'
+    ? (explicitSides.has('left') && explicitSides.has('right') ? 'Both sides selected.' : 'All available matching spots are selected.')
+    : `${state.side[0].toUpperCase()}${state.side.slice(1)} spot selected.`
+  frameMuscleBounds(bounds)
 }
 
 function clearSelection() {
-  if (bodyMapStore.getState().areaId) bodyMapStore.clearArea({ source: 'viewer' })
-  else focusBodyArea(null)
+  if (bodyMapStore.getState().muscleId) bodyMapStore.clearMuscle({ source: 'viewer' })
+  else if (!bodyMapStore.getState().areaId) focusBodyArea(null)
 }
 
-function getSelectableHit(hits) {
-  return hits.find(hit => {
-    const name = meshMatName.get(hit.object.uuid) ?? ""
-    return name !== "Fascia"
-  })?.object
+function recordMatchesSelectedSide(record, muscleId, side) {
+  if (side === 'both') return true
+  if (record.side === side) return true
+  const records = muscleRecordsById.get(muscleId) ?? []
+  return !record.side && records.every(item => !item.side)
+}
+
+function getSelectableMeshAt(clientX, clientY) {
+  const state = bodyMapStore.getState()
+  if (!state.areaId || !state.side || state.catalogStatus !== 'ready') return null
+  const availableIds = new Set((state.optionsByArea[state.areaId] ?? []).map(option => option.id))
+  const rect = renderer.domElement.getBoundingClientRect()
+  pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1
+  pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1
+  raycaster.setFromCamera(pointer, camera)
+  return raycaster.intersectObjects(bodyMeshes, false)
+    .map(hit => hit.object)
+    .find(object => {
+      const muscleId = muscleIdByMesh.get(object)
+      const record = muscleRecordByMesh.get(object)
+      return muscleId && record && availableIds.has(muscleId) && recordMatchesSelectedSide(record, muscleId, state.side)
+    }) ?? null
 }
 
 function selectBodyMesh(mesh) {
-  if (!mesh) return
-  const selection = bodyMapStore.getState()
-  if (!selection.areaId || !selection.side) {
+  const state = bodyMapStore.getState()
+  if (!state.areaId || !state.side) {
     document.getElementById('partDescription').textContent = 'Choose a body area and side before selecting an exact spot.'
     return
   }
-  restoreAreaHighlights()
-  if (selectedMesh && selectedMesh.uuid === mesh.uuid) {
-    clearSelection()
-    return
-  }
-
-  restoreSelectedMesh()
-  const matName = meshMatName.get(mesh.uuid) ?? 'Unknown'
-
-  originalMat = mesh.material
-  originalRenderOrder = mesh.renderOrder
-  selectedMesh = mesh
-  mesh.material = highlightMat
-  mesh.renderOrder = 999
-
-  const { camPos, meshCenter, horizDir } = getCameraPositionForMesh(mesh)
-  lastHorizDir.copy(horizDir)
-  startCameraAnim(camPos, meshCenter, ZOOM_IN_DURATION)
-  updateInfoPanel(mesh, matName)
-}
-
-function updateInfoPanel(mesh, matName) {
-  const box = new THREE.Box3().setFromObject(mesh)
-  const center = new THREE.Vector3()
-  box.getCenter(center)
-
-  const detectedRegion = getBodyArea(center)
-  const supportedArea = getSupportedBodyAreaForRegion(detectedRegion, center.y)
-  const area = supportedArea?.id ?? detectedRegion
-  const areaLabel = supportedArea?.label ??
-    detectedRegion.charAt(0).toUpperCase() + detectedRegion.slice(1)
-
-  console.log("Selected mesh:", mesh.name)
-  console.log("Material:", matName)
-  console.log("Area:", area, `| y:${center.y.toFixed(3)} x:${center.x.toFixed(3)} z:${center.z.toFixed(3)}`)
-
-  document.getElementById("partTitle").textContent = 'Spot selected'
-  document.getElementById("partDescription").textContent = areaLabel
-    ? `A spot in ${areaLabel} is selected.`
-    : 'A spot is selected.'
-
-  if (supportedArea) bodyMapStore.selectArea(area, { source: 'viewer-mesh' })
-  else if (bodyMapStore.getState().areaId) bodyMapStore.clearArea({ source: 'viewer-mesh' })
+  const muscleId = muscleIdByMesh.get(mesh)
+  const belongsToArea = (state.optionsByArea[state.areaId] ?? []).some(option => option.id === muscleId)
+  const record = muscleRecordByMesh.get(mesh)
+  if (!muscleId || !record || !belongsToArea || !recordMatchesSelectedSide(record, muscleId, state.side)) return
+  if (state.muscleId === muscleId) bodyMapStore.clearMuscle({ source: 'viewer' })
+  else bodyMapStore.selectMuscle(muscleId, { source: 'viewer' })
 }
 
 function handleViewerClick(e) {
-  const rect = renderer.domElement.getBoundingClientRect()
-  pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
-  pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
-  raycaster.setFromCamera(pointer, camera)
-  const hits = raycaster.intersectObjects(bodyMeshes, false)
-  const mesh = getSelectableHit(hits)
-
+  const mesh = getSelectableMeshAt(e.clientX, e.clientY)
   if (!mesh) {
     clearSelection()
     return
   }
-
   selectBodyMesh(mesh)
 }
 
@@ -457,13 +420,31 @@ renderer.domElement.addEventListener('pointercancel', () => {
   pointerDownPoint = null
 })
 
+renderer.domElement.addEventListener('pointermove', event => {
+  if (!pointerDownPoint) {
+    renderer.domElement.style.cursor = getSelectableMeshAt(event.clientX, event.clientY) ? 'pointer' : 'grab'
+  }
+})
+renderer.domElement.addEventListener('pointerleave', () => {
+  renderer.domElement.style.cursor = 'grab'
+})
+
 camera.position.copy(defaultCamPos)
 
 bodyMapStore.subscribe((state, previous, action) => {
   const areaChanged = state.areaId !== previous.areaId
+  const muscleChanged = state.muscleId !== previous.muscleId
+  const sideChanged = state.side !== previous.side
   const modelStateChanged = action.type === 'catalog-ready' || action.type === 'catalog-error'
-  if ((areaChanged && action.source !== 'viewer-mesh') || modelStateChanged) {
-    focusBodyArea(state.areaId)
+
+  if (areaChanged || modelStateChanged) {
+    if (state.muscleId) showMuscleSelection(state)
+    else focusBodyArea(state.areaId)
+    return
+  }
+  if (muscleChanged || (sideChanged && state.muscleId)) {
+    if (state.muscleId) showMuscleSelection(state)
+    else focusBodyArea(state.areaId)
   }
 })
 

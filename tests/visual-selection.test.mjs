@@ -48,6 +48,7 @@ test('side and generic selected-spot status update without exposing a muscle nam
   assert.equal(store.getState().muscleId, null)
   assert.equal(store.getState().areaId, 'foot')
   assert.equal(store.getState().side, 'left')
+  assert.equal(doc.activeElement, doc.getElementById('visualSelectionHeading'))
 })
 
 test('model failure preserves the familiar area and side workflow', () => {

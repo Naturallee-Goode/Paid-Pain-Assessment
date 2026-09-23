@@ -31,7 +31,7 @@ const server = http.createServer(async (req, res) => {
     await page.route('**/*.glb', route => route.fulfill({ body: model, contentType: 'model/gltf-binary' }));
     await page.route('**/viewer.js', async route => {
       const response = await route.fetch();
-      await route.fulfill({ response, body: await response.text() + '\nwindow.__viewerTest = { THREE, bodyMeshes, muscleCatalog, getMusclesForArea, focusRegions: AREA_FOCUS_REGIONS, isWithinArea, selectBodyMesh, clearSelection, camera, controls, areaHighlights, animating: () => animating, selected: () => selectedMesh, setRenderLoopPaused: setViewerRenderLoopPaused };' });
+      await route.fulfill({ response, body: await response.text() + '\nwindow.__viewerTest = { THREE, bodyMeshes, muscleCatalog, getMusclesForArea, focusRegions: AREA_FOCUS_REGIONS, isWithinArea, selectBodyMesh, clearSelection, camera, controls, areaHighlights, muscleHighlights, get muscleRecordsById() { return muscleRecordsById; }, muscleIdByMesh, muscleRecordByMesh, animating: () => animating, selected: () => [...muscleHighlights.keys()], setRenderLoopPaused: setViewerRenderLoopPaused };' });
     });
     await page.goto(url);
     await page.waitForFunction(() => window.__viewerTest?.bodyMeshes.length > 0, null, { timeout: 60000 });
@@ -57,7 +57,7 @@ const server = http.createServer(async (req, res) => {
       assert.equal(await page.locator('#visualSelection').getAttribute('hidden'), null);
       assert.match(await page.locator('#visualSelectionStatus').textContent(), /Choose Left, Right, or Both/);
       assert.doesNotMatch(await page.locator('#visualSelection').textContent(), /muscles? available/i);
-      assert.equal(await page.evaluate(() => window.__viewerTest.selected()), null);
+      assert.equal(await page.evaluate(() => window.__viewerTest.selected().length), 0);
       await page.waitForFunction(() => !window.__viewerTest.animating());
       const state = await page.evaluate(() => {
         const v=window.__viewerTest;
@@ -95,6 +95,45 @@ const server = http.createServer(async (req, res) => {
     assert(backTargets['upper-back'][1] > backTargets['lower-back'][1]);
     await page.locator('#clearBodyArea').click();
     assert.notEqual(await page.locator('#visualSelection').getAttribute('hidden'), null);
+
+    // Exact selection is visual, requires area + side, and never exposes anatomy names.
+    await page.locator('[data-area="foot"]').click();
+    const footMuscles = await page.evaluate(() => {
+      const viewer = window.__viewerTest;
+      const ids = [...new Set(viewer.getMusclesForArea('foot').map(record => viewer.muscleIdByMesh.get(record.mesh)))];
+      return ids.slice(0, 2);
+    });
+    await page.evaluate(id => {
+      const record = window.__viewerTest.muscleRecordsById.get(id).find(item => item.side === 'left');
+      window.__viewerTest.selectBodyMesh(record.mesh);
+    }, footMuscles[0]);
+    assert.equal(await page.evaluate(() => window.__viewerTest.selected().length), 0, 'A side is required before exact selection');
+    await page.locator('input[name="painSide"][value="left"]').check();
+    await page.evaluate(id => {
+      const record = window.__viewerTest.muscleRecordsById.get(id).find(item => item.side === 'left');
+      window.__viewerTest.selectBodyMesh(record.mesh);
+    }, footMuscles[0]);
+    assert.equal(await page.locator('#partTitle').textContent(), 'Spot selected');
+    assert.match(await page.locator('#visualSelectionStatus').textContent(), /Spot selected/);
+    assert.doesNotMatch(await page.locator('#visualSelection').textContent(), /Abductor|Flexor|Extensor|Interossei|Lumbrical/i);
+    assert.equal(await page.evaluate(() => window.__viewerTest.selected().every(mesh => window.__viewerTest.muscleRecordByMesh.get(mesh).side === 'left')), true);
+    await page.evaluate(() => { window.__oldSpotMaterials = new Map([...window.__viewerTest.muscleHighlights]); });
+    await page.evaluate(id => {
+      const record = window.__viewerTest.muscleRecordsById.get(id).find(item => item.side === 'left');
+      window.__viewerTest.selectBodyMesh(record.mesh);
+    }, footMuscles[1]);
+    assert.equal(await page.evaluate(() => [...window.__oldSpotMaterials].every(([mesh, original]) => mesh.material === original.material && mesh.renderOrder === original.renderOrder)), true);
+    await page.locator('#clearSpot').click();
+    assert.equal(await page.evaluate(() => window.__viewerTest.selected().length), 0);
+    assert.equal(await page.locator('#selectedBodyArea').inputValue(), 'foot');
+    assert.equal(await page.locator('input[name="painSide"]:checked').inputValue(), 'left');
+    assert.equal(await page.locator('#visualSelectionHeading').evaluate(element => element === document.activeElement), true);
+    await page.locator('input[name="painSide"][value="both"]').check();
+    await page.evaluate(id => window.__viewerTest.selectBodyMesh(window.__viewerTest.muscleRecordsById.get(id)[0].mesh), footMuscles[0]);
+    assert.equal(await page.evaluate(id => window.__viewerTest.selected().length === window.__viewerTest.muscleRecordsById.get(id).length, footMuscles[0]), true);
+    await page.locator('#clearSpot').click();
+    await page.locator('#clearBodyArea').click();
+
     for (const id of ['changeBodyArea', 'clearBodyArea']) {
       await page.locator('[data-area="knee"]').click();
       await page.locator(`#${id}`).click();
@@ -109,6 +148,13 @@ const server = http.createServer(async (req, res) => {
     await page.locator('[data-area="hip"]').focus();
     await page.keyboard.press('Space');
     assert.equal(await page.locator('#selectedBodyArea').inputValue(), 'hip');
+    await page.locator('input[name="painSide"][value="right"]').check();
+    await page.evaluate(() => {
+      const viewer = window.__viewerTest;
+      const record = viewer.getMusclesForArea('hip').find(item => item.side === 'right');
+      viewer.selectBodyMesh(record.mesh);
+    });
+    assert((await page.evaluate(() => window.__viewerTest.selected().length)) > 0);
     await page.locator('#painLevel').evaluate(element => {
       element.value = '8';
       element.dispatchEvent(new Event('input', { bubbles: true }));
@@ -118,6 +164,8 @@ const server = http.createServer(async (req, res) => {
     await page.locator('#intakeForm [type="reset"]').click();
     assert.equal(await page.locator('#selectedBodyArea').inputValue(), 'hip');
     assert.equal(await page.locator('[data-area="hip"]').getAttribute('aria-pressed'), 'true');
+    assert.equal(await page.locator('input[name="painSide"]:checked').inputValue(), 'right');
+    assert((await page.evaluate(() => window.__viewerTest.selected().length)) > 0);
     assert.equal(await page.locator('#painLevelValue').textContent(), '8');
     page.once('dialog', dialog => dialog.accept());
     await page.locator('#intakeForm [type="reset"]').click();
@@ -125,6 +173,8 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator('#selectedBodyArea').inputValue(), '');
     assert.equal(await page.locator('[aria-pressed="true"]').count(), 0);
     assert.equal(await page.locator('#painLevelValue').textContent(), '5');
+    assert.equal(await page.locator('input[name="painSide"]:checked').count(), 0);
+    assert.equal(await page.evaluate(() => window.__viewerTest.selected().length), 0);
     for (const width of [390, 768, 1280]) {
       await page.setViewportSize({ width, height: 844 });
       await page.locator('[data-area="wrist-hand"]').click();
@@ -192,7 +242,7 @@ const server = http.createServer(async (req, res) => {
       assert.notEqual(await isolated.locator('#visualSelection').getAttribute('hidden'), null);
       await isolated.close();
     }
-    console.log('PASS: visual area guidance, area highlights, camera controls, reset, responsive layouts, and delayed/failed/unavailable viewer states. No form submitted.');
+    console.log('PASS: visual spot selection, side-aware highlighting, switching/clearing, camera controls, reset, responsive layouts, and model failure states. No form submitted.');
   } finally {
     if (browser) await browser.close();
     await new Promise(resolve => server.close(resolve));
