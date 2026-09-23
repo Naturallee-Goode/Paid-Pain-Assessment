@@ -26,9 +26,12 @@ const expectedBodyAreas = [
   { id: 'foot', label: 'Foot' },
 ]
 
-test('index.html loads the canonical body-map module exactly once', () => {
-  assert.match(indexHtml, /<script type="module" src="viewer\.js"><\/script>/)
-  assert.equal((indexHtml.match(/<script type="module" src="viewer\.js"><\/script>/g) || []).length, 1)
+test('index.html loads one body-map entry point and external form assets', () => {
+  assert.match(indexHtml, /<script type="module" src="body-map-app\.mjs"><\/script>/)
+  assert.equal((indexHtml.match(/body-map-app\.mjs/g) || []).length, 1)
+  assert.match(indexHtml, /<script type="module" src="script\.js"><\/script>/)
+  assert.match(indexHtml, /<link rel="stylesheet" href="styles\.css">/)
+  assert.doesNotMatch(indexHtml, /<style>/)
   assert.doesNotMatch(indexHtml, /<script type="module">/)
 })
 
@@ -63,6 +66,10 @@ test('body-area lookup preserves IDs while selections change', async () => {
   assert.strictEqual(getSupportedBodyAreaForRegion('knee', 0.45), getSupportedBodyArea('knee'))
   assert.strictEqual(getSupportedBodyAreaForRegion('wrist', 0.8), getSupportedBodyArea('wrist-hand'))
   assert.strictEqual(getSupportedBodyAreaForRegion('hand', 0.7), getSupportedBodyArea('wrist-hand'))
+  assert.strictEqual(getSupportedBodyAreaForRegion('upperarm', 1.1), getSupportedBodyArea('arm'))
+  assert.strictEqual(getSupportedBodyAreaForRegion('forearm', 0.9), getSupportedBodyArea('arm'))
+  assert.strictEqual(getSupportedBodyAreaForRegion('thigh', 0.6), getSupportedBodyArea('leg'))
+  assert.strictEqual(getSupportedBodyAreaForRegion('calf', 0.3), getSupportedBodyArea('leg'))
   assert.strictEqual(getSupportedBodyAreaForRegion('back', 1.3), getSupportedBodyArea('upper-back'))
   assert.strictEqual(getSupportedBodyAreaForRegion('back', 1.2), getSupportedBodyArea('lower-back'))
 })

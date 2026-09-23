@@ -7,6 +7,9 @@ import { buildMuscleCatalog, getSourceNodeName, parseAnatomyName } from "./muscl
 import { AREA_FOCUS_REGIONS, isWithinArea, getAreaCameraDistance } from "./body-area-focus.mjs";
 
 import { mapMusclesToAreas } from "./muscle-area-mapping.mjs";
+import { buildMuscleOptions } from "./muscle-options.mjs";
+import { bodyMapStore } from "./body-map-store.mjs";
+import { easeInOutQuad, getAnimationProgress } from "./animation-timing.mjs";
 
 const scene = new THREE.Scene()
 
@@ -94,6 +97,7 @@ const meshLabelIndex = new Map()
 const meshSourceName = new Map()
 const muscleCatalog = []
 let bodyAreaMuscles = {}
+let muscleRecordsById = new Map()
 // Follow-up muscle-list UI can consume this without changing catalog ownership.
 export function getMusclesForArea(areaId) {
   return Object.hasOwn(bodyAreaMuscles, areaId) ? [...bodyAreaMuscles[areaId]] : []
@@ -182,7 +186,7 @@ const DEFAULT_MUSCLE = { color: 0xc03828, roughness: 0.62, metalness: 0.05 }
 
 const loader = new GLTFLoader()
 loader.load(
-  "https://SamBillante.github.io/Paid-Pain-Assessment/assets/human-body2.glb", // If running locally, change this link to the path of the GLB file on your machine, e.g. "models/human-body2.glb"
+  "assets/human-body2.glb",
   (gltf) => {
     scene.add(gltf.scene)
     const catalogEntries = []
@@ -220,16 +224,15 @@ loader.load(
 
     muscleCatalog.push(...buildMuscleCatalog(catalogEntries))
     bodyAreaMuscles = mapMusclesToAreas(muscleCatalog).byArea
+    const muscleOptions = buildMuscleOptions(bodyAreaMuscles)
+    muscleRecordsById = muscleOptions.recordsById
+    bodyMapStore.setCatalog(muscleOptions.optionsByArea)
     muscleCatalog.forEach(record => {
       const key = record.displayName.toLowerCase()
       const entry = meshLabelIndex.get(key) ?? { label: record.displayName, meshes: [] }
       entry.meshes.push(record.mesh)
       meshLabelIndex.set(key, entry)
     })
-
-    // Apply a choice made while the model or viewer module was loading.
-    const pendingArea = document.getElementById('selectedBodyArea').value
-    if (AREA_FOCUS_REGIONS.some(area => area.id === pendingArea)) focusBodyArea(pendingArea)
 
     // Hide loading overlay
     const overlay = document.getElementById("loadingOverlay")
@@ -246,6 +249,7 @@ loader.load(
   },
   (error) => {
     console.error("GLB load error:", error)
+    bodyMapStore.setCatalogError()
     document.getElementById("loadingLabel").textContent = "Failed to load model"
   }
 )
@@ -304,19 +308,17 @@ function focusBodyArea(id) {
   startCameraAnim(new THREE.Vector3(center.x, center.y, center.z + direction * Math.max(distance, .15)), center, ZOOM_IN_DURATION)
 }
 
-document.addEventListener('bodyAreaChanged', event => focusBodyArea(event.detail.area))
-
 let selectedMesh = null, originalMat = null, originalRenderOrder = 0
 
-const ZOOM_IN_DURATION  = 90
-const ZOOM_OUT_DURATION = 60
+const ZOOM_IN_DURATION  = 650
+const ZOOM_OUT_DURATION = 450
 const CLICK_MAX_MOVE = 8
 const CLICK_MAX_DURATION = 250
 
 let animating = false
 let animFrom = { pos: new THREE.Vector3(), target: new THREE.Vector3() }
 let animTo   = { pos: new THREE.Vector3(), target: new THREE.Vector3() }
-let animT = 0
+let animStartedAt = null
 let animDuration = ZOOM_IN_DURATION
 let pointerDownPoint = null
 let pointerDownTime = 0
@@ -332,8 +334,14 @@ function startCameraAnim(toPos, toTarget, duration) {
   animFrom.target.copy(controls.target)
   animTo.pos.copy(toPos)
   animTo.target.copy(toTarget)
-  animT = 0
+  animStartedAt = null
   animDuration = duration
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+    camera.position.copy(toPos)
+    controls.target.copy(toTarget)
+    animating = false
+    return
+  }
   animating = true
 }
 
@@ -412,14 +420,8 @@ function restoreSelectedMesh() {
 }
 
 function clearSelection() {
-  restoreAreaHighlights()
-  restoreSelectedMesh()
-  const { camPos, target } = getZoomOutPosition(lastHorizDir)
-  startCameraAnim(camPos, target, ZOOM_OUT_DURATION)
-  document.getElementById("partTitle").textContent = "Select a body part"
-  document.getElementById("partDescription").textContent = ""
-  updateSelectedBodyInput('')
-  document.dispatchEvent(new CustomEvent('bodyAreaCleared'))
+  if (bodyMapStore.getState().areaId) bodyMapStore.clearArea({ source: 'viewer' })
+  else focusBodyArea(null)
 }
 
 function getSelectableHit(hits) {
@@ -473,13 +475,6 @@ function updateSearchResultsFromInput() {
   renderSearchResults(value)
 }
 
-function updateSelectedBodyInput(area) {
-  const selectedBodyArea = document.getElementById('selectedBodyArea')
-  if (selectedBodyArea) {
-    selectedBodyArea.value = area || ''
-  }
-}
-
 function updateInfoPanel(mesh, matName) {
   const box = new THREE.Box3().setFromObject(mesh)
   const center = new THREE.Vector3()
@@ -507,8 +502,8 @@ function updateInfoPanel(mesh, matName) {
     descEl.textContent = ""
   }
 
-  updateSelectedBodyInput(area)
-  document.dispatchEvent(new CustomEvent('bodyAreaSelected', { detail: { area, label: areaLabel, meshName: displayName } }))
+  if (supportedArea) bodyMapStore.selectArea(area, { source: 'viewer-mesh' })
+  else if (bodyMapStore.getState().areaId) bodyMapStore.clearArea({ source: 'viewer-mesh' })
 }
 
 function handleViewerClick(e) {
@@ -579,12 +574,28 @@ document.addEventListener('click', (event) => {
   clearSearchResults()
 })
 
-function animate(){
+bodyMapStore.subscribe((state, previous, action) => {
+  const areaChanged = state.areaId !== previous.areaId
+  const modelBecameReady = action.type === 'catalog-ready'
+  if ((areaChanged && action.source !== 'viewer-mesh') || modelBecameReady) {
+    focusBodyArea(state.areaId)
+  }
+})
+
+let renderLoopPaused = false
+export function setViewerRenderLoopPaused(paused) {
+  const wasPaused = renderLoopPaused
+  renderLoopPaused = Boolean(paused)
+  if (wasPaused && !renderLoopPaused) requestAnimationFrame(animate)
+}
+
+function animate(timestamp){
+  if (renderLoopPaused) return
   requestAnimationFrame(animate)
   if(animating){
-    animT++
-    const t = Math.min(animT / animDuration, 1)
-    const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t
+    if (animStartedAt === null) animStartedAt = timestamp
+    const t = getAnimationProgress(animStartedAt, timestamp, animDuration)
+    const ease = easeInOutQuad(t)
     camera.position.lerpVectors(animFrom.pos, animTo.pos, ease)
     controls.target.lerpVectors(animFrom.target, animTo.target, ease)
     if(t >= 1) animating = false
@@ -593,4 +604,4 @@ function animate(){
   renderer.render(scene,camera)
 }
 
-animate()
+requestAnimationFrame(animate)

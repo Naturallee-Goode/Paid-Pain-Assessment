@@ -28,5 +28,11 @@ export function getSupportedBodyAreaForRegion(region, verticalPosition) {
   if (region === 'wrist' || region === 'hand') {
     return getSupportedBodyArea('wrist-hand')
   }
+  if (region === 'upperarm' || region === 'forearm') {
+    return getSupportedBodyArea('arm')
+  }
+  if (region === 'thigh' || region === 'calf' || region === 'lowerleg') {
+    return getSupportedBodyArea('leg')
+  }
   return getSupportedBodyArea(region)
 }
