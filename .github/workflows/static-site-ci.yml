@@ -2,8 +2,6 @@ name: Static Site CI
 
 on:
   pull_request:
-    branches:
-      - main
   push:
     branches:
       - main
@@ -44,6 +42,9 @@ jobs:
           node --check "$source_dir/viewer.js"
           node --check "$source_dir/body-area-config.mjs"
           node --check "$source_dir/body-area-controls.mjs"
+          node --check "$source_dir/body-area-focus.mjs"
+          node --check "$source_dir/muscle-area-mapping.mjs"
+          node --check "$source_dir/muscle-area-assignments.mjs"
 
       - name: Verify body-map source ownership
         run: npm run test:body-map

@@ -31,11 +31,22 @@ const server = http.createServer(async (req, res) => {
     await page.route('**/*.glb', route => route.fulfill({ body: model, contentType: 'model/gltf-binary' }));
     await page.route('**/viewer.js', async route => {
       const response = await route.fetch();
-      await route.fulfill({ response, body: await response.text() + '\nwindow.__viewerTest = { bodyMeshes, selectBodyMesh, clearSelection, selected: () => selectedMesh };' });
+      await route.fulfill({ response, body: await response.text() + '\nwindow.__viewerTest = { THREE, bodyMeshes, muscleCatalog, getMusclesForArea, focusRegions: AREA_FOCUS_REGIONS, isWithinArea, selectBodyMesh, clearSelection, camera, controls, areaHighlights, animating: () => animating, selected: () => selectedMesh };' });
     });
     await page.goto(url);
     await page.waitForFunction(() => window.__viewerTest?.bodyMeshes.length > 0, null, { timeout: 60000 });
     await page.locator('#loadingOverlay').waitFor({ state: 'hidden' });
+    const sides = await page.evaluate(() => {
+      const catalog = window.__viewerTest.muscleCatalog;
+      return ['left', 'right', null].map(side => catalog.filter(record => record.side === side).length);
+    });
+    assert.deepEqual(sides, [229, 230, 3], 'The loaded catalog must preserve model sides');
+    const mappedCounts = await page.evaluate(() => [...document.querySelectorAll('[data-area]')].map(button => window.__viewerTest.getMusclesForArea(button.dataset.area).length));
+    assert(mappedCounts.every(count => count > 0), 'Every area needs a loaded muscle list');
+    await page.evaluate(() => {
+      window.__originalMaterials = new Map(window.__viewerTest.bodyMeshes.map(mesh => [mesh, {material: mesh.material, order: mesh.renderOrder}]));
+    });
+    const backTargets = {};
     for (const button of await page.locator('[data-area]').all()) {
       await button.click();
       const id = await button.getAttribute('data-area');
@@ -43,7 +54,42 @@ const server = http.createServer(async (req, res) => {
       assert.equal(await page.locator('[aria-pressed="true"]').count(), 1);
       assert.equal(await page.locator('#partTitle').textContent(), await button.textContent());
       assert.equal(await page.evaluate(() => window.__viewerTest.selected()), null);
+      await page.waitForFunction(() => !window.__viewerTest.animating());
+      const state = await page.evaluate(() => {
+        const v=window.__viewerTest;
+        return {count:v.areaHighlights.size, target:v.controls.target.toArray(), camera:v.camera.position.toArray(), restored:v.bodyMeshes.filter(mesh=>!v.areaHighlights.has(mesh)).every(mesh=>mesh.material===window.__originalMaterials.get(mesh).material && mesh.renderOrder===window.__originalMaterials.get(mesh).order)};
+      });
+      assert(state.count > 0, `No highlighted region: ${id}`);
+      assert(state.restored, `Stale highlight after switching to ${id}`);
+      if (id === 'arm' || id === 'leg') {
+        assert(await page.evaluate(areaId => {
+          const v = window.__viewerTest;
+          const area = v.focusRegions.find(region => region.id === areaId);
+          const meshes = v.bodyMeshes.filter(mesh => {
+            const center = new v.THREE.Box3().setFromObject(mesh).getCenter(new v.THREE.Vector3());
+            return v.isWithinArea(center, area);
+          });
+          return meshes.length === v.areaHighlights.size && meshes.every(mesh => v.areaHighlights.has(mesh));
+        }, id), `${id} must highlight every mesh in its spatial region`);
+      }
+      if (['neck', 'lower-back', 'hip'].includes(id)) {
+        const names = await page.evaluate(() => window.__viewerTest.muscleCatalog
+          .filter(record => window.__viewerTest.areaHighlights.has(record.mesh))
+          .map(record => record.displayName));
+        const excluded = {
+          neck: /labii|orbicularis|zygomaticus/i,
+          'lower-back': /gluteus/i,
+          hip: /of hand/i,
+        }[id];
+        assert(!names.some(name => excluded.test(name)), `${id} highlighted a muscle outside the area`);
+      }
+      if (id.endsWith('back')) {
+        backTargets[id]=state.target;
+        assert(state.camera[2] < state.target[2], 'Back areas must be viewed from behind');
+      }
     }
+    assert(backTargets['upper-back'][1] > backTargets['lower-back'][1]);
+    await page.locator('#clearBodyArea').click();
     // Switching from a selected mesh must restore its material and clear search.
     await page.evaluate(() => {
       const mesh = window.__viewerTest.bodyMeshes[0];
@@ -58,6 +104,7 @@ const server = http.createServer(async (req, res) => {
       await page.locator('[data-area="knee"]').click();
       await page.locator(`#${id}`).click();
       assert.equal(await page.locator('#selectedBodyArea').inputValue(), '');
+      assert.equal(await page.evaluate(() => window.__viewerTest.areaHighlights.size), 0);
       assert.equal(await page.locator('[aria-pressed="true"]').count(), 0);
       assert.equal(await page.locator('[data-area="neck"]').evaluate(el => el === document.activeElement), true);
     }
@@ -78,6 +125,22 @@ const server = http.createServer(async (req, res) => {
         assert((await button.boundingBox()).height >= 44);
       }
     }
+    // Area focus must not disable user-controlled camera motion.
+    await page.waitForFunction(() => !window.__viewerTest.animating());
+    const canvas=page.locator('#viewer canvas');
+    await canvas.scrollIntoViewIfNeeded();
+    const rect=await canvas.boundingBox();
+    const before=await page.evaluate(() => window.__viewerTest.camera.position.toArray());
+    await page.mouse.move(rect.x+rect.width/2,rect.y+rect.height/2);
+    await page.mouse.down();
+    await page.mouse.move(rect.x+rect.width/2+60,rect.y+rect.height/2,{steps:10});
+    await page.mouse.up();
+    await page.waitForTimeout(300);
+    assert.notDeepEqual(await page.evaluate(() => window.__viewerTest.camera.position.toArray()),before);
+    const distance=await page.evaluate(() => window.__viewerTest.camera.position.distanceTo(window.__viewerTest.controls.target));
+    await page.mouse.wheel(0,-150);
+    await page.waitForTimeout(300);
+    assert.notEqual(await page.evaluate(() => window.__viewerTest.camera.position.distanceTo(window.__viewerTest.controls.target)),distance);
     assert.deepEqual(errors, []);
 
     // Controls must not depend on model availability or even successful viewer startup.
@@ -97,12 +160,13 @@ const server = http.createServer(async (req, res) => {
         release();
         await isolated.locator('#loadingOverlay').waitFor({ state: 'hidden', timeout: 60000 });
         assert.equal(await isolated.locator('#selectedBodyArea').inputValue(), 'lower-back');
+        assert.equal(await isolated.locator('#partTitle').textContent(), 'Lower Back');
       }
       await isolated.locator('#clearBodyArea').click();
       assert.equal(await isolated.locator('#selectedBodyArea').inputValue(), '');
       await isolated.close();
     }
-    console.log('PASS: all ten areas, viewer cleanup, Change/Clear, keyboard, reset, three layouts, delayed/failed model, and unavailable viewer. No form submitted.');
+    console.log('PASS: area highlights, distinct back targets, restoration, rotation/zoom, all twelve areas, viewer cleanup, Change/Clear, keyboard, reset, three layouts, delayed/failed model, and unavailable viewer. No form submitted.');
   } finally {
     if (browser) await browser.close();
     await new Promise(resolve => server.close(resolve));

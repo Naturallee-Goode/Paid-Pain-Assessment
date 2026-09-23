@@ -4,6 +4,10 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { getSupportedBodyAreaForRegion } from "./body-areas.js";
 import { buildMuscleCatalog, getSourceNodeName, parseAnatomyName } from "./muscle-catalog.js";
 
+import { AREA_FOCUS_REGIONS, isWithinArea, getAreaCameraDistance } from "./body-area-focus.mjs";
+
+import { mapMusclesToAreas } from "./muscle-area-mapping.mjs";
+
 const scene = new THREE.Scene()
 
 const viewerContainer = document.getElementById("viewer")
@@ -89,6 +93,11 @@ const meshMatName = new Map()
 const meshLabelIndex = new Map()
 const meshSourceName = new Map()
 const muscleCatalog = []
+let bodyAreaMuscles = {}
+// Follow-up muscle-list UI can consume this without changing catalog ownership.
+export function getMusclesForArea(areaId) {
+  return Object.hasOwn(bodyAreaMuscles, areaId) ? [...bodyAreaMuscles[areaId]] : []
+}
 
 const searchInput = document.getElementById("searchInput")
 const searchResults = document.getElementById("searchResults")
@@ -210,12 +219,17 @@ loader.load(
     })
 
     muscleCatalog.push(...buildMuscleCatalog(catalogEntries))
+    bodyAreaMuscles = mapMusclesToAreas(muscleCatalog).byArea
     muscleCatalog.forEach(record => {
       const key = record.displayName.toLowerCase()
       const entry = meshLabelIndex.get(key) ?? { label: record.displayName, meshes: [] }
       entry.meshes.push(record.mesh)
       meshLabelIndex.set(key, entry)
     })
+
+    // Apply a choice made while the model or viewer module was loading.
+    const pendingArea = document.getElementById('selectedBodyArea').value
+    if (AREA_FOCUS_REGIONS.some(area => area.id === pendingArea)) focusBodyArea(pendingArea)
 
     // Hide loading overlay
     const overlay = document.getElementById("loadingOverlay")
@@ -240,6 +254,57 @@ const highlightMat = new THREE.MeshPhysicalMaterial({
   color: 0xff9900, emissive: 0xff6600, emissiveIntensity: 0.4,
   roughness: 0.4, metalness: 0.1, depthTest: false, depthWrite: false, transparent: true, opacity: 0.95
 })
+
+const areaHighlights = new Map()
+function restoreAreaHighlights() {
+  for (const [mesh, original] of areaHighlights) {
+    mesh.material = original.material
+    mesh.renderOrder = original.renderOrder
+  }
+  areaHighlights.clear()
+}
+
+function focusBodyArea(id) {
+  restoreSelectedMesh()
+  restoreAreaHighlights()
+  clearSearchResults()
+  if (searchInput) searchInput.value = ''
+  const area = AREA_FOCUS_REGIONS.find(item => item.id === id)
+  if (!area) {
+    startCameraAnim(defaultCamPos, defaultTarget, ZOOM_OUT_DURATION)
+    document.getElementById('partTitle').textContent = 'Choose a body area'
+    document.getElementById('partDescription').textContent = ''
+    return
+  }
+  const bounds = new THREE.Box3()
+  for (const mesh of bodyMeshes) {
+    const box = new THREE.Box3().setFromObject(mesh)
+    if (!isWithinArea(box.getCenter(new THREE.Vector3()), area)) continue
+    // A long back muscle can have its center near the pelvis while extending
+    // far above the hip. Keep it out of the hip highlight.
+    if (id === 'hip' && box.max.y > 1.17) continue
+    areaHighlights.set(mesh, { material: mesh.material, renderOrder: mesh.renderOrder })
+    mesh.material = highlightMat
+    mesh.renderOrder = 999
+    bounds.union(box)
+  }
+  document.getElementById('partTitle').textContent = area.label
+  document.getElementById('partDescription').textContent = bodyMeshes.length
+    ? (bounds.isEmpty() ? 'No model region is available for this area yet.' : 'Rotate or zoom to explore this area.')
+    : 'Your area is selected. The model will focus when it loads.'
+  if (bounds.isEmpty()) {
+    startCameraAnim(defaultCamPos, defaultTarget, ZOOM_OUT_DURATION)
+    return
+  }
+  const center = bounds.getCenter(new THREE.Vector3())
+  const size = bounds.getSize(new THREE.Vector3())
+  const distance = getAreaCameraDistance(size, camera.fov, camera.aspect)
+  const direction = area.back ? -1 : 1
+  lastHorizDir.set(0, 0, direction)
+  startCameraAnim(new THREE.Vector3(center.x, center.y, center.z + direction * Math.max(distance, .15)), center, ZOOM_IN_DURATION)
+}
+
+document.addEventListener('bodyAreaChanged', event => focusBodyArea(event.detail.area))
 
 let selectedMesh = null, originalMat = null, originalRenderOrder = 0
 
@@ -347,6 +412,7 @@ function restoreSelectedMesh() {
 }
 
 function clearSelection() {
+  restoreAreaHighlights()
   restoreSelectedMesh()
   const { camPos, target } = getZoomOutPosition(lastHorizDir)
   startCameraAnim(camPos, target, ZOOM_OUT_DURATION)
@@ -355,17 +421,6 @@ function clearSelection() {
   updateSelectedBodyInput('')
   document.dispatchEvent(new CustomEvent('bodyAreaCleared'))
 }
-
-// Area controls work independently of model loading. Discard any previous
-// muscle selection without selecting a new mesh or applying area focus (#47).
-document.addEventListener('bodyAreaChanged', ({ detail }) => {
-  restoreSelectedMesh()
-  clearSearchResults()
-  if (searchInput) searchInput.value = ''
-  startCameraAnim(defaultCamPos, defaultTarget, ZOOM_OUT_DURATION)
-  document.getElementById('partTitle').textContent = detail.label || 'Select a body part'
-  document.getElementById('partDescription').textContent = ''
-})
 
 function getSelectableHit(hits) {
   return hits.find(hit => {
@@ -376,6 +431,7 @@ function getSelectableHit(hits) {
 
 function selectBodyMesh(mesh) {
   if (!mesh) return
+  restoreAreaHighlights()
   if (selectedMesh && selectedMesh.uuid === mesh.uuid) {
     clearSelection()
     return
