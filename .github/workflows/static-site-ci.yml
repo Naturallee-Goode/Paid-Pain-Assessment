@@ -49,6 +49,7 @@ jobs:
           node --check "$source_dir/muscle-area-mapping.mjs"
           node --check "$source_dir/muscle-area-assignments.mjs"
           node --check "$source_dir/muscle-options.mjs"
+          node --check "$source_dir/visual-selection.mjs"
 
       - name: Verify body-map source ownership
         run: npm run test:body-map
@@ -71,6 +72,7 @@ jobs:
           test -s "$source_dir/body-areas.js"
           test -s "$source_dir/muscle-catalog.js"
           test -s "$source_dir/muscle-options.mjs"
+          test -s "$source_dir/visual-selection.mjs"
           test -s "$source_dir/body-map-store.mjs"
           test -s "$source_dir/body-map-app.mjs"
           test -s "$source_dir/viewer.js"

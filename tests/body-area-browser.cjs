@@ -54,6 +54,9 @@ const server = http.createServer(async (req, res) => {
       assert.equal(await page.locator('#selectedBodyArea').inputValue(), id);
       assert.equal(await page.locator('[aria-pressed="true"]').count(), 1);
       assert.equal(await page.locator('#partTitle').textContent(), await button.textContent());
+      assert.equal(await page.locator('#visualSelection').getAttribute('hidden'), null);
+      assert.match(await page.locator('#visualSelectionStatus').textContent(), /Choose Left, Right, or Both/);
+      assert.doesNotMatch(await page.locator('#visualSelection').textContent(), /muscles? available/i);
       assert.equal(await page.evaluate(() => window.__viewerTest.selected()), null);
       await page.waitForFunction(() => !window.__viewerTest.animating());
       const state = await page.evaluate(() => {
@@ -91,16 +94,7 @@ const server = http.createServer(async (req, res) => {
     }
     assert(backTargets['upper-back'][1] > backTargets['lower-back'][1]);
     await page.locator('#clearBodyArea').click();
-    // Switching from a selected mesh must restore its material and clear search.
-    await page.evaluate(() => {
-      const mesh = window.__viewerTest.bodyMeshes[0];
-      window.__originalMaterial = mesh.material;
-      window.__viewerTest.selectBodyMesh(mesh);
-      document.querySelector('#searchInput').value = 'old search';
-    });
-    await page.locator('[data-area="neck"]').click();
-    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMeshes[0].material === window.__originalMaterial), true);
-    assert.equal(await page.locator('#searchInput').inputValue(), '');
+    assert.notEqual(await page.locator('#visualSelection').getAttribute('hidden'), null);
     for (const id of ['changeBodyArea', 'clearBodyArea']) {
       await page.locator('[data-area="knee"]').click();
       await page.locator(`#${id}`).click();
@@ -178,16 +172,27 @@ const server = http.createServer(async (req, res) => {
       await isolated.locator('[data-area="lower-back"]').click();
       assert.equal(await isolated.locator('#selectedBodyArea').inputValue(), 'lower-back');
       if (scenario === 'delayed') {
+        assert.match(await isolated.locator('#visualSelectionStatus').textContent(), /Loading the optional 3D body map/);
         release();
         await isolated.locator('#loadingOverlay').waitFor({ state: 'hidden', timeout: 60000 });
         assert.equal(await isolated.locator('#selectedBodyArea').inputValue(), 'lower-back');
         assert.equal(await isolated.locator('#partTitle').textContent(), 'Lower Back');
+        assert.match(await isolated.locator('#visualSelectionStatus').textContent(), /Choose Left, Right, or Both/);
+      } else {
+        await isolated.waitForFunction(() => document.querySelector('#visualSelectionStatus').textContent.includes('unavailable'));
+        if (scenario === 'failed') {
+          assert.equal(await isolated.locator('#loadingLabel').textContent(), 'Failed to load model');
+          assert.match(await isolated.locator('#partDescription').textContent(), /3D model is unavailable/);
+        } else {
+          assert.equal(await isolated.locator('#loadingLabel').textContent(), '3D model unavailable');
+        }
       }
       await isolated.locator('#clearBodyArea').click();
       assert.equal(await isolated.locator('#selectedBodyArea').inputValue(), '');
+      assert.notEqual(await isolated.locator('#visualSelection').getAttribute('hidden'), null);
       await isolated.close();
     }
-    console.log('PASS: area highlights, distinct back targets, restoration, rotation/zoom, all twelve areas, viewer cleanup, Change/Clear, keyboard, reset, three layouts, delayed/failed model, and unavailable viewer. No form submitted.');
+    console.log('PASS: visual area guidance, area highlights, camera controls, reset, responsive layouts, and delayed/failed/unavailable viewer states. No form submitted.');
   } finally {
     if (browser) await browser.close();
     await new Promise(resolve => server.close(resolve));

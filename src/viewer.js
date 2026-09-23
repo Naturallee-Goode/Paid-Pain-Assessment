@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { getSupportedBodyAreaForRegion } from "./body-areas.js";
-import { buildMuscleCatalog, getSourceNodeName, parseAnatomyName } from "./muscle-catalog.js";
+import { buildMuscleCatalog, getSourceNodeName } from "./muscle-catalog.js";
 
 import { AREA_FOCUS_REGIONS, isWithinArea, getAreaCameraDistance } from "./body-area-focus.mjs";
 
@@ -93,8 +93,6 @@ const pointer = new THREE.Vector2()
 const bodyMeshes = []
 const meshVolume = new Map()
 const meshMatName = new Map()
-const meshLabelIndex = new Map()
-const meshSourceName = new Map()
 const muscleCatalog = []
 let bodyAreaMuscles = {}
 let muscleRecordsById = new Map()
@@ -103,32 +101,8 @@ export function getMusclesForArea(areaId) {
   return Object.hasOwn(bodyAreaMuscles, areaId) ? [...bodyAreaMuscles[areaId]] : []
 }
 
-const searchInput = document.getElementById("searchInput")
-const searchResults = document.getElementById("searchResults")
-
 const SPINE_X = 0
 const SPINE_Z = 0
-
-const DIAGNOSES = {
-  head:      ["Tension headaches", "Migraine headaches", "Concussion", "Temporomandibular joint disorder (TMJ)"],
-  neck:      ["Cervical strain or sprain", "Cervical radiculopathy", "Cervical spondylosis", "Herniated cervical disc"],
-  shoulder:  ["Rotator cuff tear or tendinitis", "Shoulder impingement syndrome", "Frozen shoulder (adhesive capsulitis)", "Shoulder bursitis"],
-  elbow:     ["Tennis elbow (lateral epicondylitis)", "Golfer's elbow (medial epicondylitis)", "Olecranon bursitis", "Ulnar nerve entrapment"],
-  forearm:   [],
-  wrist:     ["Carpal tunnel syndrome", "Wrist sprain", "De Quervain's tenosynovitis", "Ganglion cyst"],
-  hand:      ["Trigger finger", "Arthritis in the hand", "Tendon injuries", "Dupuytren's contracture"],
-  chest:     ["Costochondritis", "Pectoralis strain", "Intercostal muscle strain", "Sternoclavicular joint sprain"],
-  abdomen:   [],
-  back:      ["Strain", "Herniated disc", "Sciatica", "Degenerative disc disease", "Spinal stenosis"],
-  hip:       ["Hip bursitis", "Hip arthritis", "Hip impingement", "Labral tear"],
-  thigh:     ["Hamstring strain", "Quadriceps strain", "IT band syndrome", "Femoral stress fracture"],
-  knee:      ["ACL tear", "Meniscus tear", "Patellar tendonitis", "Knee arthritis", "Patellofemoral pain syndrome"],
-  calf:      ["Calf strain", "Deep vein thrombosis", "Compartment syndrome", "Shin splints"],
-  lowerleg:  [],
-  ankle:     ["Ankle sprain", "Achilles tendonitis", "Ankle instability", "Stress fracture"],
-  foot:      ["Plantar fasciitis", "Tarsal tunnel syndrome", "Bunions", "Morton's neuroma"],
-  upperarm:  ["Biceps tendon rupture", "Triceps strain", "Humerus fracture", "Referred shoulder pain"],
-}
 
 const ARM_X_THRESHOLD = 0.14
 
@@ -197,7 +171,6 @@ loader.load(
       const mat = child.material
       const matName = Array.isArray(mat) ? mat[0]?.name : mat?.name
       const sourceName = getSourceNodeName(gltf, child)
-      meshSourceName.set(child.uuid, sourceName)
       catalogEntries.push({ mesh: child, sourceName, materialName: matName })
       if(matName === "Text"){
         const t = (m) => { m.transparent=true; m.opacity=0; m.depthWrite=false; m.needsUpdate=true }
@@ -227,13 +200,6 @@ loader.load(
     const muscleOptions = buildMuscleOptions(bodyAreaMuscles)
     muscleRecordsById = muscleOptions.recordsById
     bodyMapStore.setCatalog(muscleOptions.optionsByArea)
-    muscleCatalog.forEach(record => {
-      const key = record.displayName.toLowerCase()
-      const entry = meshLabelIndex.get(key) ?? { label: record.displayName, meshes: [] }
-      entry.meshes.push(record.mesh)
-      meshLabelIndex.set(key, entry)
-    })
-
     // Hide loading overlay
     const overlay = document.getElementById("loadingOverlay")
     overlay.style.transition = "opacity 0.4s ease"
@@ -271,8 +237,6 @@ function restoreAreaHighlights() {
 function focusBodyArea(id) {
   restoreSelectedMesh()
   restoreAreaHighlights()
-  clearSearchResults()
-  if (searchInput) searchInput.value = ''
   const area = AREA_FOCUS_REGIONS.find(item => item.id === id)
   if (!area) {
     startCameraAnim(defaultCamPos, defaultTarget, ZOOM_OUT_DURATION)
@@ -295,7 +259,9 @@ function focusBodyArea(id) {
   document.getElementById('partTitle').textContent = area.label
   document.getElementById('partDescription').textContent = bodyMeshes.length
     ? (bounds.isEmpty() ? 'No model region is available for this area yet.' : 'Rotate or zoom to explore this area.')
-    : 'Your area is selected. The model will focus when it loads.'
+    : bodyMapStore.getState().catalogStatus === 'error'
+      ? 'Your area is selected, but the 3D model is unavailable.'
+      : 'Your area is selected. The model will focus when it loads.'
   if (bounds.isEmpty()) {
     startCameraAnim(defaultCamPos, defaultTarget, ZOOM_OUT_DURATION)
     return
@@ -369,48 +335,6 @@ function getZoomOutPosition(horizDir) {
   }
 }
 
-function getSearchMatches(query) {
-  const normalized = query.trim().toLowerCase()
-  if (!normalized) return []
-  return [...meshLabelIndex.entries()]
-    .filter(([key]) => key.includes(normalized))
-    .map(([, entry]) => entry)
-    .sort((a, b) => a.label.localeCompare(b.label))
-    .slice(0, 10)
-}
-
-function clearSearchResults() {
-  if (!searchResults) return
-  searchResults.innerHTML = ''
-  searchResults.classList.remove('visible')
-}
-
-function renderSearchResults(query) {
-  if (!searchResults) return
-  const matches = getSearchMatches(query)
-  searchResults.innerHTML = ''
-  if (!matches.length) {
-    searchResults.innerHTML = '<li class="search-empty">No matches found</li>'
-    searchResults.classList.add('visible')
-    return
-  }
-
-  matches.forEach(({ label, meshes }) => {
-    const item = document.createElement('li')
-    item.className = 'search-result-item'
-    item.textContent = label
-    item.addEventListener('click', () => {
-      if (meshes && meshes.length) {
-        selectBodyMesh(meshes[0])
-        if (searchInput) searchInput.value = label
-        clearSearchResults()
-      }
-    })
-    searchResults.appendChild(item)
-  })
-  searchResults.classList.add('visible')
-}
-
 function restoreSelectedMesh() {
   if (!selectedMesh || !originalMat) return
   selectedMesh.material = originalMat
@@ -433,6 +357,11 @@ function getSelectableHit(hits) {
 
 function selectBodyMesh(mesh) {
   if (!mesh) return
+  const selection = bodyMapStore.getState()
+  if (!selection.areaId || !selection.side) {
+    document.getElementById('partDescription').textContent = 'Choose a body area and side before selecting an exact spot.'
+    return
+  }
   restoreAreaHighlights()
   if (selectedMesh && selectedMesh.uuid === mesh.uuid) {
     clearSelection()
@@ -454,27 +383,6 @@ function selectBodyMesh(mesh) {
   updateInfoPanel(mesh, matName)
 }
 
-function selectSearchResult(query) {
-  const matches = getSearchMatches(query)
-  if (!matches.length) return
-  const { label, meshes } = matches[0]
-  if (meshes && meshes.length) {
-    selectBodyMesh(meshes[0])
-    if (searchInput) searchInput.value = label
-    clearSearchResults()
-  }
-}
-
-function updateSearchResultsFromInput() {
-  if (!searchInput) return
-  const value = searchInput.value.trim()
-  if (!value) {
-    clearSearchResults()
-    return
-  }
-  renderSearchResults(value)
-}
-
 function updateInfoPanel(mesh, matName) {
   const box = new THREE.Box3().setFromObject(mesh)
   const center = new THREE.Vector3()
@@ -483,7 +391,6 @@ function updateInfoPanel(mesh, matName) {
   const detectedRegion = getBodyArea(center)
   const supportedArea = getSupportedBodyAreaForRegion(detectedRegion, center.y)
   const area = supportedArea?.id ?? detectedRegion
-  const diagnoses = DIAGNOSES[detectedRegion]
   const areaLabel = supportedArea?.label ??
     detectedRegion.charAt(0).toUpperCase() + detectedRegion.slice(1)
 
@@ -491,16 +398,10 @@ function updateInfoPanel(mesh, matName) {
   console.log("Material:", matName)
   console.log("Area:", area, `| y:${center.y.toFixed(3)} x:${center.x.toFixed(3)} z:${center.z.toFixed(3)}`)
 
-  const displayName = parseAnatomyName(meshSourceName.get(mesh.uuid) ?? mesh.name).displayName
-  document.getElementById("partTitle").textContent = displayName
-
-  const descEl = document.getElementById("partDescription")
-  if(diagnoses && areaLabel) {
-    descEl.innerHTML = `<strong>Common ${areaLabel} Diagnoses:</strong><br>` +
-      diagnoses.map(d => `• ${d}`).join("<br>")
-  } else {
-    descEl.textContent = ""
-  }
+  document.getElementById("partTitle").textContent = 'Spot selected'
+  document.getElementById("partDescription").textContent = areaLabel
+    ? `A spot in ${areaLabel} is selected.`
+    : 'A spot is selected.'
 
   if (supportedArea) bodyMapStore.selectArea(area, { source: 'viewer-mesh' })
   else if (bodyMapStore.getState().areaId) bodyMapStore.clearArea({ source: 'viewer-mesh' })
@@ -558,26 +459,10 @@ renderer.domElement.addEventListener('pointercancel', () => {
 
 camera.position.copy(defaultCamPos)
 
-if (searchInput) {
-  searchInput.addEventListener('input', updateSearchResultsFromInput)
-  searchInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
-      event.preventDefault()
-      selectSearchResult(searchInput.value)
-    }
-  })
-}
-
-document.addEventListener('click', (event) => {
-  if (!searchResults || !searchInput) return
-  if (event.target === searchInput || searchResults.contains(event.target)) return
-  clearSearchResults()
-})
-
 bodyMapStore.subscribe((state, previous, action) => {
   const areaChanged = state.areaId !== previous.areaId
-  const modelBecameReady = action.type === 'catalog-ready'
-  if ((areaChanged && action.source !== 'viewer-mesh') || modelBecameReady) {
+  const modelStateChanged = action.type === 'catalog-ready' || action.type === 'catalog-error'
+  if ((areaChanged && action.source !== 'viewer-mesh') || modelStateChanged) {
     focusBodyArea(state.areaId)
   }
 })
