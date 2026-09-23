@@ -1,0 +1,42 @@
+Each time the form is submitted, the error handling code at pain-assessment:2002 is run, displaying the error message.
+The error is thrown by the call to emailjs.send at pain-assessment:1976
+The error has status 404 with the text "Account not found." This indicates that the browser is making contact with the emailjs servers, but there's a problem with the account identifier.
+
+The following request uses the public key, service_id, and template_id used by the sight
+
+curl -X POST https://api.emailjs.com/api/v1.0/email/send \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "aDOAB4XTm5St_Upl2",
+    "service_id": "service_y7rpfgl",
+    "template_id": "template_jfl0bao",
+    "template_params": {}
+  }'
+
+Sending this request gives back the same "Account not found" response. This indicates that the account information in the site is incorrect
+
+Checking the source code shows different user_id, service_id, and template_id, with the commit "Temporary Service to Send Emails while waiting for sponsor setup of email service." I imagine this is what was used BEFORE deployment, so it's probably not a good idea to check... I'll do it anyway.
+
+curl -X POST https://api.emailjs.com/api/v1.0/email/send \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "QSHhS2k1y5xW4eKmm",
+    "service_id": "service_pzvgdz8",
+    "template_id": "template_uhhy7rd",
+    "template_params": {}
+  }'
+
+Wow, this command gives a different response:
+API access from non-browser environments is currently disabled.Enable this option in https://dashboard.emailjs.com/admin
+
+This indicates that the emailjs acct that they set up initially actually still works, but the account set up by the sponsor does not. So why does the (presumably) newer account from the sponsor appear to be deactivated?
+
+To test: does the site display an error when using the test ids? Does the email actually send when using the test ids?
+
+To ask sponsor: Did you set up your emailjs account? 
+Can you still log into your emailjs account? 
+	We will probably have to do troubleshooting. It will probably be painful.
+Did the site work after switching over to the permanent emailjs account?
+
+
+Conclusion (for now): the site does not work properly because the account it's connected to either no longer exists or is misconfigured in some way.

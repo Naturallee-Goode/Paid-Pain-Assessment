@@ -2,10 +2,14 @@
   "name": "paid-pain-assessment",
   "private": true,
   "scripts": {
-    "lint:html": "htmlhint index.html upperbodyscan.html lowerbodyscan.html",
-    "test:body-map": "node --test"
+    "lint:html": "htmlhint src/index.html src/upperbodyscan.html src/lowerbodyscan.html",
+    "test:body-map": "node --test tests/*.test.*",
+    "test:browser": "node tests/body-area-browser.cjs",
+    "report:muscle-areas": "node scripts/report-muscle-areas.mjs"
   },
   "devDependencies": {
-    "htmlhint": "^1.9.0"
+    "htmlhint": "^1.9.0",
+    "jsdom": "^29.1.1",
+    "playwright": "^1.63.0"
   }
 }

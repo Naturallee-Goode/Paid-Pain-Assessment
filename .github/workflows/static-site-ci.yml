@@ -2,8 +2,6 @@ name: Static Site CI
 
 on:
   pull_request:
-    branches:
-      - main
   push:
     branches:
       - main
@@ -42,9 +40,24 @@ jobs:
           node --check "$source_dir/body-areas.js"
           node --check "$source_dir/muscle-catalog.js"
           node --check "$source_dir/viewer.js"
+          node --check "$source_dir/body-area-config.mjs"
+          node --check "$source_dir/body-area-controls.mjs"
+          node --check "$source_dir/body-area-focus.mjs"
+          node --check "$source_dir/body-map-app.mjs"
+          node --check "$source_dir/body-map-store.mjs"
+          node --check "$source_dir/animation-timing.mjs"
+          node --check "$source_dir/muscle-area-mapping.mjs"
+          node --check "$source_dir/muscle-area-assignments.mjs"
+          node --check "$source_dir/muscle-options.mjs"
 
       - name: Verify body-map source ownership
         run: npm run test:body-map
+
+      - name: Install browser test runtime
+        run: npx playwright install --with-deps chromium
+
+      - name: Verify body-map browser workflow
+        run: npm run test:browser
 
       - name: Verify required site files
         run: |
@@ -57,5 +70,8 @@ jobs:
           test -s "$source_dir/script.js"
           test -s "$source_dir/body-areas.js"
           test -s "$source_dir/muscle-catalog.js"
+          test -s "$source_dir/muscle-options.mjs"
+          test -s "$source_dir/body-map-store.mjs"
+          test -s "$source_dir/body-map-app.mjs"
           test -s "$source_dir/viewer.js"
           test -s "$source_dir/assets/human-body2.glb"

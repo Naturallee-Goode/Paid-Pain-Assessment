@@ -16,17 +16,22 @@ const expectedBodyAreas = [
   { id: 'shoulder', label: 'Shoulder' },
   { id: 'upper-back', label: 'Upper Back' },
   { id: 'lower-back', label: 'Lower Back' },
+  { id: 'arm', label: 'Arm' },
   { id: 'elbow', label: 'Elbow' },
   { id: 'wrist-hand', label: 'Wrist/Hand' },
   { id: 'hip', label: 'Hip' },
+  { id: 'leg', label: 'Leg' },
   { id: 'knee', label: 'Knee' },
   { id: 'ankle', label: 'Ankle' },
   { id: 'foot', label: 'Foot' },
 ]
 
-test('index.html loads the canonical body-map module exactly once', () => {
-  assert.match(indexHtml, /<script type="module" src="viewer\.js"><\/script>/)
-  assert.equal((indexHtml.match(/<script type="module" src="viewer\.js"><\/script>/g) || []).length, 1)
+test('index.html loads one body-map entry point and external form assets', () => {
+  assert.match(indexHtml, /<script type="module" src="body-map-app\.mjs"><\/script>/)
+  assert.equal((indexHtml.match(/body-map-app\.mjs/g) || []).length, 1)
+  assert.match(indexHtml, /<script type="module" src="script\.js"><\/script>/)
+  assert.match(indexHtml, /<link rel="stylesheet" href="styles\.css">/)
+  assert.doesNotMatch(indexHtml, /<style>/)
   assert.doesNotMatch(indexHtml, /<script type="module">/)
 })
 
@@ -42,7 +47,7 @@ test('viewer.js retains the body-map dependencies and interactions', () => {
   assert.match(viewerJavaScript, /buildMuscleCatalog\(catalogEntries\)/)
 })
 
-test('body-map data defines the ten supported areas with stable IDs and labels', async () => {
+test('body-map data defines the twelve supported areas with stable IDs and labels', async () => {
   const { SUPPORTED_BODY_AREAS } = await bodyAreasModule
 
   assert.deepEqual(SUPPORTED_BODY_AREAS, expectedBodyAreas)
@@ -61,6 +66,10 @@ test('body-area lookup preserves IDs while selections change', async () => {
   assert.strictEqual(getSupportedBodyAreaForRegion('knee', 0.45), getSupportedBodyArea('knee'))
   assert.strictEqual(getSupportedBodyAreaForRegion('wrist', 0.8), getSupportedBodyArea('wrist-hand'))
   assert.strictEqual(getSupportedBodyAreaForRegion('hand', 0.7), getSupportedBodyArea('wrist-hand'))
+  assert.strictEqual(getSupportedBodyAreaForRegion('upperarm', 1.1), getSupportedBodyArea('arm'))
+  assert.strictEqual(getSupportedBodyAreaForRegion('forearm', 0.9), getSupportedBodyArea('arm'))
+  assert.strictEqual(getSupportedBodyAreaForRegion('thigh', 0.6), getSupportedBodyArea('leg'))
+  assert.strictEqual(getSupportedBodyAreaForRegion('calf', 0.3), getSupportedBodyArea('leg'))
   assert.strictEqual(getSupportedBodyAreaForRegion('back', 1.3), getSupportedBodyArea('upper-back'))
   assert.strictEqual(getSupportedBodyAreaForRegion('back', 1.2), getSupportedBodyArea('lower-back'))
 })
