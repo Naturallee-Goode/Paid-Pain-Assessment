@@ -14,6 +14,13 @@ export function createMuscleId(sourceName) {
   return `muscle.${slug}`
 }
 
+export function resolveMuscleRecords(records, side) {
+  if (!side || side === 'both') return [...records]
+  const matching = records.filter(record => record.side === side)
+  if (matching.length) return matching
+  return records.every(record => !record.side) ? [...records] : []
+}
+
 export function buildMuscleOptions(byArea) {
   const optionsByArea = {}
   const recordsById = new Map()

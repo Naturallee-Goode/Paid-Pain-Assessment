@@ -58,7 +58,11 @@ export function createBodyMapStore() {
     setSide(side, { source = 'ui' } = {}) {
       const normalized = side || null
       if (normalized && !VALID_SIDES.has(normalized)) throw new Error(`Unknown side: ${side}`)
-      update({ side: normalized }, { type: 'side', source })
+      const selected = (state.optionsByArea[state.areaId] ?? []).find(option => option.id === state.muscleId)
+      const sideIsUnavailable = selected && ['left', 'right'].includes(normalized)
+        && selected.availableSides.length > 0
+        && !selected.availableSides.includes(normalized)
+      update({ side: normalized, muscleId: sideIsUnavailable ? null : state.muscleId }, { type: 'side', source })
     },
 
     setCatalog(optionsByArea) {

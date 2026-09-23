@@ -3,7 +3,10 @@ import assert from 'node:assert/strict'
 import { createBodyMapStore } from '../src/body-map-store.mjs'
 
 const options = {
-  elbow: [{ id: 'muscle.anconeus-muscle', name: 'Anconeus Muscle', availableSides: ['left', 'right'] }],
+  elbow: [
+    { id: 'muscle.anconeus-muscle', name: 'Anconeus Muscle', availableSides: ['left', 'right'] },
+    { id: 'muscle.right-only', name: 'Internal Name', availableSides: ['right'] },
+  ],
   knee: [{ id: 'muscle.popliteus-muscle', name: 'Popliteus Muscle', availableSides: ['left', 'right'] }],
 }
 
@@ -41,6 +44,17 @@ test('store rejects invalid area, muscle, and side values', () => {
   store.selectArea('knee')
   assert.throws(() => store.selectMuscle('muscle.anconeus-muscle'), /not available/)
   assert.throws(() => store.setSide('middle'), /Unknown side/)
+})
+
+test('changing to an unavailable model side clears the optional exact spot', () => {
+  const store = createBodyMapStore()
+  store.setCatalog(options)
+  store.selectArea('elbow')
+  store.setSide('right')
+  store.selectMuscle('muscle.right-only')
+  store.setSide('left')
+  assert.equal(store.getState().side, 'left')
+  assert.equal(store.getState().muscleId, null)
 })
 
 test('catalog readiness replays to late subscribers', () => {

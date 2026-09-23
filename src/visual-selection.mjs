@@ -8,7 +8,10 @@ export function initializeVisualSelection(doc = document, store = bodyMapStore) 
   const status = doc.getElementById('visualSelectionStatus')
   const clearSpot = doc.getElementById('clearSpot')
 
-  clearSpot.addEventListener('click', () => store.clearMuscle())
+  clearSpot.addEventListener('click', () => {
+    store.clearMuscle()
+    heading.focus()
+  })
 
   return store.subscribe(state => {
     if (!state.areaId) {
