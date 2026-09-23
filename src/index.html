@@ -64,8 +64,7 @@
             <!-- Section 2: Interactive Body Map -->
             <fieldset>
                 <legend>2. Interactive Body Map</legend>
-                <p class="field-description">Choose a body area below, or select a part on the model. Your selection will appear below.
-                </p>
+                <p class="field-description">Choose a familiar body area first. You can then optionally point to the exact spot on the model.</p>
 
                 <div id="bodyAreaControls" class="body-area-controls">
                     <p id="bodyAreaInstruction">Choose a body area</p>
@@ -75,10 +74,25 @@
                     <button type="button" id="clearBodyArea" disabled>Clear Selection</button>
                 </div>
 
-                <section id="musclePicker" class="muscle-picker" aria-labelledby="musclePickerHeading" hidden>
-                    <h3 id="musclePickerHeading">Choose a muscle</h3>
-                    <p id="musclePickerStatus" class="muscle-picker-status" role="status" aria-live="polite"></p>
-                    <ul id="muscleList" class="muscle-list"></ul>
+                <section id="visualSelection" class="visual-selection" aria-labelledby="visualSelectionHeading" hidden>
+                    <h3 id="visualSelectionHeading">Show us where it hurts</h3>
+                    <div class="form-group side-selector">
+                        <span class="side-selector-label">Which side?</span>
+                        <div class="radio-group" role="group" aria-label="Pain side">
+                            <label class="radio-label">
+                                <input type="radio" name="painSide" value="left"> Left
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="painSide" value="right"> Right
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="painSide" value="both"> Both
+                            </label>
+                        </div>
+                    </div>
+                    <p id="visualSelectionStatus" class="visual-selection-status" role="status" aria-live="polite"></p>
+                    <button type="button" id="clearSpot" class="clear-spot" disabled hidden>Clear Spot</button>
+                    <p class="visual-selection-optional">Not sure of the exact spot? You can continue with just the body area and side selected.</p>
                 </section>
 
                 <!-- 3D Viewer -->
@@ -92,9 +106,8 @@
                             <div id="loadingPercent" class="loading-percent">0%</div>
                         </div>
                     </div>
-                    <div id="viewer"></div>
+                    <div id="viewer" role="img" aria-label="Optional interactive 3D body map. Drag to rotate, pinch or scroll to zoom, and tap to select a spot."></div>
                     <div id="infoPanel" class="viewer-info-panel">
-                        <div id="panelToggle" class="panel-toggle" title="Collapse info panel">‹</div>
                         <div class="viewer-info-content">
                             <div id="partTitle" class="viewer-part-title">Choose a body area</div>
                             <div id="partDescription" class="viewer-part-description"></div>
@@ -103,21 +116,6 @@
                 </div>
 
                 <input type="hidden" id="selectedBodyArea" name="selectedBodyArea" value="">
-
-                <div class="form-group side-selector">
-                    <label>Side:</label>
-                    <div class="radio-group">
-                        <label class="radio-label">
-                            <input type="radio" name="painSide" value="left"> Left
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="painSide" value="right"> Right
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="painSide" value="both"> Both
-                        </label>
-                    </div>
-                </div>
             </fieldset>
 
             <!-- Section 3: Pain Details -->

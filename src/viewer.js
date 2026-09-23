@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { getSupportedBodyAreaForRegion } from "./body-areas.js";
-import { buildMuscleCatalog, getSourceNodeName, parseAnatomyName } from "./muscle-catalog.js";
+import { buildMuscleCatalog, getSourceNodeName } from "./muscle-catalog.js";
 
 import { AREA_FOCUS_REGIONS, isWithinArea, getAreaCameraDistance } from "./body-area-focus.mjs";
 
@@ -93,7 +93,6 @@ const pointer = new THREE.Vector2()
 const bodyMeshes = []
 const meshVolume = new Map()
 const meshMatName = new Map()
-const meshSourceName = new Map()
 const muscleCatalog = []
 let bodyAreaMuscles = {}
 let muscleRecordsById = new Map()
@@ -172,7 +171,6 @@ loader.load(
       const mat = child.material
       const matName = Array.isArray(mat) ? mat[0]?.name : mat?.name
       const sourceName = getSourceNodeName(gltf, child)
-      meshSourceName.set(child.uuid, sourceName)
       catalogEntries.push({ mesh: child, sourceName, materialName: matName })
       if(matName === "Text"){
         const t = (m) => { m.transparent=true; m.opacity=0; m.depthWrite=false; m.needsUpdate=true }
@@ -359,6 +357,11 @@ function getSelectableHit(hits) {
 
 function selectBodyMesh(mesh) {
   if (!mesh) return
+  const selection = bodyMapStore.getState()
+  if (!selection.areaId || !selection.side) {
+    document.getElementById('partDescription').textContent = 'Choose a body area and side before selecting an exact spot.'
+    return
+  }
   restoreAreaHighlights()
   if (selectedMesh && selectedMesh.uuid === mesh.uuid) {
     clearSelection()
@@ -395,12 +398,10 @@ function updateInfoPanel(mesh, matName) {
   console.log("Material:", matName)
   console.log("Area:", area, `| y:${center.y.toFixed(3)} x:${center.x.toFixed(3)} z:${center.z.toFixed(3)}`)
 
-  const displayName = parseAnatomyName(meshSourceName.get(mesh.uuid) ?? mesh.name).displayName
-  document.getElementById("partTitle").textContent = displayName
-
+  document.getElementById("partTitle").textContent = 'Spot selected'
   document.getElementById("partDescription").textContent = areaLabel
-    ? `Selected muscle in ${areaLabel}.`
-    : 'Selected muscle.'
+    ? `A spot in ${areaLabel} is selected.`
+    : 'A spot is selected.'
 
   if (supportedArea) bodyMapStore.selectArea(area, { source: 'viewer-mesh' })
   else if (bodyMapStore.getState().areaId) bodyMapStore.clearArea({ source: 'viewer-mesh' })

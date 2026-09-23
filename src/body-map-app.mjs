@@ -1,9 +1,9 @@
 import { initializeBodyAreaControls } from './body-area-controls.mjs'
 import { bodyMapStore } from './body-map-store.mjs'
-import { initializeMusclePicker } from './muscle-picker.mjs'
+import { initializeVisualSelection } from './visual-selection.mjs'
 
 initializeBodyAreaControls(document, bodyMapStore)
-initializeMusclePicker(document, bodyMapStore)
+initializeVisualSelection(document, bodyMapStore)
 
 const form = document.getElementById('intakeForm')
 if (form) {
