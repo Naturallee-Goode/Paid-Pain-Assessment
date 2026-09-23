@@ -1,8 +1,8 @@
 # Body-area controls — issue #46
 
-The controls provide ten body-area choices, one pressed state at a time, a live selection announcement, Change Area, and Clear Selection. Both action buttons clear the selection and return keyboard focus to the first area button. Form reset clears selection too. These buttons never submit the form.
+The controls provide twelve body-area choices, one pressed state at a time, a live selection announcement, Change Area, and Clear Selection. Both action buttons clear the selection and return keyboard focus to the first area button. Form reset clears selection too. These buttons never submit the form.
 
-The controls run independently of the 3D viewer so they remain usable while the model loads or when viewer initialization fails. Changing areas restores any previously highlighted mesh and clears stale search/panel content. Legacy model selections still update the controls; areas outside the ten supported choices retain their existing form values without falsely pressing an area button.
+The controls run independently of the 3D viewer so they remain usable while the model loads or when viewer initialization fails. Changing areas restores any previously highlighted mesh and clears stale search/panel content. Legacy model selections still update the controls; areas outside the twelve supported choices retain their existing form values without falsely pressing an area button.
 
 ## Scope and integration
 
@@ -28,7 +28,7 @@ Browser checks start and stop their own local server. Install the test browser o
 CHROME_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npm run test:browser
 ```
 
-The browser suite checks all ten choices, previous mesh-material restoration, search cleanup, keyboard Enter/Space, reset, phone/tablet/desktop widths, touch-target height, delayed and failed model loading, and unavailable viewer code. The checked-in GLB is served as a test fixture in place of the existing remote model URL. CDN JavaScript dependencies still require network access. Viewer test hooks exist only in intercepted browser-test responses. No form submissions or live emails are sent. Browser checks are run separately from CI.
+The browser suite checks all twelve choices, including full spatial-region highlighting for Arm and Leg, previous mesh-material restoration, search cleanup, keyboard Enter/Space, reset, phone/tablet/desktop widths, touch-target height, delayed and failed model loading, and unavailable viewer code. The checked-in GLB is served as a test fixture in place of the existing remote model URL. CDN JavaScript dependencies still require network access. Viewer test hooks exist only in intercepted browser-test responses. No form submissions or live emails are sent. Browser checks are run separately from CI.
 
 ## Follow-up work: issue #47
 
@@ -36,7 +36,7 @@ On `feat/47-body-area-focus`, a separate focus module defines spatial regions fo
 
 The integrated unit suite contains sixteen passing tests. Browser checks additionally verify nonempty highlights for every area, old-material restoration, distinct back camera targets, and continued user rotation/zoom. The browser suite still checks the controls on phone/tablet/desktop layouts and loading/failure cases. The CI workflow checks the new module's syntax.
 
-This branch builds on #46 and locally integrates Girwan’s reviewed #58 snapshot (`2775d2b`), which includes #43. This local integration does not merge his GitHub PRs. Spatial focus is independent of the #44 side-labeling bug, and does not implement #45's muscle catalog mappings. The bounds are specific to the current GLB and match whole objects by their bounding-box centers, so objects crossing a region boundary may extend beyond that area. Human visual acceptance of each highlighted region is still needed before closing #47. The production model URL and EmailJS remain unchanged.
+Spatial focus is independent of the muscle-to-area mappings from #45. The bounds are specific to the current GLB and match whole objects by their bounding-box centers, so objects crossing a region boundary may extend beyond that area. Human visual acceptance of each highlighted region is still needed before closing #47. The production model URL and EmailJS remain unchanged.
 
 ### Combined verification
 

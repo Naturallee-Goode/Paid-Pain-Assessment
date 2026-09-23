@@ -31,7 +31,7 @@ const server = http.createServer(async (req, res) => {
     await page.route('**/*.glb', route => route.fulfill({ body: model, contentType: 'model/gltf-binary' }));
     await page.route('**/viewer.js', async route => {
       const response = await route.fetch();
-      await route.fulfill({ response, body: await response.text() + '\nwindow.__viewerTest = { bodyMeshes, muscleCatalog, getMusclesForArea, selectBodyMesh, clearSelection, camera, controls, areaHighlights, animating: () => animating, selected: () => selectedMesh };' });
+      await route.fulfill({ response, body: await response.text() + '\nwindow.__viewerTest = { THREE, bodyMeshes, muscleCatalog, getMusclesForArea, focusRegions: AREA_FOCUS_REGIONS, isWithinArea, selectBodyMesh, clearSelection, camera, controls, areaHighlights, animating: () => animating, selected: () => selectedMesh };' });
     });
     await page.goto(url);
     await page.waitForFunction(() => window.__viewerTest?.bodyMeshes.length > 0, null, { timeout: 60000 });
@@ -64,9 +64,13 @@ const server = http.createServer(async (req, res) => {
       if (id === 'arm' || id === 'leg') {
         assert(await page.evaluate(areaId => {
           const v = window.__viewerTest;
-          const meshes = v.getMusclesForArea(areaId).map(record => record.mesh);
+          const area = v.focusRegions.find(region => region.id === areaId);
+          const meshes = v.bodyMeshes.filter(mesh => {
+            const center = new v.THREE.Box3().setFromObject(mesh).getCenter(new v.THREE.Vector3());
+            return v.isWithinArea(center, area);
+          });
           return meshes.length === v.areaHighlights.size && meshes.every(mesh => v.areaHighlights.has(mesh));
-        }, id), `${id} must highlight its mapped muscles only`);
+        }, id), `${id} must highlight every mesh in its spatial region`);
       }
       if (['neck', 'lower-back', 'hip'].includes(id)) {
         const names = await page.evaluate(() => window.__viewerTest.muscleCatalog
