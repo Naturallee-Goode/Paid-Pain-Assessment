@@ -261,7 +261,9 @@ function focusBodyArea(id) {
   document.getElementById('partTitle').textContent = area.label
   document.getElementById('partDescription').textContent = bodyMeshes.length
     ? (bounds.isEmpty() ? 'No model region is available for this area yet.' : 'Rotate or zoom to explore this area.')
-    : 'Your area is selected. The model will focus when it loads.'
+    : bodyMapStore.getState().catalogStatus === 'error'
+      ? 'Your area is selected, but the 3D model is unavailable.'
+      : 'Your area is selected. The model will focus when it loads.'
   if (bounds.isEmpty()) {
     startCameraAnim(defaultCamPos, defaultTarget, ZOOM_OUT_DURATION)
     return
@@ -458,8 +460,8 @@ camera.position.copy(defaultCamPos)
 
 bodyMapStore.subscribe((state, previous, action) => {
   const areaChanged = state.areaId !== previous.areaId
-  const modelBecameReady = action.type === 'catalog-ready'
-  if ((areaChanged && action.source !== 'viewer-mesh') || modelBecameReady) {
+  const modelStateChanged = action.type === 'catalog-ready' || action.type === 'catalog-error'
+  if ((areaChanged && action.source !== 'viewer-mesh') || modelStateChanged) {
     focusBodyArea(state.areaId)
   }
 })

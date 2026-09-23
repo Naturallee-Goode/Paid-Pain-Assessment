@@ -25,4 +25,10 @@ try {
 } catch (error) {
   console.error('Body-map viewer failed to start:', error)
   bodyMapStore.setCatalogError()
+  const label = document.getElementById('loadingLabel')
+  const percent = document.getElementById('loadingPercent')
+  const progress = document.getElementById('loadingBarFill')
+  if (label) label.textContent = '3D model unavailable'
+  if (percent) percent.textContent = ''
+  if (progress) progress.style.width = '0%'
 }

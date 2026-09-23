@@ -188,6 +188,12 @@ const server = http.createServer(async (req, res) => {
         assert((await isolated.locator('#muscleList li').count()) > 0);
       } else {
         await isolated.waitForFunction(() => document.querySelector('#musclePickerStatus').textContent.includes('unavailable'));
+        if (scenario === 'failed') {
+          assert.equal(await isolated.locator('#loadingLabel').textContent(), 'Failed to load model');
+          assert.match(await isolated.locator('#partDescription').textContent(), /3D model is unavailable/);
+        } else {
+          assert.equal(await isolated.locator('#loadingLabel').textContent(), '3D model unavailable');
+        }
       }
       await isolated.locator('#clearBodyArea').click();
       assert.equal(await isolated.locator('#selectedBodyArea').inputValue(), '');
