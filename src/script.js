@@ -11,9 +11,9 @@ import { bodyMapStore } from './body-map-store.mjs';
 // ==============================================================================
 // Replace these with your actual EmailJS credentials from emailjs.com
 const EMAILJS_CONFIG = {
-    publicKey: 'QSHhS2k1y5xW4eKmm',
-    serviceId: 'service_pzvgdz8',
-    templateId: 'template_uhhy7rd'
+    publicKey: 'PqbFgpGuvDKxMFWQo',
+    serviceId: 'service_dohl2js',
+    templateId: 'template_w73hj3v'
 };
 
 // ==============================================================================
