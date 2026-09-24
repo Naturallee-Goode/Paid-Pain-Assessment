@@ -1,0 +1,7 @@
+Issue: no idea where site is deployed
+Sponsor gave access to bluehost, but that had no reference to pain-assessment, and none of the index.html files matched the index.html in the repo
+Request header for pain-assessment mentions x-bc, so it's being served by Bigcommerce
+Looks like I'm missing some permissions in Bigcommerce, 
+Opening the site through Bigcommerce gives an editor for every page except pain-assessment, so it isn't being hosted directly through Bigcommerce.
+Presumably, it's being hosted through next.js/Catalyst. Documentation mentions this as one of the options, and it matches the lack of relevant files on the two hosting platforms.
+Will hand off to Jay to investigate further.
