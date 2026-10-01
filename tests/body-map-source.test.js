@@ -27,7 +27,7 @@ const expectedBodyAreas = [
 ]
 
 test('index.html loads one body-map entry point and external form assets', () => {
-  assert.match(indexHtml, /<script type="module" src="body-map-app\.mjs"><\/script>/)
+  assert.match(indexHtml, /<script type="module" src="body-map-app\.mjs(?:\?v=\d+)?"><\/script>/)
   assert.equal((indexHtml.match(/body-map-app\.mjs/g) || []).length, 1)
   assert.match(indexHtml, /<script type="module" src="script\.js"><\/script>/)
   assert.match(indexHtml, /<link rel="stylesheet" href="styles\.css">/)
