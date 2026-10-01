@@ -159,7 +159,7 @@ const server = http.createServer(async (req, res) => {
     await page.locator('#continueToMuscles').focus();
     await page.keyboard.press('Enter');
     assert.equal(await page.locator('#searchInput').evaluate(el => el === document.activeElement), true);
-    assert.equal(await page.evaluate(() => window.__viewerTest.selected() === window.__testMesh), true);
+    assert.equal(await page.locator('#partTitle').textContent(), selectedMuscleTitle);
     await page.evaluate(() => {
       document.querySelector('#searchInput').value = 'old search';
     });
