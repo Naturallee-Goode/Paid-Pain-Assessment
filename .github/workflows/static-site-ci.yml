@@ -49,6 +49,8 @@ jobs:
           node --check "$source_dir/muscle-area-mapping.mjs"
           node --check "$source_dir/muscle-area-assignments.mjs"
           node --check "$source_dir/muscle-options.mjs"
+          node --check "$source_dir/muscle-diagnoses.mjs"
+          node --check "$source_dir/body-side-filter.mjs"
 
       - name: Verify body-map source ownership
         run: npm run test:body-map

@@ -6,6 +6,7 @@ export function createBodyMapStore() {
   let state = {
     areaId: null,
     muscleId: null,
+    issuesReviewed: false,
     side: null,
     catalogStatus: 'loading',
     optionsByArea: {},
@@ -37,11 +38,16 @@ export function createBodyMapStore() {
       const area = areaId ? getSupportedBodyArea(areaId) : null
       if (areaId && !area) throw new Error(`Unknown body area: ${areaId}`)
       if ((area?.id ?? null) === state.areaId) return
-      update({ areaId: area?.id ?? null, muscleId: null, side: null }, { type: 'area', source })
+      update({ areaId: area?.id ?? null, muscleId: null, side: null, issuesReviewed: false }, { type: 'area', source })
     },
 
     clearArea(options) {
       this.selectArea(null, options)
+    },
+
+    continueToMuscles() {
+      if (!state.areaId) return
+      update({ issuesReviewed: true }, { type: 'issues-reviewed', source: 'ui' })
     },
 
     selectMuscle(muscleId, { source = 'ui' } = {}) {
@@ -70,7 +76,7 @@ export function createBodyMapStore() {
     },
 
     reset() {
-      update({ areaId: null, muscleId: null, side: null }, { type: 'reset', source: 'form' })
+      update({ areaId: null, muscleId: null, side: null, issuesReviewed: false }, { type: 'reset', source: 'form' })
     },
   }
 }

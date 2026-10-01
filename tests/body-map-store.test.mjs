@@ -15,11 +15,13 @@ test('store publishes coherent area, muscle, side, and reset transitions', () =>
 
   store.setCatalog(options)
   store.selectArea('elbow')
+  store.continueToMuscles()
   store.selectMuscle('muscle.anconeus-muscle')
   store.setSide('right')
   assert.deepEqual(store.getState(), {
     areaId: 'elbow',
     muscleId: 'muscle.anconeus-muscle',
+    issuesReviewed: true,
     side: 'right',
     catalogStatus: 'ready',
     optionsByArea: options,
