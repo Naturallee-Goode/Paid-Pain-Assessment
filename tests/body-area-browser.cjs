@@ -67,17 +67,12 @@ const server = http.createServer(async (req, res) => {
       });
       assert(state.count > 0, `No highlighted region: ${id}`);
       assert(state.restored, `Stale highlight after switching to ${id}`);
-      if (id === 'arm' || id === 'leg') {
-        assert(await page.evaluate(areaId => {
-          const v = window.__viewerTest;
-          const area = v.focusRegions.find(region => region.id === areaId);
-          const meshes = v.bodyMeshes.filter(mesh => {
-            const center = new v.THREE.Box3().setFromObject(mesh).getCenter(new v.THREE.Vector3());
-            return v.isWithinArea(center, area);
-          });
-          return meshes.length === v.areaHighlights.size && meshes.every(mesh => v.areaHighlights.has(mesh));
-        }, id), `${id} must highlight every mesh in its spatial region`);
-      }
+      assert(await page.evaluate(areaId => {
+        const v = window.__viewerTest;
+        const expected = new Set(v.getMusclesForArea(areaId).map(record => record.mesh));
+        return expected.size === v.areaHighlights.size
+          && [...expected].every(mesh => v.areaHighlights.has(mesh));
+      }, id), `${id} must highlight exactly its anatomically assigned meshes`);
       if (['neck', 'lower-back', 'hip'].includes(id)) {
         const names = await page.evaluate(() => window.__viewerTest.muscleCatalog
           .filter(record => window.__viewerTest.areaHighlights.has(record.mesh))
