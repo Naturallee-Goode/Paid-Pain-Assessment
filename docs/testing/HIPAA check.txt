@@ -1,0 +1,8 @@
+Using the CMS covered entities chart (https://www.cms.gov/regulations-and-guidance/administrative-simplification/hipaa-aca/downloads/coveredentitieschart20160617.pdf)
+
+
+on page 4: Mia furnishes healthcare (counseling and assessment with respect to the physical or mental condition)
+On page 5: Mia (most likely) transmits covered transactions electronically, meaning she accepts electronic payments for consultations that happen through the site. I'll have to check with her, though.
+	The storefront doesn't count, since the products aren't connected to the intake form
+
+These are the only two requirements to be covered by HIPAA. The first is definitely met, and the second is most likely met, unless she does cash/check only and doesn't touch insurance.
