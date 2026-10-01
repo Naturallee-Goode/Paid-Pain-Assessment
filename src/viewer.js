@@ -98,6 +98,7 @@ const meshMatName = new Map()
 const meshLabelIndex = new Map()
 const meshSourceName = new Map()
 const meshSide = new Map()
+const meshBaseAppearance = new Map()
 const muscleCatalog = []
 let bodyAreaMuscles = {}
 let muscleRecordsById = new Map()
@@ -196,6 +197,7 @@ loader.load(
         depthWrite: preset.opacity === undefined,
         sheen: 0.15, sheenColor: new THREE.Color(0xff8866), sheenRoughness: 0.8, envMapIntensity: 0.3,
       })
+      meshBaseAppearance.set(child, { material: child.material, renderOrder: child.renderOrder })
       bodyMeshes.push(child)
       child.geometry.computeBoundingBox()
       const box = child.geometry.boundingBox
@@ -245,8 +247,9 @@ const highlightMat = new THREE.MeshPhysicalMaterial({
 const areaHighlights = new Map()
 function restoreAreaHighlights() {
   for (const [mesh, original] of areaHighlights) {
-    mesh.material = original.material
-    mesh.renderOrder = original.renderOrder
+    const base = meshBaseAppearance.get(mesh) ?? original
+    mesh.material = base.material
+    mesh.renderOrder = base.renderOrder
   }
   areaHighlights.clear()
 }
@@ -258,7 +261,9 @@ function highlightSelectedMuscleSide(side) {
     muscleCatalog.filter(record => record.displayName === selectedName),
     side,
   )
-  if (!matchingRecords.length) return false
+  // Some selectable structures are not split into left/right catalog copies.
+  // Keep the current structure selected when a side filter cannot be applied.
+  if (!matchingRecords.length) return true
 
   restoreSelectedMesh()
   restoreAreaHighlights()
@@ -272,6 +277,7 @@ function highlightSelectedMuscleSide(side) {
 
   for (const record of additional) {
     const mesh = record.mesh
+    if (mesh === selectedMesh || areaHighlights.has(mesh)) continue
     areaHighlights.set(mesh, { material: mesh.material, renderOrder: mesh.renderOrder })
     mesh.material = highlightMat
     mesh.renderOrder = 999
@@ -426,8 +432,9 @@ function renderSearchResults(query) {
 
 function restoreSelectedMesh() {
   if (!selectedMesh || !originalMat) return
-  selectedMesh.material = originalMat
-  selectedMesh.renderOrder = originalRenderOrder
+  const base = meshBaseAppearance.get(selectedMesh)
+  selectedMesh.material = base?.material ?? originalMat
+  selectedMesh.renderOrder = base?.renderOrder ?? originalRenderOrder
   selectedMesh = null
   originalMat = null
 }
@@ -607,7 +614,7 @@ bodyMapStore.subscribe((state, previous, action) => {
   const areaChanged = state.areaId !== previous.areaId
   const sideChanged = state.side !== previous.side
   const modelBecameReady = action.type === 'catalog-ready'
-  if (sideChanged && highlightSelectedMuscleSide(state.side)) return
+  if (!areaChanged && sideChanged && highlightSelectedMuscleSide(state.side)) return
   if ((areaChanged && action.source !== 'viewer-mesh') || sideChanged || modelBecameReady) {
     focusBodyArea(state.areaId)
   }

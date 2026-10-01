@@ -29,9 +29,9 @@ const server = http.createServer(async (req, res) => {
     // Use the checked-in model as a fixture without changing the production URL.
     const model = await fs.readFile(path.join(root, 'assets/human-body2.glb'));
     await page.route('**/*.glb', route => route.fulfill({ body: model, contentType: 'model/gltf-binary' }));
-    await page.route('**/viewer.js', async route => {
+    await page.route('**/viewer.js*', async route => {
       const response = await route.fetch();
-      await route.fulfill({ response, body: await response.text() + '\nwindow.__viewerTest = { THREE, bodyMeshes, muscleCatalog, getMusclesForArea, getBodyArea, getSupportedBodyAreaForRegion, bodyMapStore, focusRegions: AREA_FOCUS_REGIONS, isWithinArea, selectBodyMesh, clearSelection, camera, controls, areaHighlights, animating: () => animating, selected: () => selectedMesh, setRenderLoopPaused: setViewerRenderLoopPaused };' });
+      await route.fulfill({ response, body: await response.text() + '\nwindow.__viewerTest = { THREE, bodyMeshes, muscleCatalog, getMusclesForArea, getBodyArea, getSupportedBodyAreaForRegion, bodyMapStore, focusRegions: AREA_FOCUS_REGIONS, isWithinArea, selectBodyMesh, clearSelection, camera, controls, areaHighlights, highlightMat, animating: () => animating, selected: () => selectedMesh, setRenderLoopPaused: setViewerRenderLoopPaused };' });
     });
     await page.goto(url);
     await page.waitForFunction(() => window.__viewerTest?.bodyMeshes.length > 0, null, { timeout: 60000 });
@@ -120,11 +120,13 @@ const server = http.createServer(async (req, res) => {
     // A model click first chooses an area; the next click can select a muscle without Continue.
     await page.evaluate(() => {
       const v = window.__viewerTest;
-      window.__testMesh = v.bodyMeshes.find(mesh => {
-        const center = new v.THREE.Box3().setFromObject(mesh).getCenter(new v.THREE.Vector3());
+      const record = v.muscleCatalog.find(candidate => {
+        if (candidate.side !== 'left') return false;
+        if (!v.muscleCatalog.some(peer => peer.displayName === candidate.displayName && peer.side === 'right')) return false;
+        const center = new v.THREE.Box3().setFromObject(candidate.mesh).getCenter(new v.THREE.Vector3());
         return v.getSupportedBodyAreaForRegion(v.getBodyArea(center), center.y)?.id === 'shoulder';
       });
-      window.__originalMaterial = window.__testMesh.material;
+      window.__testMesh = record.mesh;
       v.selectBodyMesh(window.__testMesh);
     });
     assert.equal(await page.locator('#selectedBodyArea').inputValue(), 'shoulder');
@@ -164,8 +166,8 @@ const server = http.createServer(async (req, res) => {
       document.querySelector('#searchInput').value = 'old search';
     });
     assert.equal(await page.evaluate(() => window.__viewerTest.selected() === window.__testMesh), true);
-    await page.locator('[data-area="neck"]').click();
-    assert.equal(await page.evaluate(() => window.__testMesh.material === window.__originalMaterial), true);
+    await page.locator('[data-area="foot"]').click();
+    assert.equal(await page.evaluate(() => window.__testMesh.material === window.__viewerTest.highlightMat), false);
     assert.equal(await page.locator('#searchInput').inputValue(), '');
     for (const id of ['changeBodyArea', 'clearBodyArea']) {
       await page.locator('[data-area="knee"]').click();
@@ -246,9 +248,9 @@ const server = http.createServer(async (req, res) => {
       let release;
       const gate = new Promise(resolve => { release = resolve; });
       if (scenario === 'viewer-unavailable') {
-        await isolated.route('**/viewer.js', route => route.abort());
+        await isolated.route('**/viewer.js*', route => route.abort());
       } else {
-        await isolated.route('**/viewer.js', async route => {
+        await isolated.route('**/viewer.js*', async route => {
           const response = await route.fetch();
           await route.fulfill({ response, body: await response.text() + '\nsetViewerRenderLoopPaused(true);' });
         });
