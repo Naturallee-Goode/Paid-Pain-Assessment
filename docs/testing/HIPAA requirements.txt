@@ -1,0 +1,12 @@
+Used AI to find a source from emailJS
+
+https://www.emailjs.com/legal/hipaa
+
+For our purposes, the important thing to note is that the sponsor MUST purchase a business plan and enter into a business associate agreement. We need to find out if the cost is reasonable to the sponsor and what needs to be done if not. After subscribing, we must enable "Do not save private data" for the template.
+
+The cost for emailJS business is $480 a year, which isn't nothing.
+
+
+We also need to check that Gmail is HIPAA-compliant
+https://knowledge.workspace.google.com/admin/compliance/hipaa-compliance-with-google-workspace-and-cloud-identity
+typically, no. The sponsor needs a 7-8 dollar per month subscription to Google Workspace. Then they need to enter the BAA and implement the HIPAA controls described in https://services.google.com/fh/files/misc/gsuite_cloud_identity_hipaa_implementation_guide.pdf
