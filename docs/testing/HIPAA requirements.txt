@@ -10,3 +10,5 @@ The cost for emailJS business is $480 a year, which isn't nothing.
 We also need to check that Gmail is HIPAA-compliant
 https://knowledge.workspace.google.com/admin/compliance/hipaa-compliance-with-google-workspace-and-cloud-identity
 typically, no. The sponsor needs a 7-8 dollar per month subscription to Google Workspace. Then they need to enter the BAA and implement the HIPAA controls described in https://services.google.com/fh/files/misc/gsuite_cloud_identity_hipaa_implementation_guide.pdf
+
+Further action depends on how exactly the site is deployed. HTTPS should be enough to encrypt the data. EmailJS.send uses HTTPS encryption, so no issues there.
