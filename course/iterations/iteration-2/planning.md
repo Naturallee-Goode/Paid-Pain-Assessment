@@ -31,6 +31,8 @@ We will make the pain assessment usable without anatomical knowledge: clients ca
 
 ## Selected Work
 
+Assignees below were verified against GitHub Issues on October 8, 2026. Issue #95 is closed and has no recorded assignee; its entry remains Unassigned.
+
 | Issue | Planned outcome | Recorded assignee |
 | --- | --- | --- |
 | [#74](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/74) | Initial area-level common-issue information before muscle selection | Lily Oswald |
@@ -38,17 +40,17 @@ We will make the pain assessment usable without anatomical knowledge: clients ca
 | [#82](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/82) | Review #74 and complete missing-content, loading, and reset edge cases | Girwan Dhakal |
 | [#83](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/83) | Interpret simple-mode model clicks as familiar area selections | Girwan Dhakal |
 | [#84](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/84) | Separate simple client and optional advanced muscle views | Girwan Dhakal |
-| [#85](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/85) | Browse, search, and select muscles within the selected area in advanced mode | Unassigned |
-| [#86](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/86) | Keep visible selections, confirmation, and intake payload consistent | Unassigned |
-| [#87](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/87) | Verify the integrated flow across devices and input methods | Unassigned |
-| [#88](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/88) | Reproduce and correct Neck/Arm highlighting against agreed boundaries | Unassigned |
-| [#89](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/89) | Verify the existing Leg fix and correct Lower Back highlighting | Unassigned |
+| [#85](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/85) | Browse, search, and select muscles within the selected area in advanced mode | Jay Roy |
+| [#86](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/86) | Keep visible selections, confirmation, and intake payload consistent | Jay Roy |
+| [#87](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/87) | Verify the integrated flow across devices and input methods | Jay Roy |
+| [#88](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/88) | Reproduce and correct Neck/Arm highlighting against agreed boundaries | Jay Roy |
+| [#89](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/89) | Verify the existing Leg fix and correct Lower Back highlighting | Lily Oswald |
 | [#90](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/90) | Provide one Reset Body Map control for selection and camera recovery | Lily Oswald |
 | [#91](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/91) | Make optional side selection understandable and consistent | Lily Oswald |
 | [#92](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/92) | Remove panel collapse and improve advanced-search layout | Lily Oswald |
-| [#93](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/93) | Stabilize the submit button and verify pending/failure/retry behavior | Unassigned |
-| [#96](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/96) | Review an area/boundary worksheet with Mia and record decisions | Unassigned |
-| [#77](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/77) | Investigate HIPAA applicability and document the decision | Griffen Bon (gcbon) |
+| [#93](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/93) | Stabilize the submit button and verify pending/failure/retry behavior | Griffen Bon |
+| [#96](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/96) | Review an area/boundary worksheet with Mia and record decisions | Griffen Bon |
+| [#77](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/77) | Investigate HIPAA applicability and document the decision | Griffen Bon |
 | [#95](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/95) | Investigate necessary controls and cost-conscious changes | Unassigned |
 | [#97](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/97) | Complete this planning record | Girwan Dhakal |
 
@@ -57,7 +59,7 @@ We will make the pain assessment usable without anatomical knowledge: clients ca
 - **Sponsor review:** Area subdivisions, exact boundaries, and final educational copy remain pending. Record approved, rejected, and unresolved options explicitly in #96 and #81.
 - **Booking and production delivery:** The booking route remains a sponsor follow-up, and deployment/account access remains a dependency for live delivery testing. No new Calendly implementation Issue appears in the reviewed sprint Issue set; do not represent that implementation as a selected commitment until its scope and tracking are confirmed.
 - **Deferred scope:** New payment processing, direct MedBridge integration, client accounts/databases, home exercise requests, QR-code delivery, and webcam redesign/removal are not selected commitments in this plan. The earlier Sprint 2 proposal is background, not evidence that these items were approved on October 1.
-- **Capacity and ownership:** Assign owners to the outstanding Issues and review workload and dependencies before freezing the initial planning snapshot. Capture any later additions, removals, or carried-forward work with rationale in the living Project and iteration review.
+- **Capacity and ownership:** Owners are recorded for all selected open Issues as of October 8. Review workload and dependencies as assignments change. Capture any later additions, removals, or carried-forward work with rationale in the living Project and iteration review.
 
 ## Planning Snapshot
 
