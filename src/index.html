@@ -111,8 +111,9 @@
 
                 <input type="hidden" id="selectedBodyArea" name="selectedBodyArea" value="">
 
-                <div class="form-group side-selector">
-                    <label>Side:</label>
+                <div class="form-group side-selector" role="group" aria-labelledby="painSideLabel" aria-describedby="painSideDescription painSideStatus">
+                    <p id="painSideLabel" class="side-selector-label">Side (optional)</p>
+                    <p id="painSideDescription" class="field-description">Choose the side of your body where you feel the concern, or leave this blank.</p>
                     <div class="radio-group">
                         <label class="radio-label">
                             <input type="radio" name="painSide" value="left"> Left
@@ -124,6 +125,8 @@
                             <input type="radio" name="painSide" value="both"> Both
                         </label>
                     </div>
+                    <button type="button" id="clearPainSide" class="btn btn-secondary side-clear" disabled>Clear side</button>
+                    <p id="painSideStatus" class="side-status" role="status" aria-live="polite">No side selected.</p>
                 </div>
             </fieldset>
 

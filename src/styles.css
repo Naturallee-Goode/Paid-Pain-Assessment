@@ -530,6 +530,23 @@ input[type="range"]::-moz-range-thumb:hover {
     margin-top: var(--spacing-sm);
 }
 
+.side-selector-label {
+    margin: 0;
+    font-weight: var(--font-weight-bold);
+}
+
+.side-selector .field-description {
+    margin: var(--spacing-xs) 0 0;
+}
+
+.side-clear {
+    margin-top: var(--spacing-md);
+}
+
+.side-status {
+    margin: var(--spacing-sm) 0 0;
+}
+
 /* Radio Groups */
 .radio-group {
     display: flex;

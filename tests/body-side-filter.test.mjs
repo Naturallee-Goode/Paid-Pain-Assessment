@@ -23,3 +23,10 @@ test('a selected muscle keeps the copies requested by the side choice', () => {
   assert.deepEqual(filterMuscleRecordsBySide(records, 'right'), [records[1]])
   assert.deepEqual(filterMuscleRecordsBySide(records, 'both'), records)
 })
+
+test('a missing counterpart is not invented or replaced with the wrong side', () => {
+  const leftOnly = [{ side: 'left' }]
+  assert.deepEqual(filterMuscleRecordsBySide(leftOnly, 'right'), [])
+  assert.deepEqual(filterMuscleRecordsBySide(leftOnly, 'left'), leftOnly)
+  assert.deepEqual(filterMuscleRecordsBySide(leftOnly, null), leftOnly)
+})
