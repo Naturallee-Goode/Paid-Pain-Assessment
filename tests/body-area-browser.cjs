@@ -23,6 +23,8 @@ const server = http.createServer(async (req, res) => {
   try {
     browser = await chromium.launch({ ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}), headless: true });
     const url = `http://127.0.0.1:${server.address().port}`;
+    const evidenceDir = process.env.EVIDENCE_DIR;
+    if (evidenceDir) await fs.mkdir(evidenceDir, { recursive: true });
     const page = await browser.newPage({ reducedMotion: 'reduce' });
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
@@ -133,6 +135,9 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator('#partDescription a').count(), 0);
     assert.match(await page.locator('#partDescription').textContent(), /not a medical diagnosis/);
     const selectedMuscleTitle = await page.locator('#partTitle').textContent();
+    assert.equal(await page.locator('input[name="painSide"][required]').count(), 0);
+    assert.equal(await page.locator('input[name="painSide"]:checked').count(), 0);
+    if (evidenceDir) await page.locator('.side-selector').screenshot({ path: path.join(evidenceDir, 'side-not-specified.png') });
     for (const side of ['left', 'right']) {
       await page.locator(`input[name="painSide"][value="${side}"]`).check();
       assert.equal(await page.locator('#partTitle').textContent(), selectedMuscleTitle);
@@ -141,6 +146,7 @@ const server = http.createServer(async (req, res) => {
         const v = window.__viewerTest;
         return v.muscleCatalog.find(record => record.mesh === v.selected())?.side;
       }, side), side);
+      if (side === 'left' && evidenceDir) await page.locator('.side-selector').screenshot({ path: path.join(evidenceDir, 'side-left-selected.png') });
     }
     await page.locator('input[name="painSide"][value="both"]').check();
     assert.equal(await page.locator('#partTitle').textContent(), selectedMuscleTitle);
@@ -153,6 +159,12 @@ const server = http.createServer(async (req, res) => {
         .map(record => record.side));
       return sides.has('left') && sides.has('right');
     }), 'Both must preserve the selected muscle and highlight its left and right copies');
+    await page.locator('#clearPainSide').focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('input[name="painSide"]:checked').count(), 0);
+    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().side), null);
+    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().muscleId !== null), true);
+    assert.equal(await page.locator('input[name="painSide"][value="left"]').evaluate(el => el === document.activeElement), true);
     await page.locator('#continueToMuscles').focus();
     await page.keyboard.press('Enter');
     assert.equal(await page.locator('#searchInput').evaluate(el => el === document.activeElement), true);
@@ -219,8 +231,6 @@ const server = http.createServer(async (req, res) => {
     await page.waitForTimeout(300);
     assert.notEqual(await page.evaluate(() => window.__viewerTest.camera.position.distanceTo(window.__viewerTest.controls.target)),distance);
     // Reproducible issue evidence: two different areas and a mobile layout.
-    const evidenceDir = process.env.EVIDENCE_DIR;
-    if (evidenceDir) await fs.mkdir(evidenceDir, { recursive: true });
     for (const [area, width] of [['shoulder', 1280], ['foot', 1280], ['shoulder', 390]]) {
       await page.setViewportSize({ width, height: 960 });
       await page.locator(`[data-area="${area}"]`).click();

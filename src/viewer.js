@@ -7,7 +7,7 @@ import { buildMuscleCatalog, getSourceNodeName, parseAnatomyName } from "./muscl
 import { AREA_FOCUS_REGIONS, isWithinArea, getAreaCameraDistance } from "./body-area-focus.mjs";
 
 import { mapMusclesToAreas } from "./muscle-area-mapping.mjs";
-import { buildMuscleOptions } from "./muscle-options.mjs";
+import { buildMuscleOptions, createMuscleId } from "./muscle-options.mjs";
 import { bodyMapStore } from "./body-map-store.mjs";
 import { easeInOutQuad, getAnimationProgress } from "./animation-timing.mjs";
 import { getPossibleMuscleDiagnoses } from "./muscle-diagnoses.mjs";
@@ -255,18 +255,14 @@ function restoreAreaHighlights() {
 }
 
 function highlightSelectedMuscleSide(side) {
-  if (!selectedMesh) return false
-  const selectedName = parseAnatomyName(meshSourceName.get(selectedMesh.uuid) ?? selectedMesh.name).displayName
-  const matchingRecords = filterMuscleRecordsBySide(
-    muscleCatalog.filter(record => record.displayName === selectedName),
-    side,
-  )
-  // Some selectable structures are not split into left/right catalog copies.
-  // Keep the current structure selected when a side filter cannot be applied.
-  if (!matchingRecords.length) return true
-
+  const muscleId = bodyMapStore.getState().muscleId
+  if (!muscleId) return false
+  const matchingRecords = filterMuscleRecordsBySide(muscleRecordsById.get(muscleId) ?? [], side)
   restoreSelectedMesh()
   restoreAreaHighlights()
+
+  // Keep the logical muscle selected without highlighting an unavailable counterpart.
+  if (!matchingRecords.length) return true
 
   const [primary, ...additional] = matchingRecords
   selectedMesh = primary.mesh
@@ -476,6 +472,9 @@ function selectBodyMesh(mesh) {
   selectedMesh = mesh
   mesh.material = highlightMat
   mesh.renderOrder = 999
+
+  const selectedRecord = muscleCatalog.find(record => record.mesh === mesh)
+  if (selectedRecord) bodyMapStore.selectMuscle(createMuscleId(selectedRecord.sourceName), { source: 'viewer-mesh' })
 
   const { camPos, meshCenter, horizDir } = getCameraPositionForMesh(mesh)
   lastHorizDir.copy(horizDir)
