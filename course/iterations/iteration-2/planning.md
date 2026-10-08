@@ -63,7 +63,7 @@ Assignees below were verified against GitHub Issues on October 8, 2026. Issue #9
 
 ## Planning Snapshot
 
-The screenshot below records the Senior Design Project's **Iteration 2 Plan** view on October 6, 2026, filtered to Iteration 2. It shows the selected Issues, recorded assignees, statuses, and linked pull requests at the time of capture.
+The screenshot below records the Senior Design Project's **Iteration 2 Plan** view on October 8, 2026, filtered to Iteration 2. It shows the selected Issues, recorded assignees, statuses, and linked pull requests at the time of capture.
 
 The [Iteration 2 Plan](https://github.com/orgs/Naturallee-Goode/projects/1/views/4) view remains the living detailed plan as work progresses.
 
