@@ -68,5 +68,5 @@ test('Arm and Leg include limb muscles by location and preserve both sides', () 
   }
  }
  assert(!byArea.arm.some(r=>/pectoralis|of hand/i.test(r.sourceName)))
- assert(!byArea.leg.some(r=>/gluteus|of foot/i.test(r.sourceName)))
+ assert(!byArea.leg.some(r=>/gluteus|of foot|of hand|carpi|pollicis/i.test(r.sourceName)))
 })

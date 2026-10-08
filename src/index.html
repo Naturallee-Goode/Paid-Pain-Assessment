@@ -64,7 +64,7 @@
             <!-- Section 2: Interactive Body Map -->
             <fieldset>
                 <legend>2. Interactive Body Map</legend>
-                <p class="field-description">Choose a body area below, or select a part on the model. Your selection will appear below.
+                <p class="field-description">Choose a body area to see possible issues. Click a muscle in that area on the model, or continue to muscle search.
                 </p>
 
                 <div id="bodyAreaControls" class="body-area-controls">
@@ -74,6 +74,14 @@
                     <button type="button" id="changeBodyArea" disabled>Change Area</button>
                     <button type="button" id="clearBodyArea" disabled>Clear Selection</button>
                 </div>
+
+                <section id="possibleIssues" class="possible-issues" aria-labelledby="possibleIssuesTitle" hidden>
+                    <h3 id="possibleIssuesTitle"></h3>
+                    <p id="issuesDisclaimer">Educational information only, not a medical diagnosis. These are examples of possible issues, not a complete list or a prediction about your pain. A qualified healthcare professional can assess your symptoms.</p>
+                    <ul id="possibleIssuesList"></ul>
+                    <button type="button" id="continueToMuscles" class="btn btn-primary" aria-controls="muscleSelection">Continue to muscle selection</button>
+                    <p id="muscleSelectionHint" role="status" hidden>You can now search for a muscle or select one on the model. Muscle selection is optional.</p>
+                </section>
 
                 <!-- 3D Viewer -->
                 <div class="viewer-wrapper">
@@ -92,7 +100,8 @@
                         <div class="viewer-info-content">
                             <div id="partTitle" class="viewer-part-title">Search or select a body part</div>
                             <div id="partDescription" class="viewer-part-description"></div>
-                            <div class="viewer-search">
+                            <div id="muscleSelection" class="viewer-search" hidden>
+                                <label for="searchInput">Search muscles (optional)</label>
                                 <input type="text" id="searchInput" placeholder="Search muscles..." autocomplete="off">
                                 <ul id="searchResults"></ul>
                             </div>
@@ -102,8 +111,9 @@
 
                 <input type="hidden" id="selectedBodyArea" name="selectedBodyArea" value="">
 
-                <div class="form-group side-selector">
-                    <label>Side:</label>
+                <div class="form-group side-selector" role="group" aria-labelledby="painSideLabel" aria-describedby="painSideDescription painSideStatus">
+                    <p id="painSideLabel" class="side-selector-label">Side (optional)</p>
+                    <p id="painSideDescription" class="field-description">Choose the side of your body where you feel the concern, or leave this blank.</p>
                     <div class="radio-group">
                         <label class="radio-label">
                             <input type="radio" name="painSide" value="left"> Left
@@ -115,6 +125,8 @@
                             <input type="radio" name="painSide" value="both"> Both
                         </label>
                     </div>
+                    <button type="button" id="clearPainSide" class="btn btn-secondary side-clear" disabled>Clear side</button>
+                    <p id="painSideStatus" class="side-status" role="status" aria-live="polite">No side selected.</p>
                 </div>
             </fieldset>
 
@@ -386,7 +398,7 @@
     </div>
 
     <script type="module" src="script.js"></script>
-    <script type="module" src="body-map-app.mjs"></script>
+    <script type="module" src="body-map-app.mjs?v=4"></script>
 </body>
 
 </html>
