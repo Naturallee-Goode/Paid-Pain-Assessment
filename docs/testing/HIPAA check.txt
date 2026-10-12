@@ -6,3 +6,6 @@ On page 5: Mia (most likely) transmits covered transactions electronically, mean
 	The storefront doesn't count, since the products aren't connected to the intake form
 
 These are the only two requirements to be covered by HIPAA. The first is definitely met, and the second is most likely met, unless she does cash/check only and doesn't touch insurance.
+
+On further research, it turns out that Mia likely DOESN'T transmit covered transactions, as only transactions with insurance providers count.
+Conclusion: HIPAA compliance is not required.
