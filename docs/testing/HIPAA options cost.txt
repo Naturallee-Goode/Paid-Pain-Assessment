@@ -1,0 +1,10 @@
+There are 3 good options:
+EmailJS
+Mailgun
+Amazon SES
+
+EmailJS, of course, costs $40 per month but wouldn't require any code changes. 
+
+Mailgun unfortunately doesn't specify which subscription qualifies you for a BAA (required for HIPAA compliance). The best case is that you can get it with a Foundation subscription, for only 15 dollars a month. The worst case is probably the business subscription for $35 a month
+
+Amazon SES seems to have some hurdles to using it, BUT it can be made HIPAA compliant for no cost, and the cost is 10 cents per 1000 emails, likely putting the cost at under a cent a month. I'll need to talk to Jay about hosting. It could be simpler if we do everything through Amazon.
