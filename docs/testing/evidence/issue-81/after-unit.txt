@@ -1,0 +1,71 @@
+
+> test:body-map
+> node --test tests/*.test.*
+
+✔ animation progress uses elapsed time rather than rendered frame count (6.1946ms)
+✔ easing preserves animation endpoints (0.8113ms)
+(node:21380) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/g_dha/OneDrive%20-%20The%20University%20of%20Alabama/Uni/Fall%202026/CS%20495/Paid-Pain-Assessment/src/body-areas.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\g_dha\OneDrive - The University of Alabama\Uni\Fall 2026\CS 495\Paid-Pain-Assessment\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ all twelve controls select exclusively and never submit (514.8499ms)
+✔ Change Area and Clear Selection clear stored data and return keyboard focus (100.0079ms)
+✔ external store changes render without custom DOM event loops (58.3104ms)
+(node:23400) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/g_dha/OneDrive%20-%20The%20University%20of%20Alabama/Uni/Fall%202026/CS%20495/Paid-Pain-Assessment/src/body-areas.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\g_dha\OneDrive - The University of Alabama\Uni\Fall 2026\CS 495\Paid-Pain-Assessment\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ every selectable area has one focus region (18.1043ms)
+✔ back regions are posterior and separate at the shared region boundary (1.1854ms)
+✔ bilateral regions include both sides with identical spatial rules (0.9174ms)
+✔ camera distance fits the nearest face on portrait and landscape viewports (1.376ms)
+✔ index.html loads one body-map entry point and external form assets (6.7652ms)
+✔ viewer.js retains the body-map dependencies and interactions (1.1471ms)
+✔ body-map data defines the twelve supported areas with stable IDs and labels (3.1033ms)
+✔ body-area lookup preserves IDs while selections change (1.4149ms)
+(node:30096) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/g_dha/OneDrive%20-%20The%20University%20of%20Alabama/Uni/Fall%202026/CS%20495/Paid-Pain-Assessment/src/body-areas.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\g_dha\OneDrive - The University of Alabama\Uni\Fall 2026\CS 495\Paid-Pain-Assessment\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ store publishes coherent area, muscle, side, and reset transitions (18.0904ms)
+✔ store rejects invalid area, muscle, and side values (2.7408ms)
+✔ catalog readiness replays to late subscribers (4.281ms)
+(node:31024) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/g_dha/OneDrive%20-%20The%20University%20of%20Alabama/Uni/Fall%202026/CS%20495/Paid-Pain-Assessment/src/body-areas.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\g_dha\OneDrive - The University of Alabama\Uni\Fall 2026\CS 495\Paid-Pain-Assessment\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ content and review documentation match every supported ID without orphan records (5.6388ms)
+✔ all configured areas show readable content without citations, review labels, or added disclaimer (309.586ms)
+✔ pending and approved content render while incomplete approvals and requested changes are unavailable (47.4051ms)
+✔ missing and empty records clear stale copy and use an explicit unavailable state (32.0983ms)
+✔ content is rendered as text, so researched or reviewed copy cannot inject markup (28.6746ms)
+✔ educational form wording remains and both panels use the same content renderer (8.0776ms)
+(node:1856) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/g_dha/OneDrive%20-%20The%20University%20of%20Alabama/Uni/Fall%202026/CS%20495/Paid-Pain-Assessment/src/muscle-catalog.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\g_dha\OneDrive - The University of Alabama\Uni\Fall 2026\CS 495\Paid-Pain-Assessment\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ real catalog yields twelve nonempty, sorted groups with distinct back lists (13.0844ms)
+✔ assignments reference real names and preserve both sides and mesh identity (5.2626ms)
+✔ excluded anatomy cannot enter groups through the catalog pipeline (2.8421ms)
+✔ unmapped records are reported; invalid areas fail explicitly; duplicates are removed (6.2004ms)
+✔ physical-location lists do not include remote joint movers (8.8971ms)
+✔ Arm and Leg include limb muscles by location and preserve both sides (4.2082ms)
+✔ muscle names are readable while left and right stay available internally (6.3967ms)
+✔ source names stay side-specific for shared GLTF mesh clones (5.2579ms)
+✔ non-muscle materials and grouped objects are excluded (0.8751ms)
+✔ the current GLB produces a sorted muscle-only catalog (226.8607ms)
+(node:31592) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/g_dha/OneDrive%20-%20The%20University%20of%20Alabama/Uni/Fall%202026/CS%20495/Paid-Pain-Assessment/src/muscle-catalog.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\g_dha\OneDrive - The University of Alabama\Uni\Fall 2026\CS 495\Paid-Pain-Assessment\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ logical options are stable, sorted, unique, and retain side records privately (21.1724ms)
+✔ multi-area muscles keep one area-neutral ID (8.249ms)
+✔ ID collisions fail instead of merging different source muscles (2.7006ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 35
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 14285.1119
