@@ -360,6 +360,23 @@ function startCameraAnim(toPos, toTarget, duration) {
   animating = true
 }
 
+function resetBodyMapView() {
+  animating = false
+  animStartedAt = null
+  restoreSelectedMesh()
+  restoreAreaHighlights()
+  clearSearchResults()
+  if (searchInput) searchInput.value = ''
+  document.getElementById('partTitle').textContent = 'Search or select a body part'
+  document.getElementById('partDescription').textContent = ''
+  const dampingEnabled = controls.enableDamping
+  controls.enableDamping = false
+  controls.reset()
+  controls.enableDamping = dampingEnabled
+  camera.position.copy(defaultCamPos)
+  controls.target.copy(defaultTarget)
+}
+
 function getCameraPositionForMesh(mesh) {
   const box = new THREE.Box3().setFromObject(mesh)
   const meshCenter = new THREE.Vector3()
@@ -592,6 +609,7 @@ renderer.domElement.addEventListener('pointercancel', () => {
 })
 
 camera.position.copy(defaultCamPos)
+controls.saveState()
 
 if (searchInput) {
   searchInput.addEventListener('input', updateSearchResultsFromInput)
@@ -610,6 +628,10 @@ document.addEventListener('click', (event) => {
 })
 
 bodyMapStore.subscribe((state, previous, action) => {
+  if (action.type === 'reset') {
+    resetBodyMapView()
+    return
+  }
   const areaChanged = state.areaId !== previous.areaId
   const sideChanged = state.side !== previous.side
   const modelBecameReady = action.type === 'catalog-ready'
