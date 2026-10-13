@@ -65,7 +65,7 @@ test('Continue reveals optional muscles; changing area replaces issues and reset
 test('body-map and form reset remove stale issues even with failed model loading', () => {
   const { doc, store } = setup()
   store.setCatalogError()
-  for (const reset of [() => doc.getElementById('resetBodyMap').click(), () => store.reset()]) {
+  for (const reset of [() => doc.getElementById('clearBodyArea').click(), () => store.reset()]) {
     store.selectArea('hip')
     doc.getElementById('continueToMuscles').click()
     reset()

@@ -113,7 +113,7 @@ const server = http.createServer(async (req, res) => {
       return sides.has('left') && sides.has('right');
     }), 'Both must highlight muscles on both sides of the selected area');
     assert((await page.evaluate(() => window.__viewerTest.areaHighlights.size)) > leftCount);
-    await page.locator('#resetBodyMap').click();
+    await page.locator('#clearBodyArea').click();
     // A model click first chooses an area; the next click can select a muscle without Continue.
     await page.evaluate(() => {
       const v = window.__viewerTest;
@@ -178,7 +178,7 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator('#searchInput').inputValue(), '');
     await page.locator('[data-area="knee"]').click();
     await page.locator('#fullName').fill('Keep This Answer');
-    await page.locator('#resetBodyMap').focus();
+    await page.locator('#clearBodyArea').focus();
     await page.keyboard.press('Enter');
     assert.equal(await page.locator('#selectedBodyArea').inputValue(), '');
     assert.equal(await page.evaluate(() => window.__viewerTest.areaHighlights.size), 0);
@@ -233,7 +233,7 @@ const server = http.createServer(async (req, res) => {
     await page.waitForTimeout(300);
     assert.notEqual(await page.evaluate(() => window.__viewerTest.camera.position.distanceTo(window.__viewerTest.controls.target)),distance);
     if (evidenceDir) await page.screenshot({ path: path.join(evidenceDir, 'before-reset.png') });
-    await page.locator('#resetBodyMap').click();
+    await page.locator('#clearBodyArea').click();
     assert.deepEqual(await page.evaluate(() => window.__viewerTest.camera.position.toArray()), [0, 0.85, 2]);
     assert.deepEqual(await page.evaluate(() => window.__viewerTest.controls.target.toArray()), [0, 0.85, 0]);
     assert.equal(await page.evaluate(() => window.__viewerTest.animating()), false);
@@ -248,8 +248,8 @@ const server = http.createServer(async (req, res) => {
       v.controls.update();
     });
     assert.equal(await page.locator('#selectedBodyArea').inputValue(), '');
-    assert.equal(await page.locator('#resetBodyMap').isEnabled(), true);
-    await page.locator('#resetBodyMap').click();
+    assert.equal(await page.locator('#clearBodyArea').isEnabled(), true);
+    await page.locator('#clearBodyArea').click();
     assert.deepEqual(await page.evaluate(() => window.__viewerTest.camera.position.toArray()), [0, 0.85, 2]);
     assert.deepEqual(await page.evaluate(() => window.__viewerTest.controls.target.toArray()), [0, 0.85, 0]);
     // Reproducible issue evidence: two different areas and a mobile layout.
@@ -297,11 +297,11 @@ const server = http.createServer(async (req, res) => {
         assert.equal(await isolated.locator('#selectedBodyArea').inputValue(), 'lower-back');
         assert.equal(await isolated.locator('#partTitle').textContent(), 'Lower Back');
       }
-      await isolated.locator('#resetBodyMap').click();
+      await isolated.locator('#clearBodyArea').click();
       assert.equal(await isolated.locator('#selectedBodyArea').inputValue(), '');
       await isolated.close();
     }
-    console.log('PASS: area highlights, distinct back targets, restoration, rotation/zoom, all twelve areas, viewer cleanup, Reset Body Map, keyboard, form-answer preservation, three layouts, delayed/failed model, and unavailable viewer. No form submitted.');
+    console.log('PASS: area highlights, distinct back targets, restoration, rotation/zoom, all twelve areas, viewer cleanup, Clear Selection, keyboard, form-answer preservation, three layouts, delayed/failed model, and unavailable viewer. No form submitted.');
   } finally {
     if (browser) await browser.close();
     await new Promise(resolve => server.close(resolve));

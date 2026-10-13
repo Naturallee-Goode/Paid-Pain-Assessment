@@ -1,8 +1,8 @@
-# PBI #90: Reset Body Map
+# PBI #90: Clear Selection
 
-The duplicate Change Area and Clear Selection actions are replaced by one **Reset Body Map** button. Selecting a different area directly replaces the previous selection and clears stale muscle and side state. Reset clears the area, muscle, side, possible-issue review, search text, selection details, and highlights while leaving contact information and other intake answers unchanged.
+The duplicate Change Area action is removed, leaving one **Clear Selection** button. Selecting a different area directly replaces the previous selection and clears stale muscle and side state. Clear Selection resets the area, muscle, side, possible-issue review, search text, selection details, and highlights while leaving contact information and other intake answers unchanged.
 
-The reset action always remains enabled. When the model is available, it stops any active camera transition and immediately restores the full forward-facing camera position, target, and zoom. The same state reset remains usable while the model is loading, after loading fails, or if viewer code is unavailable.
+Clear Selection always remains enabled. When the model is available, it stops any active camera transition and immediately restores the full forward-facing camera position, target, and zoom. The same state reset remains usable while the model is loading, after loading fails, or if viewer code is unavailable.
 
 ## Automated evidence
 

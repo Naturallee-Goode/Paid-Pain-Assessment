@@ -7,7 +7,7 @@ export function initializeBodyAreaControls(doc = document, store = bodyMapStore)
   const choices = doc.getElementById('bodyAreaChoices')
   const status = doc.getElementById('bodyAreaStatus')
   const input = doc.getElementById('selectedBodyArea')
-  const reset = doc.getElementById('resetBodyMap')
+  const clear = doc.getElementById('clearBodyArea')
   const buttons = []
 
   for (const area of SUPPORTED_BODY_AREAS) {
@@ -21,11 +21,11 @@ export function initializeBodyAreaControls(doc = document, store = bodyMapStore)
     buttons.push(button)
   }
 
-  const resetAndFocus = () => {
+  const clearAndFocus = () => {
     store.reset({ source: 'body-map' })
     buttons[0]?.focus()
   }
-  reset.addEventListener('click', resetAndFocus)
+  clear.addEventListener('click', clearAndFocus)
 
   const unsubscribe = store.subscribe(state => {
     const area = SUPPORTED_BODY_AREAS.find(item => item.id === state.areaId)

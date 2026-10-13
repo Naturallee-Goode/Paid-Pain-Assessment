@@ -30,21 +30,21 @@ test('all twelve controls select exclusively and never submit', () => {
   assert.equal(submissions, 0)
 })
 
-test('Reset Body Map clears stored map data, returns focus, and never submits', () => {
+test('Clear Selection clears stored map data, returns focus, and never submits', () => {
   const { doc, store, buttons, input } = setup()
   let submissions = 0
   doc.getElementById('intakeForm').addEventListener('submit', event => { event.preventDefault(); submissions++ })
   store.setCatalog({ 'lower-back': [{ id: 'muscle.test' }] })
   buttons[3].click()
   store.setSide('left')
-  doc.getElementById('resetBodyMap').click()
+  doc.getElementById('clearBodyArea').click()
   assert.equal(input.value, '')
   assert.equal(store.getState().areaId, null)
   assert.equal(store.getState().muscleId, null)
   assert.equal(store.getState().side, null)
   assert.equal(doc.querySelectorAll('[aria-pressed="true"]').length, 0)
   assert.equal(doc.activeElement, buttons[0])
-  assert.equal(doc.getElementById('resetBodyMap').disabled, false)
+  assert.equal(doc.getElementById('clearBodyArea').disabled, false)
   assert.equal(submissions, 0)
 })
 
