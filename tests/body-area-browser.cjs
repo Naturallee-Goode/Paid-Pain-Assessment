@@ -176,14 +176,15 @@ const server = http.createServer(async (req, res) => {
     await page.locator('[data-area="foot"]').click();
     assert.equal(await page.evaluate(() => window.__testMesh.material === window.__viewerTest.highlightMat), false);
     assert.equal(await page.locator('#searchInput').inputValue(), '');
-    for (const id of ['changeBodyArea', 'clearBodyArea']) {
-      await page.locator('[data-area="knee"]').click();
-      await page.locator(`#${id}`).click();
-      assert.equal(await page.locator('#selectedBodyArea').inputValue(), '');
-      assert.equal(await page.evaluate(() => window.__viewerTest.areaHighlights.size), 0);
-      assert.equal(await page.locator('[aria-pressed="true"]').count(), 0);
-      assert.equal(await page.locator('[data-area="neck"]').evaluate(el => el === document.activeElement), true);
-    }
+    await page.locator('[data-area="knee"]').click();
+    await page.locator('#fullName').fill('Keep This Answer');
+    await page.locator('#clearBodyArea').focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('#selectedBodyArea').inputValue(), '');
+    assert.equal(await page.evaluate(() => window.__viewerTest.areaHighlights.size), 0);
+    assert.equal(await page.locator('[aria-pressed="true"]').count(), 0);
+    assert.equal(await page.locator('[data-area="neck"]').evaluate(el => el === document.activeElement), true);
+    assert.equal(await page.locator('#fullName').inputValue(), 'Keep This Answer');
     await page.locator('[data-area="elbow"]').focus();
     await page.keyboard.press('Enter');
     assert.equal(await page.locator('#selectedBodyArea').inputValue(), 'elbow');
@@ -215,6 +216,7 @@ const server = http.createServer(async (req, res) => {
       }
     }
     // Area focus must not disable user-controlled camera motion.
+    await page.locator('#fullName').fill('Keep This Answer');
     await page.waitForFunction(() => !window.__viewerTest.animating());
     const canvas=page.locator('#viewer canvas');
     await canvas.scrollIntoViewIfNeeded();
@@ -230,6 +232,26 @@ const server = http.createServer(async (req, res) => {
     await page.mouse.wheel(0,-150);
     await page.waitForTimeout(300);
     assert.notEqual(await page.evaluate(() => window.__viewerTest.camera.position.distanceTo(window.__viewerTest.controls.target)),distance);
+    if (evidenceDir) await page.screenshot({ path: path.join(evidenceDir, 'before-reset.png') });
+    await page.locator('#clearBodyArea').click();
+    assert.deepEqual(await page.evaluate(() => window.__viewerTest.camera.position.toArray()), [0, 0.85, 2]);
+    assert.deepEqual(await page.evaluate(() => window.__viewerTest.controls.target.toArray()), [0, 0.85, 0]);
+    assert.equal(await page.evaluate(() => window.__viewerTest.animating()), false);
+    assert.equal(await page.locator('#fullName').inputValue(), 'Keep This Answer');
+    if (evidenceDir) await page.screenshot({ path: path.join(evidenceDir, 'after-reset.png') });
+
+    // Reset remains useful with no area selected when only the camera has moved.
+    await page.evaluate(() => {
+      const v = window.__viewerTest;
+      v.camera.position.set(3, 4, 5);
+      v.controls.target.set(1, 1, 1);
+      v.controls.update();
+    });
+    assert.equal(await page.locator('#selectedBodyArea').inputValue(), '');
+    assert.equal(await page.locator('#clearBodyArea').isEnabled(), true);
+    await page.locator('#clearBodyArea').click();
+    assert.deepEqual(await page.evaluate(() => window.__viewerTest.camera.position.toArray()), [0, 0.85, 2]);
+    assert.deepEqual(await page.evaluate(() => window.__viewerTest.controls.target.toArray()), [0, 0.85, 0]);
     // Reproducible issue evidence: two different areas and a mobile layout.
     for (const [area, width] of [['shoulder', 1280], ['foot', 1280], ['shoulder', 390]]) {
       await page.setViewportSize({ width, height: 960 });
@@ -279,7 +301,7 @@ const server = http.createServer(async (req, res) => {
       assert.equal(await isolated.locator('#selectedBodyArea').inputValue(), '');
       await isolated.close();
     }
-    console.log('PASS: area highlights, distinct back targets, restoration, rotation/zoom, all twelve areas, viewer cleanup, Change/Clear, keyboard, reset, three layouts, delayed/failed model, and unavailable viewer. No form submitted.');
+    console.log('PASS: area highlights, distinct back targets, restoration, rotation/zoom, all twelve areas, viewer cleanup, Clear Selection, keyboard, form-answer preservation, three layouts, delayed/failed model, and unavailable viewer. No form submitted.');
   } finally {
     if (browser) await browser.close();
     await new Promise(resolve => server.close(resolve));

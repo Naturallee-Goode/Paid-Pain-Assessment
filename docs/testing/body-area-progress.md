@@ -1,6 +1,6 @@
 # Body-area controls — issue #46
 
-The controls provide twelve body-area choices, one pressed state at a time, a live selection announcement, Change Area, and Clear Selection. Both action buttons clear the selection and return keyboard focus to the first area button. Form reset clears selection too. These buttons never submit the form.
+The controls provide twelve body-area choices, one pressed state at a time, a live selection announcement, and one Clear Selection action. Clear Selection resets the body map and returns keyboard focus to the first area button without submitting the form or changing unrelated intake answers. It remains available when no area is selected so a rotated or zoomed model can always be restored.
 
 The controls run independently of the 3D viewer so they remain usable while the model loads or when viewer initialization fails. Changing areas restores any previously highlighted mesh and clears stale search/panel content. Legacy model selections still update the controls; areas outside the twelve supported choices retain their existing form values without falsely pressing an area button.
 
@@ -20,7 +20,7 @@ node --check src/body-area-config.mjs
 node --check src/body-area-controls.mjs
 ```
 
-The unit/DOM suite runs in GitHub CI and covers selection, Change/Clear, reset, focus restoration, event synchronization, and accidental submission prevention, alongside the existing viewer-source checks.
+The unit/DOM suite runs in GitHub CI and covers selection, direct area replacement, body-map reset, focus restoration, event synchronization, and accidental submission prevention, alongside the existing viewer-source checks.
 
 Browser checks start and stop their own local server. Install the test browser once with `npx playwright install chromium`, then run `npm run test:browser`. Alternatively, use installed Chrome on macOS:
 
@@ -32,7 +32,7 @@ The browser suite checks all twelve choices, including full spatial-region highl
 
 ## Follow-up work: issue #47
 
-On `feat/47-body-area-focus`, a separate focus module defines spatial regions for the current model. Area selection restores old materials, highlights matching model objects, and frames their bounds using both vertical field of view and viewport aspect ratio. Upper Back and Lower Back have separate posterior regions; neither automatically selects an individual muscle. Change/Clear, form reset, or selecting an individual mesh removes region highlights. A choice made before the model loads is applied when loading completes.
+On `feat/47-body-area-focus`, a separate focus module defines spatial regions for the current model. Area selection restores old materials, highlights matching model objects, and frames their bounds using both vertical field of view and viewport aspect ratio. Upper Back and Lower Back have separate posterior regions; neither automatically selects an individual muscle. Clear Selection, form reset, or selecting an individual mesh removes region highlights. A choice made before the model loads is applied when loading completes.
 
 The integrated unit suite contains sixteen passing tests. Browser checks additionally verify nonempty highlights for every area, old-material restoration, distinct back camera targets, and continued user rotation/zoom. The browser suite still checks the controls on phone/tablet/desktop layouts and loading/failure cases. The CI workflow checks the new module's syntax.
 

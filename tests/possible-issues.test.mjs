@@ -62,10 +62,10 @@ test('Continue reveals optional muscles; changing area replaces issues and reset
   assert.doesNotMatch(doc.getElementById('possibleIssuesList').textContent, /Bursitis/)
 })
 
-test('clear, change and form reset remove stale issues even with failed model loading', () => {
+test('body-map and form reset remove stale issues even with failed model loading', () => {
   const { doc, store } = setup()
   store.setCatalogError()
-  for (const reset of [() => doc.getElementById('clearBodyArea').click(), () => doc.getElementById('changeBodyArea').click(), () => store.reset()]) {
+  for (const reset of [() => doc.getElementById('clearBodyArea').click(), () => store.reset()]) {
     store.selectArea('hip')
     doc.getElementById('continueToMuscles').click()
     reset()

@@ -75,8 +75,11 @@ export function createBodyMapStore() {
       update({ catalogStatus: 'error', optionsByArea: {} }, { type: 'catalog-error', source: 'model' })
     },
 
-    reset() {
-      update({ areaId: null, muscleId: null, side: null, issuesReviewed: false }, { type: 'reset', source: 'form' })
+    reset({ source = 'form' } = {}) {
+      publish(
+        { ...state, areaId: null, muscleId: null, side: null, issuesReviewed: false },
+        { type: 'reset', source },
+      )
     },
   }
 }
