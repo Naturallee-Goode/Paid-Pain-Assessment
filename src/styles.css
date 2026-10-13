@@ -1146,7 +1146,7 @@ input[type="range"]::-moz-range-thumb:hover {
     display: flex;
     align-items: stretch;
     transition: max-height 0.3s ease;
-    max-height: 300px;
+    max-height: none;
     overflow: hidden;
 }
 
@@ -1194,6 +1194,9 @@ input[type="range"]::-moz-range-thumb:hover {
     line-height: 1.5;
     margin-bottom: var(--spacing-md);
 }
+
+.common-issues-list { margin: .5rem 0; padding-left: 1.25rem; }
+.common-issues-list li + li { margin-top: .5rem; }
 
 /* Search */
 .viewer-search {

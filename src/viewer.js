@@ -10,6 +10,7 @@ import { mapMusclesToAreas } from "./muscle-area-mapping.mjs";
 import { buildMuscleOptions } from "./muscle-options.mjs";
 import { bodyMapStore } from "./body-map-store.mjs";
 import { easeInOutQuad, getAnimationProgress } from "./animation-timing.mjs";
+import { renderCommonIssues } from "./common-issues.mjs";
 
 const scene = new THREE.Scene()
 
@@ -108,27 +109,6 @@ const searchResults = document.getElementById("searchResults")
 
 const SPINE_X = 0
 const SPINE_Z = 0
-
-const DIAGNOSES = {
-  head:      ["Tension headaches", "Migraine headaches", "Concussion", "Temporomandibular joint disorder (TMJ)"],
-  neck:      ["Cervical strain or sprain", "Cervical radiculopathy", "Cervical spondylosis", "Herniated cervical disc"],
-  shoulder:  ["Rotator cuff tear or tendinitis", "Shoulder impingement syndrome", "Frozen shoulder (adhesive capsulitis)", "Shoulder bursitis"],
-  elbow:     ["Tennis elbow (lateral epicondylitis)", "Golfer's elbow (medial epicondylitis)", "Olecranon bursitis", "Ulnar nerve entrapment"],
-  forearm:   [],
-  wrist:     ["Carpal tunnel syndrome", "Wrist sprain", "De Quervain's tenosynovitis", "Ganglion cyst"],
-  hand:      ["Trigger finger", "Arthritis in the hand", "Tendon injuries", "Dupuytren's contracture"],
-  chest:     ["Costochondritis", "Pectoralis strain", "Intercostal muscle strain", "Sternoclavicular joint sprain"],
-  abdomen:   [],
-  back:      ["Strain", "Herniated disc", "Sciatica", "Degenerative disc disease", "Spinal stenosis"],
-  hip:       ["Hip bursitis", "Hip arthritis", "Hip impingement", "Labral tear"],
-  thigh:     ["Hamstring strain", "Quadriceps strain", "IT band syndrome", "Femoral stress fracture"],
-  knee:      ["ACL tear", "Meniscus tear", "Patellar tendonitis", "Knee arthritis", "Patellofemoral pain syndrome"],
-  calf:      ["Calf strain", "Deep vein thrombosis", "Compartment syndrome", "Shin splints"],
-  lowerleg:  [],
-  ankle:     ["Ankle sprain", "Achilles tendonitis", "Ankle instability", "Stress fracture"],
-  foot:      ["Plantar fasciitis", "Tarsal tunnel syndrome", "Bunions", "Morton's neuroma"],
-  upperarm:  ["Biceps tendon rupture", "Triceps strain", "Humerus fracture", "Referred shoulder pain"],
-}
 
 const ARM_X_THRESHOLD = 0.14
 
@@ -293,9 +273,7 @@ function focusBodyArea(id) {
     bounds.union(box)
   }
   document.getElementById('partTitle').textContent = area.label
-  document.getElementById('partDescription').textContent = bodyMeshes.length
-    ? (bounds.isEmpty() ? 'No model region is available for this area yet.' : 'Rotate or zoom to explore this area.')
-    : 'Your area is selected. The model will focus when it loads.'
+  renderCommonIssues(document.getElementById('partDescription'), id)
   if (bounds.isEmpty()) {
     startCameraAnim(defaultCamPos, defaultTarget, ZOOM_OUT_DURATION)
     return
@@ -483,9 +461,6 @@ function updateInfoPanel(mesh, matName) {
   const detectedRegion = getBodyArea(center)
   const supportedArea = getSupportedBodyAreaForRegion(detectedRegion, center.y)
   const area = supportedArea?.id ?? detectedRegion
-  const diagnoses = DIAGNOSES[detectedRegion]
-  const areaLabel = supportedArea?.label ??
-    detectedRegion.charAt(0).toUpperCase() + detectedRegion.slice(1)
 
   console.log("Selected mesh:", mesh.name)
   console.log("Material:", matName)
@@ -495,12 +470,7 @@ function updateInfoPanel(mesh, matName) {
   document.getElementById("partTitle").textContent = displayName
 
   const descEl = document.getElementById("partDescription")
-  if(diagnoses && areaLabel) {
-    descEl.innerHTML = `<strong>Common ${areaLabel} Diagnoses:</strong><br>` +
-      diagnoses.map(d => `• ${d}`).join("<br>")
-  } else {
-    descEl.textContent = ""
-  }
+  renderCommonIssues(descEl, supportedArea?.id)
 
   if (supportedArea) bodyMapStore.selectArea(area, { source: 'viewer-mesh' })
   else if (bodyMapStore.getState().areaId) bodyMapStore.clearArea({ source: 'viewer-mesh' })
