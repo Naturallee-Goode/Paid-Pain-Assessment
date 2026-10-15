@@ -1,69 +1,9 @@
-
-> test:body-map
-> node --test tests/*.test.*
-
-✔ animation progress uses elapsed time rather than rendered frame count (8.6865ms)
-✔ easing preserves animation endpoints (1.3202ms)
-(node:18836) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/g_dha/OneDrive%20-%20The%20University%20of%20Alabama/Uni/Fall%202026/CS%20495/Paid-Pain-Assessment/src/body-areas.js is not specified and it doesn't parse as CommonJS.
-Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
-To eliminate this warning, add "type": "module" to C:\Users\g_dha\OneDrive - The University of Alabama\Uni\Fall 2026\CS 495\Paid-Pain-Assessment\package.json.
-(Use `node --trace-warnings ...` to show where the warning was created)
-✔ every configured area shows its content without a model, muscle, or side (546.6115ms)
-✔ area replacement and both reset controls clear old information without changing intake answers (101.7954ms)
-✔ catalog completion, failure, and optional detail changes preserve area information (68.4954ms)
-✔ missing, empty, and unavailable records replace stale content with the agreed message (63.6049ms)
-(node:18284) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/g_dha/OneDrive%20-%20The%20University%20of%20Alabama/Uni/Fall%202026/CS%20495/Paid-Pain-Assessment/src/body-areas.js is not specified and it doesn't parse as CommonJS.
-Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
-To eliminate this warning, add "type": "module" to C:\Users\g_dha\OneDrive - The University of Alabama\Uni\Fall 2026\CS 495\Paid-Pain-Assessment\package.json.
-(Use `node --trace-warnings ...` to show where the warning was created)
-✔ all twelve controls select exclusively and never submit (517.2132ms)
-✔ Change Area and Clear Selection clear stored data and return keyboard focus (78.2372ms)
-✔ external store changes render without custom DOM event loops (78.1451ms)
-(node:25700) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/g_dha/OneDrive%20-%20The%20University%20of%20Alabama/Uni/Fall%202026/CS%20495/Paid-Pain-Assessment/src/body-areas.js is not specified and it doesn't parse as CommonJS.
-Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
-To eliminate this warning, add "type": "module" to C:\Users\g_dha\OneDrive - The University of Alabama\Uni\Fall 2026\CS 495\Paid-Pain-Assessment\package.json.
-(Use `node --trace-warnings ...` to show where the warning was created)
-✔ every selectable area has one focus region (9.5059ms)
-✔ back regions are posterior and separate at the shared region boundary (1.0042ms)
-✔ bilateral regions include both sides with identical spatial rules (0.8386ms)
-✔ camera distance fits the nearest face on portrait and landscape viewports (0.6655ms)
-✔ index.html loads one body-map entry point and external form assets (7.6051ms)
-✔ viewer.js retains the body-map dependencies and interactions (1.4061ms)
-✔ body-map data defines the twelve supported areas with stable IDs and labels (3.2588ms)
-✔ body-area lookup preserves IDs while selections change (0.8985ms)
-(node:22152) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/g_dha/OneDrive%20-%20The%20University%20of%20Alabama/Uni/Fall%202026/CS%20495/Paid-Pain-Assessment/src/body-areas.js is not specified and it doesn't parse as CommonJS.
-Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
-To eliminate this warning, add "type": "module" to C:\Users\g_dha\OneDrive - The University of Alabama\Uni\Fall 2026\CS 495\Paid-Pain-Assessment\package.json.
-(Use `node --trace-warnings ...` to show where the warning was created)
-✔ store publishes coherent area, muscle, side, and reset transitions (7.0621ms)
-✔ store rejects invalid area, muscle, and side values (1.8486ms)
-✔ catalog readiness replays to late subscribers (2.5003ms)
-(node:24840) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/g_dha/OneDrive%20-%20The%20University%20of%20Alabama/Uni/Fall%202026/CS%20495/Paid-Pain-Assessment/src/muscle-catalog.js is not specified and it doesn't parse as CommonJS.
-Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
-To eliminate this warning, add "type": "module" to C:\Users\g_dha\OneDrive - The University of Alabama\Uni\Fall 2026\CS 495\Paid-Pain-Assessment\package.json.
-(Use `node --trace-warnings ...` to show where the warning was created)
-✔ real catalog yields twelve nonempty, sorted groups with distinct back lists (9.2168ms)
-✔ assignments reference real names and preserve both sides and mesh identity (5.0426ms)
-✔ excluded anatomy cannot enter groups through the catalog pipeline (0.967ms)
-✔ unmapped records are reported; invalid areas fail explicitly; duplicates are removed (1.5528ms)
-✔ physical-location lists do not include remote joint movers (4.7924ms)
-✔ Arm and Leg include limb muscles by location and preserve both sides (2.8508ms)
-✔ muscle names are readable while left and right stay available internally (5.6215ms)
-✔ source names stay side-specific for shared GLTF mesh clones (3.0692ms)
-✔ non-muscle materials and grouped objects are excluded (0.8165ms)
-✔ the current GLB produces a sorted muscle-only catalog (95.864ms)
-(node:16884) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/g_dha/OneDrive%20-%20The%20University%20of%20Alabama/Uni/Fall%202026/CS%20495/Paid-Pain-Assessment/src/muscle-catalog.js is not specified and it doesn't parse as CommonJS.
-Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
-To eliminate this warning, add "type": "module" to C:\Users\g_dha\OneDrive - The University of Alabama\Uni\Fall 2026\CS 495\Paid-Pain-Assessment\package.json.
-(Use `node --trace-warnings ...` to show where the warning was created)
-✔ logical options are stable, sorted, unique, and retain side records privately (10.9322ms)
-✔ multi-area muscles keep one area-neutral ID (7.2254ms)
-✔ ID collisions fail instead of merging different source muscles (2.5056ms)
-ℹ tests 33
-ℹ suites 0
-ℹ pass 33
-ℹ fail 0
-ℹ cancelled 0
-ℹ skipped 0
-ℹ todo 0
-ℹ duration_ms 8762.1626
+Integration baseline: origin/main at f2d632dbbc9a2727331e02ada849b26433aff503 (merged PR #79).
+Recorded command result: npm run test:body-map
+tests 45
+pass 45
+fail 0
+cancelled 0
+skipped 0
+todo 0
+duration_ms 38362.9773

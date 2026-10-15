@@ -1,60 +1,51 @@
 # Issue #82 — area-information edge cases
 
-Implemented October 15, 2026 on `fix/82-area-information-edge-cases`, created from `origin/main` at `f26013a`. Owner: Girwan Dhakal; selected for Iteration 2 in the Senior Design Project. This records implementation and verification for PR review; the issue remains open until integration and review are complete.
+Verified October 15, 2026 on `fix/82-area-information-edge-cases`, integrating `origin/main` at `f2d632dbbc9a2727331e02ada849b26433aff503` after PR #79 merged. Owner: Girwan Dhakal; Iteration 2. [PR #110](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/110) contains this fix and evidence. The issue remains open pending review and merge.
 
-## Plan and scope
+## Scope and integration
 
-1. Check the current main baseline and reuse the existing area content and unavailable-content renderer.
-2. Render area information from the shared selection store before importing the viewer. Keep the panel outside the model's loading overlay.
-3. Exercise every configured area, replacement, reset, unavailable content, and delayed/failed loading; record results and two screenshots.
-4. Open a focused PR into main with the acceptance evidence. Leave sponsor approval (#81), area boundaries (#96), mode changes (#84), and camera/reset redesign (#90) with their owners.
+Reuse the integrated area-information feature, verify its edge cases, and add only the demonstrated missing-content gap. The existing `possibleIssues` panel already subscribes to the shared store before viewer startup and sits outside the loading overlay. It supports all configured areas, area replacement, Clear Selection, confirmed form reset, delayed/failed model loading, and optional muscle/side selection.
 
-PR #79 was not reviewed as part of this task, per Girwan's instruction. Main does not contain its wider interaction changes or PR #105's content implementation. This branch reuses only the content data and renderer from [issue #81 / PR #105](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/105), commit [`5ffabdb`](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/commit/5ffabdbeaeb319f616b55b181ed2235cc625081a). Its data originated in [#74](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/74) / [#79](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/79). No new condition descriptions were researched or written for #82.
+This branch adds the message **Content is not available for this area yet.** when a supported area has an empty issue list. Continue remains available. The message reuses the wording from #81 / #105; content research and sponsor approval stay under #81. A small import-version increment ensures the updated renderer is requested.
 
-The copied data differs only in its documentation pointer. The reused renderer retains the exact unavailable message: **Content is not available for this area yet.** The only new rendering logic subscribes to area changes, clears the panel when no area is selected, and runs independently of viewer startup. Existing store transitions and reset controls are reused without modifying their behavior.
+The original branch was created from main at `f26013a` before #79 merged. After main advanced, four files conflicted and the two implementations would have produced duplicate panels. Integration retained main's app entry point, HTML, selection store, viewer, side controls, and reset implementation. The provisional extra panel and copied #81 modules were removed. The new issue #82 diff therefore consists of the fallback, focused verification, and evidence. There is no production diff in the viewer, body-map store, body-area controls, HTML, or form script relative to merged main.
 
 ## Acceptance / gap matrix
 
-| Criterion | Existing implementation or demonstrated gap | Fix / verification |
+| Criterion | Reused implementation | Fix / verification |
 | --- | --- | --- |
-| Identify reused requirements and gaps after #74 | #81 contains stable-ID content, a shared renderer, and an unavailable state; its viewer calls cannot provide content when viewer startup fails. Main has area controls but no independent area-information panel. | Reuse the two #81 modules and add a store subscription in the body-map entry point; wider PR #79 review was excluded by request. |
-| Every supported area shows its name and issues without muscle, side, or mode choices | Existing content covers the current configuration, but was not integrated on main. | Unit tests derive coverage from `SUPPORTED_BODY_AREAS`; browser checks use every actual area button. All current 12 areas pass with no muscle or side selected. No mode choice is introduced. |
-| Changing area replaces information; reset clears stale content | Main's store already clears selection state on area changes and reset. | The panel uses that same state. Unit tests cover Change Area, Clear Selection, and store reset. Browser checks cover content replacement, Clear Selection, and confirmed form reset, including unavailable-viewer cases. |
-| Missing content shows the agreed message | #81 already supplies the fallback renderer; no duplicate fallback is needed. | Unit tests cover missing/empty/unavailable records. A browser-only Foot fixture follows Shoulder/Ankle content and verifies no stale list remains. |
-| Delayed/failed model loading leaves area information usable | Viewer-owned rendering is coupled to successful viewer startup and can sit behind its loading overlay. | New panel is outside the viewer. Browser scenarios cover delayed completion retaining the latest area, reset before completion remaining empty, GLB failure, and failed viewer import. |
-| Durable integration and completion evidence | An open PR does not establish completion. | This record, saved logs, browser manifest, two screenshots, and the linked fix PR establish the reviewable result. Keep #82 In Progress until the fix is reviewed and merged. |
+| Identify existing work and remaining gaps after #74 | [#74](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/74) / [merged PR #79](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/79) supply the independent information panel and selection flow. | Checked integration against main at `f2d632d`; only missing-content feedback remained unmet. This was an integration check, not a repeat of the earlier PR review. |
+| Every supported area shows its name and issues without muscle, side, or mode choices | `initializePossibleIssues`, `SUPPORTED_BODY_AREAS`, and the existing content data. | Existing unit tests plus all actual area buttons in each isolated browser scenario. Current 12 areas pass without muscle or side choices. |
+| Area changes replace information; reset clears stale content | Existing area transitions and Clear Selection/form reset. | Browser and DOM assertions check replacement, empty title/list, hidden panel, and preserved unrelated answers after Clear Selection. |
+| Missing content shows the agreed message | Existing lookup returns an empty list for unavailable content, but previously rendered a blank list. | Add the fallback to the existing renderer. A browser-only Foot fixture verifies the message and absence of stale Ankle/Shoulder content. |
+| Delayed/failed model loading leaves information usable | Existing panel initializes independently of the viewer. | Five scenarios: delayed completion retaining the latest area, reset before completion remaining empty, GLB failure, failed viewer import, and missing content with model failure. |
+| Durable integration evidence | An open PR alone does not complete the issue. | Updated screenshots, result records, browser manifest, and this matrix; keep #82 In Progress until review and merge. |
 
-## Verification
+## Verification results
 
-Baseline on main: **29 unit tests**, HTML validation of all three pages, and the existing browser suite passed. The browser runtime was found at `C:\Users\g_dha\AppData\Local\ms-playwright`; the initial sandbox-default browser path was unavailable. No package or lockfile changes were needed.
-
-| Final check | Result | Saved evidence |
+| Check | Integrated result | Evidence |
 | --- | --- | --- |
-| `npm run test:body-map` | 33 passed, 0 failed | [Unit log](evidence/issue-82/unit-results.txt) |
-| `npm run lint:html` | All three pages passed | [HTML log](evidence/issue-82/html-results.txt) |
-| `node --check` for every source JS/MJS file | Passed | [Syntax log](evidence/issue-82/syntax-results.txt) |
-| `npm run test:browser` | Existing loaded-model workflow and five area-information scenarios passed | [Browser log](evidence/issue-82/browser-results.txt), [scenario manifest](evidence/issue-82/browser-results.json) |
+| `npm run test:body-map` | 45 passed, 0 failed | [Recorded result](evidence/issue-82/unit-results.txt) |
+| `npm run lint:html` | All three pages passed | [Recorded result](evidence/issue-82/html-results.txt) |
+| `node --check` for every source JS/MJS file | All 19 passed | [Syntax result](evidence/issue-82/syntax-results.txt) |
+| `npm run test:browser` | Full loaded-model workflow and all five isolated scenarios passed | [Recorded result](evidence/issue-82/browser-results.txt), [capture/scenario manifest](evidence/issue-82/browser-results.json) |
 
-Browser checks include all current areas in each isolated scenario, no-side/no-muscle state, content replacement, Clear Selection, confirmed form reset, retained unrelated answers after Clear Selection, no accidental submissions, and no unexpected page errors. The unavailable-viewer scenario expects exactly the failed dynamic-import error; its area controls and information still work. Loaded-model layout checks at 390, 768, and 1280 pixels pass without horizontal overflow. Existing camera, highlighting, selection, keyboard, and reset regressions also pass.
+The integrated browser run retains #79's regressions for repeated selection by click/Enter with Left/Right/Both/no side, multi-area muscle selection, side filtering, material cleanup, camera reset, keyboard controls, direct model selection, and form reset. It also checks 390/768/1280px layouts without horizontal overflow. New coverage exercises every area in each isolated loading scenario, catalog completion/failure, missing content, and reset during a pending model request.
 
-The browser suite serves the actual app and uses the checked-in GLB. It pauses the existing heavy render loop for assertions. The missing-content fixture intercepts only the Foot data lookup in an isolated browser; production records remain unchanged. No intake form was submitted and no email was sent.
+No intake was submitted or email sent. No unexpected page errors occurred. The unavailable-viewer scenario expects exactly its failed dynamic-import error while controls and information remain usable. The browser suite serves the actual app with the checked-in GLB and pauses the existing heavy render loop for assertions. The missing-content fixture intercepts only Foot's data lookup in an isolated browser; no production content record is changed.
 
 ## Screenshots
 
-Two new screenshots were captured by the real browser suite and visually inspected. Reset is established by the automated empty-panel/hidden-panel assertions recorded above; no additional reset screenshot was added, following the requested two-image limit.
+Two screenshots were regenerated against the integrated code and visually inspected. Reset is verified by automated empty-title/list and hidden-panel assertions, keeping the requested two-image limit.
 
-![Shoulder area information remains visible with failed model loading and no side selected](evidence/issue-82/area-only-model-failed.png)
+![Integrated Shoulder information remains usable after model failure, without muscle or side selection](evidence/issue-82/area-only-model-failed.png)
 
-![Browser-only missing Foot content uses the unavailable message without stale content](evidence/issue-82/unavailable-content.png)
+![Browser-only missing Foot content shows the agreed unavailable message](evidence/issue-82/unavailable-content.png)
 
-## Reproduce
+## Reproduce and remaining work
 
-Run `npm run test:body-map`, `npm run lint:html`, and `npm run test:browser`. To regenerate the two screenshots and manifest in PowerShell, set `ISSUE82_EVIDENCE_DIR=docs/testing/evidence/issue-82` before the browser command. On this Windows workstation also set `PLAYWRIGHT_BROWSERS_PATH=C:\Users\g_dha\AppData\Local\ms-playwright`; CI installs its own matching Chromium runtime.
+Run `npm run test:body-map`, `npm run lint:html`, and `npm run test:browser`. Set `ISSUE82_EVIDENCE_DIR=docs/testing/evidence/issue-82` before the browser command to regenerate the two images and manifest. This workstation uses `PLAYWRIGHT_BROWSERS_PATH=C:\Users\g_dha\AppData\Local\ms-playwright`; CI installs its matching Chromium runtime.
 
-## Content, integration, and AI assistance
+Sponsor content approval (#81), boundaries (#96), and mode/layout work retain their separate scope. Existing sources and limitations remain in [the integrated feature record](possible-issues.md). The unavailable wording comes from [#81's renderer](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/blob/5ffabdbeaeb319f616b55b181ed2235cc625081a/src/common-issues.mjs); this branch no longer depends on PR #105's source modules.
 
-Sponsor review remains pending under #81. Original source URLs, review statuses, and rationale are preserved in [the content data](../../src/common-issues-data.mjs) and the [original content review record](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/blob/5ffabdbeaeb319f616b55b181ed2235cc625081a/docs/content/common-issues-review.md). Reusing this copy does not record sponsor approval. The current area configuration remains the working baseline until #96 records approved changes.
-
-Because #105 is still open, its two content modules are included here so this branch works from main. When integrating #105, retain `initializeAreaInformation` and its call in `body-map-app.mjs`; retain the reviewed content data. #79's wider muscle, side, camera, and reset changes were not imported. Existing muscle-detail behavior on main is outside this fix and remains covered by its own issues/PRs.
-
-Codex assisted with planning, implementation, tests, screenshots, documentation, and PR preparation using the cs-495-workflow and git-commit-messages skills. Automated verification and screenshot inspection were performed by Codex; this is not a claim of human review, sponsor approval, or a completed merge.
+Codex assisted with integration, conflict resolution, the focused fallback, tests, screenshots, documentation, and PR preparation using the cs-495-workflow and git-commit-messages skills. Automated checks and image inspection were performed by Codex. Human review, sponsor approval, and merging this fix are not represented as completed.

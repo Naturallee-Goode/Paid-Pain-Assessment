@@ -1,5 +1,3 @@
-
-> test:browser
-> node tests/body-area-browser.cjs
-
+Integration baseline: origin/main at f2d632dbbc9a2727331e02ada849b26433aff503.
+Recorded command result: npm run test:browser
 PASS: existing model workflow and all configured area-information lists, replacement, Clear Selection, form reset, three layouts, delayed/failed model, unavailable viewer, missing-content fixture, and no accidental submissions.

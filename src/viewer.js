@@ -1,15 +1,17 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { getSupportedBodyAreaForRegion } from "./body-areas.js";
+import { getSupportedBodyArea, getSupportedBodyAreaForRegion } from "./body-areas.js";
 import { buildMuscleCatalog, getSourceNodeName, parseAnatomyName } from "./muscle-catalog.js";
 
 import { AREA_FOCUS_REGIONS, isWithinArea, getAreaCameraDistance } from "./body-area-focus.mjs";
 
 import { mapMusclesToAreas } from "./muscle-area-mapping.mjs";
-import { buildMuscleOptions } from "./muscle-options.mjs";
+import { buildMuscleOptions, createMuscleId } from "./muscle-options.mjs";
 import { bodyMapStore } from "./body-map-store.mjs";
 import { easeInOutQuad, getAnimationProgress } from "./animation-timing.mjs";
+import { getPossibleMuscleDiagnoses } from "./muscle-diagnoses.mjs";
+import { filterMuscleRecordsBySide, matchesSelectedSide } from "./body-side-filter.mjs";
 
 const scene = new THREE.Scene()
 
@@ -95,6 +97,8 @@ const meshVolume = new Map()
 const meshMatName = new Map()
 const meshLabelIndex = new Map()
 const meshSourceName = new Map()
+const meshSide = new Map()
+const meshBaseAppearance = new Map()
 const muscleCatalog = []
 let bodyAreaMuscles = {}
 let muscleRecordsById = new Map()
@@ -108,27 +112,6 @@ const searchResults = document.getElementById("searchResults")
 
 const SPINE_X = 0
 const SPINE_Z = 0
-
-const DIAGNOSES = {
-  head:      ["Tension headaches", "Migraine headaches", "Concussion", "Temporomandibular joint disorder (TMJ)"],
-  neck:      ["Cervical strain or sprain", "Cervical radiculopathy", "Cervical spondylosis", "Herniated cervical disc"],
-  shoulder:  ["Rotator cuff tear or tendinitis", "Shoulder impingement syndrome", "Frozen shoulder (adhesive capsulitis)", "Shoulder bursitis"],
-  elbow:     ["Tennis elbow (lateral epicondylitis)", "Golfer's elbow (medial epicondylitis)", "Olecranon bursitis", "Ulnar nerve entrapment"],
-  forearm:   [],
-  wrist:     ["Carpal tunnel syndrome", "Wrist sprain", "De Quervain's tenosynovitis", "Ganglion cyst"],
-  hand:      ["Trigger finger", "Arthritis in the hand", "Tendon injuries", "Dupuytren's contracture"],
-  chest:     ["Costochondritis", "Pectoralis strain", "Intercostal muscle strain", "Sternoclavicular joint sprain"],
-  abdomen:   [],
-  back:      ["Strain", "Herniated disc", "Sciatica", "Degenerative disc disease", "Spinal stenosis"],
-  hip:       ["Hip bursitis", "Hip arthritis", "Hip impingement", "Labral tear"],
-  thigh:     ["Hamstring strain", "Quadriceps strain", "IT band syndrome", "Femoral stress fracture"],
-  knee:      ["ACL tear", "Meniscus tear", "Patellar tendonitis", "Knee arthritis", "Patellofemoral pain syndrome"],
-  calf:      ["Calf strain", "Deep vein thrombosis", "Compartment syndrome", "Shin splints"],
-  lowerleg:  [],
-  ankle:     ["Ankle sprain", "Achilles tendonitis", "Ankle instability", "Stress fracture"],
-  foot:      ["Plantar fasciitis", "Tarsal tunnel syndrome", "Bunions", "Morton's neuroma"],
-  upperarm:  ["Biceps tendon rupture", "Triceps strain", "Humerus fracture", "Referred shoulder pain"],
-}
 
 const ARM_X_THRESHOLD = 0.14
 
@@ -214,6 +197,7 @@ loader.load(
         depthWrite: preset.opacity === undefined,
         sheen: 0.15, sheenColor: new THREE.Color(0xff8866), sheenRoughness: 0.8, envMapIntensity: 0.3,
       })
+      meshBaseAppearance.set(child, { material: child.material, renderOrder: child.renderOrder })
       bodyMeshes.push(child)
       child.geometry.computeBoundingBox()
       const box = child.geometry.boundingBox
@@ -223,6 +207,7 @@ loader.load(
     })
 
     muscleCatalog.push(...buildMuscleCatalog(catalogEntries))
+    muscleCatalog.forEach(record => meshSide.set(record.mesh.uuid, record.side))
     bodyAreaMuscles = mapMusclesToAreas(muscleCatalog).byArea
     const muscleOptions = buildMuscleOptions(bodyAreaMuscles)
     muscleRecordsById = muscleOptions.recordsById
@@ -262,10 +247,38 @@ const highlightMat = new THREE.MeshPhysicalMaterial({
 const areaHighlights = new Map()
 function restoreAreaHighlights() {
   for (const [mesh, original] of areaHighlights) {
-    mesh.material = original.material
-    mesh.renderOrder = original.renderOrder
+    const base = meshBaseAppearance.get(mesh) ?? original
+    mesh.material = base.material
+    mesh.renderOrder = base.renderOrder
   }
   areaHighlights.clear()
+}
+
+function highlightSelectedMuscleSide(side) {
+  const muscleId = bodyMapStore.getState().muscleId
+  if (!muscleId) return false
+  const matchingRecords = filterMuscleRecordsBySide(muscleRecordsById.get(muscleId) ?? [], side)
+  restoreSelectedMesh()
+  restoreAreaHighlights()
+
+  // Keep the logical muscle selected without highlighting an unavailable counterpart.
+  if (!matchingRecords.length) return true
+
+  const [primary, ...additional] = matchingRecords
+  selectedMesh = primary.mesh
+  originalMat = selectedMesh.material
+  originalRenderOrder = selectedMesh.renderOrder
+  selectedMesh.material = highlightMat
+  selectedMesh.renderOrder = 999
+
+  for (const record of additional) {
+    const mesh = record.mesh
+    if (mesh === selectedMesh || areaHighlights.has(mesh)) continue
+    areaHighlights.set(mesh, { material: mesh.material, renderOrder: mesh.renderOrder })
+    mesh.material = highlightMat
+    mesh.renderOrder = 999
+  }
+  return true
 }
 
 function focusBodyArea(id) {
@@ -281,12 +294,14 @@ function focusBodyArea(id) {
     return
   }
   const bounds = new THREE.Box3()
-  for (const mesh of bodyMeshes) {
+  const selectedSide = bodyMapStore.getState().side
+  const highlightedMeshes = new Set()
+  for (const record of getMusclesForArea(id)) {
+    const mesh = record.mesh
+    if (highlightedMeshes.has(mesh)) continue
+    if (!matchesSelectedSide(record.side, selectedSide)) continue
+    highlightedMeshes.add(mesh)
     const box = new THREE.Box3().setFromObject(mesh)
-    if (!isWithinArea(box.getCenter(new THREE.Vector3()), area)) continue
-    // A long back muscle can have its center near the pelvis while extending
-    // far above the hip. Keep it out of the hip highlight.
-    if (id === 'hip' && box.max.y > 1.17) continue
     areaHighlights.set(mesh, { material: mesh.material, renderOrder: mesh.renderOrder })
     mesh.material = highlightMat
     mesh.renderOrder = 999
@@ -345,6 +360,23 @@ function startCameraAnim(toPos, toTarget, duration) {
   animating = true
 }
 
+function resetBodyMapView() {
+  animating = false
+  animStartedAt = null
+  restoreSelectedMesh()
+  restoreAreaHighlights()
+  clearSearchResults()
+  if (searchInput) searchInput.value = ''
+  document.getElementById('partTitle').textContent = 'Search or select a body part'
+  document.getElementById('partDescription').textContent = ''
+  const dampingEnabled = controls.enableDamping
+  controls.enableDamping = false
+  controls.reset()
+  controls.enableDamping = dampingEnabled
+  camera.position.copy(defaultCamPos)
+  controls.target.copy(defaultTarget)
+}
+
 function getCameraPositionForMesh(mesh) {
   const box = new THREE.Box3().setFromObject(mesh)
   const meshCenter = new THREE.Vector3()
@@ -401,7 +433,7 @@ function renderSearchResults(query) {
     item.textContent = label
     item.addEventListener('click', () => {
       if (meshes && meshes.length) {
-        selectBodyMesh(meshes[0])
+        selectBodyMesh(meshes[0], { synchronizeSide: false })
         if (searchInput) searchInput.value = label
         clearSearchResults()
       }
@@ -413,8 +445,9 @@ function renderSearchResults(query) {
 
 function restoreSelectedMesh() {
   if (!selectedMesh || !originalMat) return
-  selectedMesh.material = originalMat
-  selectedMesh.renderOrder = originalRenderOrder
+  const base = meshBaseAppearance.get(selectedMesh)
+  selectedMesh.material = base?.material ?? originalMat
+  selectedMesh.renderOrder = base?.renderOrder ?? originalRenderOrder
   selectedMesh = null
   originalMat = null
 }
@@ -431,8 +464,38 @@ function getSelectableHit(hits) {
   })?.object
 }
 
-function selectBodyMesh(mesh) {
+function getCatalogAreaIdsForMesh(mesh) {
+  return Object.entries(bodyAreaMuscles)
+    .filter(([, records]) => records.some(record => record.mesh === mesh))
+    .map(([areaId]) => areaId)
+}
+
+function resolveAreaForMesh(mesh, currentAreaId, center) {
+  const catalogAreaIds = getCatalogAreaIdsForMesh(mesh)
+  if (currentAreaId && catalogAreaIds.includes(currentAreaId)) {
+    return getSupportedBodyArea(currentAreaId)
+  }
+
+  const detectedRegion = getBodyArea(center)
+  const detectedArea = getSupportedBodyAreaForRegion(detectedRegion, center.y)
+  if (detectedArea && catalogAreaIds.includes(detectedArea.id)) return detectedArea
+  return getSupportedBodyArea(catalogAreaIds[0])
+}
+
+function selectBodyMesh(mesh, { synchronizeSide = true } = {}) {
   if (!mesh) return
+  const center = new THREE.Box3().setFromObject(mesh).getCenter(new THREE.Vector3())
+  const state = bodyMapStore.getState()
+  const supportedArea = resolveAreaForMesh(mesh, state.areaId, center)
+  if (!supportedArea) return
+  if (supportedArea.id !== state.areaId) {
+    bodyMapStore.selectArea(supportedArea.id, { source: 'viewer-area' })
+    return
+  }
+  const selectedRecord = muscleCatalog.find(record => record.mesh === mesh)
+  const muscleId = selectedRecord ? createMuscleId(selectedRecord.sourceName) : null
+
+  if (!synchronizeSide && muscleId && muscleId === state.muscleId) return
   restoreAreaHighlights()
   if (selectedMesh && selectedMesh.uuid === mesh.uuid) {
     clearSelection()
@@ -448,10 +511,18 @@ function selectBodyMesh(mesh) {
   mesh.material = highlightMat
   mesh.renderOrder = 999
 
-  const { camPos, meshCenter, horizDir } = getCameraPositionForMesh(mesh)
+  if (selectedRecord) {
+    bodyMapStore.selectMuscle(muscleId, { source: 'viewer-mesh' })
+    if (synchronizeSide && selectedRecord.side) {
+      bodyMapStore.setSide(selectedRecord.side, { source: 'viewer-mesh' })
+    }
+  }
+
+  const focusedMesh = selectedMesh ?? mesh
+  const { camPos, meshCenter, horizDir } = getCameraPositionForMesh(focusedMesh)
   lastHorizDir.copy(horizDir)
   startCameraAnim(camPos, meshCenter, ZOOM_IN_DURATION)
-  updateInfoPanel(mesh, matName)
+  updateInfoPanel(focusedMesh, matName, supportedArea)
 }
 
 function selectSearchResult(query) {
@@ -459,7 +530,7 @@ function selectSearchResult(query) {
   if (!matches.length) return
   const { label, meshes } = matches[0]
   if (meshes && meshes.length) {
-    selectBodyMesh(meshes[0])
+    selectBodyMesh(meshes[0], { synchronizeSide: false })
     if (searchInput) searchInput.value = label
     clearSearchResults()
   }
@@ -475,17 +546,14 @@ function updateSearchResultsFromInput() {
   renderSearchResults(value)
 }
 
-function updateInfoPanel(mesh, matName) {
+function updateInfoPanel(mesh, matName, selectedArea = null) {
   const box = new THREE.Box3().setFromObject(mesh)
   const center = new THREE.Vector3()
   box.getCenter(center)
 
-  const detectedRegion = getBodyArea(center)
-  const supportedArea = getSupportedBodyAreaForRegion(detectedRegion, center.y)
-  const area = supportedArea?.id ?? detectedRegion
-  const diagnoses = DIAGNOSES[detectedRegion]
-  const areaLabel = supportedArea?.label ??
-    detectedRegion.charAt(0).toUpperCase() + detectedRegion.slice(1)
+  const supportedArea = selectedArea ?? resolveAreaForMesh(mesh, bodyMapStore.getState().areaId, center)
+  const area = supportedArea?.id ?? 'unknown'
+  const areaLabel = supportedArea?.label ?? 'selected'
 
   console.log("Selected mesh:", mesh.name)
   console.log("Material:", matName)
@@ -495,15 +563,21 @@ function updateInfoPanel(mesh, matName) {
   document.getElementById("partTitle").textContent = displayName
 
   const descEl = document.getElementById("partDescription")
-  if(diagnoses && areaLabel) {
-    descEl.innerHTML = `<strong>Common ${areaLabel} Diagnoses:</strong><br>` +
-      diagnoses.map(d => `• ${d}`).join("<br>")
-  } else {
-    descEl.textContent = ""
-  }
+  const diagnoses = getPossibleMuscleDiagnoses(supportedArea?.id)
+  const intro = document.createElement('p')
+  intro.textContent = `Possible diagnoses associated with this muscle in the ${areaLabel.toLowerCase()} area:`
+  const list = document.createElement('ul')
+  list.className = 'muscle-diagnosis-list'
+  diagnoses.forEach((diagnosis) => {
+    const item = document.createElement('li')
+    item.textContent = diagnosis
+    list.appendChild(item)
+  })
+  const disclaimer = document.createElement('p')
+  disclaimer.className = 'muscle-diagnosis-disclaimer'
+  disclaimer.textContent = 'Educational information only. These possibilities are not a medical diagnosis.'
+  descEl.replaceChildren(intro, list, disclaimer)
 
-  if (supportedArea) bodyMapStore.selectArea(area, { source: 'viewer-mesh' })
-  else if (bodyMapStore.getState().areaId) bodyMapStore.clearArea({ source: 'viewer-mesh' })
 }
 
 function handleViewerClick(e) {
@@ -557,6 +631,7 @@ renderer.domElement.addEventListener('pointercancel', () => {
 })
 
 camera.position.copy(defaultCamPos)
+controls.saveState()
 
 if (searchInput) {
   searchInput.addEventListener('input', updateSearchResultsFromInput)
@@ -575,9 +650,16 @@ document.addEventListener('click', (event) => {
 })
 
 bodyMapStore.subscribe((state, previous, action) => {
+  if (action.type === 'reset') {
+    resetBodyMapView()
+    return
+  }
   const areaChanged = state.areaId !== previous.areaId
+  const muscleChanged = state.muscleId !== previous.muscleId
+  const sideChanged = state.side !== previous.side
   const modelBecameReady = action.type === 'catalog-ready'
-  if ((areaChanged && action.source !== 'viewer-mesh') || modelBecameReady) {
+  if (!areaChanged && (sideChanged || (muscleChanged && state.side)) && highlightSelectedMuscleSide(state.side)) return
+  if ((areaChanged && action.source !== 'viewer-mesh') || sideChanged || modelBecameReady) {
     focusBodyArea(state.areaId)
   }
 })

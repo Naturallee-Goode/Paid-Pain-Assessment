@@ -7,7 +7,6 @@ export function initializeBodyAreaControls(doc = document, store = bodyMapStore)
   const choices = doc.getElementById('bodyAreaChoices')
   const status = doc.getElementById('bodyAreaStatus')
   const input = doc.getElementById('selectedBodyArea')
-  const change = doc.getElementById('changeBodyArea')
   const clear = doc.getElementById('clearBodyArea')
   const buttons = []
 
@@ -23,10 +22,9 @@ export function initializeBodyAreaControls(doc = document, store = bodyMapStore)
   }
 
   const clearAndFocus = () => {
-    store.clearArea()
+    store.reset({ source: 'body-map' })
     buttons[0]?.focus()
   }
-  change.addEventListener('click', clearAndFocus)
   clear.addEventListener('click', clearAndFocus)
 
   const unsubscribe = store.subscribe(state => {
@@ -36,8 +34,6 @@ export function initializeBodyAreaControls(doc = document, store = bodyMapStore)
       button.setAttribute('aria-pressed', String(button.dataset.area === area?.id))
     }
     status.textContent = area ? `Selected area: ${area.label}` : 'No body area selected.'
-    change.disabled = !area
-    clear.disabled = !area
   })
 
   return unsubscribe

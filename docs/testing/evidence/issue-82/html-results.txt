@@ -1,6 +1,3 @@
-
-> lint:html
-> htmlhint src/index.html src/upperbodyscan.html src/lowerbodyscan.html
-
-
-Scanned 3 files, no errors found (125 ms).
+Integration baseline: origin/main at f2d632dbbc9a2727331e02ada849b26433aff503.
+Recorded command result: npm run lint:html
+Scanned 3 files, no errors found (36 ms).
