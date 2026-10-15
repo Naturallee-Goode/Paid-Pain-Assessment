@@ -116,6 +116,44 @@ const server = http.createServer(async (req, res) => {
       return v.muscleCatalog.find(record => record.mesh === v.selected())?.side;
     }), 'right');
 
+    const captureSelectionState = () => page.evaluate(() => {
+      const v = window.__viewerTest;
+      return {
+        muscleId: v.bodyMapStore.getState().muscleId,
+        side: v.bodyMapStore.getState().side,
+        checkedSide: document.querySelector('input[name="painSide"]:checked')?.value ?? null,
+        selectedMesh: v.selected()?.uuid ?? null,
+        highlightedMeshes: [v.selected(), ...v.areaHighlights.keys()]
+          .filter(Boolean)
+          .map(mesh => mesh.uuid)
+          .sort(),
+        title: document.querySelector('#partTitle').textContent,
+        details: document.querySelector('#partDescription').textContent,
+        camera: v.camera.position.toArray(),
+        target: v.controls.target.toArray(),
+      };
+    });
+
+    // Regression: selecting the same search result again is a no-op for every
+    // side state, whether the result is chosen by click or Enter.
+    for (const side of ['right', 'left', 'both', null]) {
+      await page.locator('#clearBodyArea').click();
+      await page.locator('[data-area="shoulder"]').click();
+      if (side) await page.locator(`input[name="painSide"][value="${side}"]`).check();
+      await page.locator('#continueToMuscles').click();
+      await page.locator('#searchInput').fill('acromial');
+      await page.locator('#searchResults .search-result-item', { hasText: 'Acromial Part Of Deltoid Muscle' }).click();
+      const initialState = await captureSelectionState();
+
+      await page.locator('#searchInput').fill('acromial');
+      await page.locator('#searchResults .search-result-item', { hasText: 'Acromial Part Of Deltoid Muscle' }).click();
+      assert.deepEqual(await captureSelectionState(), initialState, `Repeated click changed the ${side ?? 'unspecified'}-side selection`);
+
+      await page.locator('#searchInput').fill('acromial');
+      await page.locator('#searchInput').press('Enter');
+      assert.deepEqual(await captureSelectionState(), initialState, `Repeated Enter changed the ${side ?? 'unspecified'}-side selection`);
+    }
+
     // Regression: Both must be reapplied when changing logical muscles.
     await page.locator('input[name="painSide"][value="both"]').check();
     await page.locator('#searchInput').fill('clavicular');

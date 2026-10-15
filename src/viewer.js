@@ -492,6 +492,10 @@ function selectBodyMesh(mesh, { synchronizeSide = true } = {}) {
     bodyMapStore.selectArea(supportedArea.id, { source: 'viewer-area' })
     return
   }
+  const selectedRecord = muscleCatalog.find(record => record.mesh === mesh)
+  const muscleId = selectedRecord ? createMuscleId(selectedRecord.sourceName) : null
+
+  if (!synchronizeSide && muscleId && muscleId === state.muscleId) return
   restoreAreaHighlights()
   if (selectedMesh && selectedMesh.uuid === mesh.uuid) {
     clearSelection()
@@ -507,9 +511,8 @@ function selectBodyMesh(mesh, { synchronizeSide = true } = {}) {
   mesh.material = highlightMat
   mesh.renderOrder = 999
 
-  const selectedRecord = muscleCatalog.find(record => record.mesh === mesh)
   if (selectedRecord) {
-    bodyMapStore.selectMuscle(createMuscleId(selectedRecord.sourceName), { source: 'viewer-mesh' })
+    bodyMapStore.selectMuscle(muscleId, { source: 'viewer-mesh' })
     if (synchronizeSide && selectedRecord.side) {
       bodyMapStore.setSide(selectedRecord.side, { source: 'viewer-mesh' })
     }
