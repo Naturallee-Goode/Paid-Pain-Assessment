@@ -433,7 +433,7 @@ function renderSearchResults(query) {
     item.textContent = label
     item.addEventListener('click', () => {
       if (meshes && meshes.length) {
-        selectBodyMesh(meshes[0])
+        selectBodyMesh(meshes[0], { synchronizeSide: false })
         if (searchInput) searchInput.value = label
         clearSearchResults()
       }
@@ -482,7 +482,7 @@ function resolveAreaForMesh(mesh, currentAreaId, center) {
   return getSupportedBodyArea(catalogAreaIds[0])
 }
 
-function selectBodyMesh(mesh) {
+function selectBodyMesh(mesh, { synchronizeSide = true } = {}) {
   if (!mesh) return
   const center = new THREE.Box3().setFromObject(mesh).getCenter(new THREE.Vector3())
   const state = bodyMapStore.getState()
@@ -508,7 +508,12 @@ function selectBodyMesh(mesh) {
   mesh.renderOrder = 999
 
   const selectedRecord = muscleCatalog.find(record => record.mesh === mesh)
-  if (selectedRecord) bodyMapStore.selectMuscle(createMuscleId(selectedRecord.sourceName), { source: 'viewer-mesh' })
+  if (selectedRecord) {
+    bodyMapStore.selectMuscle(createMuscleId(selectedRecord.sourceName), { source: 'viewer-mesh' })
+    if (synchronizeSide && selectedRecord.side) {
+      bodyMapStore.setSide(selectedRecord.side, { source: 'viewer-mesh' })
+    }
+  }
 
   const focusedMesh = selectedMesh ?? mesh
   const { camPos, meshCenter, horizDir } = getCameraPositionForMesh(focusedMesh)
@@ -522,7 +527,7 @@ function selectSearchResult(query) {
   if (!matches.length) return
   const { label, meshes } = matches[0]
   if (meshes && meshes.length) {
-    selectBodyMesh(meshes[0])
+    selectBodyMesh(meshes[0], { synchronizeSide: false })
     if (searchInput) searchInput.value = label
     clearSearchResults()
   }

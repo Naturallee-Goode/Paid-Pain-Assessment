@@ -176,6 +176,17 @@ const server = http.createServer(async (req, res) => {
     assert.match(await page.locator('#partDescription').textContent(), /not a medical diagnosis/);
     const selectedMuscleTitle = await page.locator('#partTitle').textContent();
     assert.equal(await page.locator('input[name="painSide"][required]').count(), 0);
+    assert.equal(await page.locator('input[name="painSide"][value="left"]').isChecked(), true);
+    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().side), 'left');
+    await page.evaluate(() => {
+      const v = window.__viewerTest;
+      const selectedRecord = v.muscleCatalog.find(record => record.mesh === window.__testMesh);
+      const rightRecord = v.muscleCatalog.find(record => record.displayName === selectedRecord.displayName && record.side === 'right');
+      v.selectBodyMesh(rightRecord.mesh);
+    });
+    assert.equal(await page.locator('input[name="painSide"][value="right"]').isChecked(), true);
+    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().side), 'right');
+    await page.locator('#clearPainSide').click();
     assert.equal(await page.locator('input[name="painSide"]:checked').count(), 0);
     if (evidenceDir) await page.locator('.side-selector').screenshot({ path: path.join(evidenceDir, 'side-not-specified.png') });
     for (const side of ['left', 'right']) {
