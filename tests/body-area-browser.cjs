@@ -24,6 +24,8 @@ const server = http.createServer(async (req, res) => {
     browser = await chromium.launch({ ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}), headless: true });
     const url = `http://127.0.0.1:${server.address().port}`;
     const evidenceDir = process.env.EVIDENCE_DIR;
+    const issue82EvidenceDir = process.env.ISSUE82_EVIDENCE_DIR;
+    if (issue82EvidenceDir) await fs.mkdir(issue82EvidenceDir, { recursive: true });
     if (evidenceDir) await fs.mkdir(evidenceDir, { recursive: true });
     const page = await browser.newPage({ reducedMotion: 'reduce' });
     const errors = [];
@@ -359,8 +361,24 @@ const server = http.createServer(async (req, res) => {
     assert.deepEqual(errors, []);
 
     // Controls must not depend on model availability or even successful viewer startup.
-    for (const scenario of ['delayed', 'failed', 'viewer-unavailable']) {
-      const isolated = await browser.newPage({ reducedMotion: 'reduce' });
+    const areaScenarios = [];
+    for (const scenario of ['delayed', 'delayed-reset', 'failed', 'viewer-unavailable', 'missing-content']) {
+      const isolated = await browser.newPage({ reducedMotion: 'reduce', viewport: { width: 1280, height: 1000 } });
+      const isolatedErrors = [];
+      isolated.on('pageerror', error => isolatedErrors.push(error.message));
+      await isolated.addInitScript(() => {
+        window.__submissions = 0;
+        document.addEventListener('submit', event => { event.preventDefault(); window.__submissions++; });
+      });
+      if (scenario === 'missing-content') {
+        // Replace only Foot's content in this browser; production data stays intact.
+        await isolated.route('**/possible-issues-data.mjs', async route => {
+          const response = await route.fetch();
+          const body = (await response.text()).replace('export function getPossibleIssues(areaId) {',
+            "export function getPossibleIssues(areaId) { if (areaId === 'foot') return [];");
+          await route.fulfill({ response, body });
+        });
+      }
       let release;
       const gate = new Promise(resolve => { release = resolve; });
       if (scenario === 'viewer-unavailable') {
@@ -372,25 +390,80 @@ const server = http.createServer(async (req, res) => {
         });
       }
       await isolated.route('**/*.glb', async route => {
-        if (scenario === 'delayed') { await gate; await route.fulfill({ body: model, contentType: 'model/gltf-binary' }); }
+        if (scenario.startsWith('delayed')) { await gate; await route.fulfill({ body: model, contentType: 'model/gltf-binary' }); }
         else await route.abort();
       });
       await isolated.goto(url, { waitUntil: 'domcontentloaded' });
-      await isolated.locator('[data-area="lower-back"]').click();
-      assert.equal(await isolated.locator('#selectedBodyArea').inputValue(), 'lower-back');
-      assert.equal(await isolated.locator('#possibleIssues').isVisible(), true);
-      assert.match(await isolated.locator('#possibleIssuesList').textContent(), /Muscle strain/);
-      if (scenario === 'delayed') {
+      await isolated.locator('#fullName').fill('Keep this test answer');
+      const panel = isolated.locator('#possibleIssues');
+      assert.equal(await panel.isVisible(), false);
+      for (const button of await isolated.locator('[data-area]').all()) {
+        await button.click();
+        assert.equal(await panel.isVisible(), true);
+        assert.equal(await isolated.locator('#possibleIssuesTitle').textContent(), `Possible issues in ${await button.textContent()}`);
+        assert.equal(await isolated.locator('input[name="painSide"]:checked').count(), 0);
+        if (scenario === 'missing-content' && await button.getAttribute('data-area') === 'foot') {
+          assert.equal(await panel.locator('li').count(), 1);
+          assert.match(await panel.textContent(), /Content is not available for this area yet\./);
+          assert.doesNotMatch(await panel.textContent(), /Frozen shoulder|Achilles/);
+        } else {
+          assert((await panel.locator('li').count()) > 0);
+        }
+      }
+      const selection = await isolated.evaluate(async () => (await import('./body-map-store.mjs')).bodyMapStore.getState());
+      assert.equal(selection.muscleId, null);
+      assert.equal(selection.side, null);
+      if (scenario.startsWith('delayed')) {
+        // Reset while the request is pending; loading must not resurrect old content.
+        if (scenario === 'delayed-reset') {
+          await isolated.locator('#clearBodyArea').click();
+          assert.equal(await isolated.locator('#possibleIssuesList').textContent(), '');
+          assert.equal(await panel.isVisible(), false);
+        }
         release();
         await isolated.locator('#loadingOverlay').waitFor({ state: 'hidden', timeout: 60000 });
-        assert.equal(await isolated.locator('#selectedBodyArea').inputValue(), 'lower-back');
-        assert.equal(await isolated.locator('#partTitle').textContent(), 'Lower Back');
+        assert.equal(await panel.isVisible(), scenario === 'delayed');
+        assert.equal(await isolated.locator('#selectedBodyArea').inputValue(), scenario === 'delayed' ? 'foot' : '');
+        if (scenario === 'delayed') assert.match(await panel.textContent(), /Possible issues in Foot/);
+        await isolated.locator('[data-area="lower-back"]').click();
+        assert.match(await panel.textContent(), /Possible issues in Lower Back/);
+      }
+      if (scenario === 'failed' || scenario === 'missing-content') {
+        await isolated.waitForFunction(() => document.getElementById('loadingLabel').textContent === 'Failed to load model');
+        if (scenario === 'failed') await isolated.locator('[data-area="shoulder"]').click();
+        if (issue82EvidenceDir) await isolated.locator('#intakeForm fieldset').nth(1).screenshot({
+          path: path.join(issue82EvidenceDir, scenario === 'failed' ? 'area-only-model-failed.png' : 'unavailable-content.png'),
+        });
       }
       await isolated.locator('#clearBodyArea').click();
       assert.equal(await isolated.locator('#selectedBodyArea').inputValue(), '');
+      assert.equal(await panel.isVisible(), false);
+      assert.equal(await isolated.locator('#possibleIssuesList').textContent(), '');
+      assert.equal(await isolated.locator('#possibleIssuesTitle').textContent(), '');
+      assert.equal(await isolated.locator('#fullName').inputValue(), 'Keep this test answer');
+      await isolated.locator('[data-area="shoulder"]').click();
+      isolated.once('dialog', dialog => dialog.accept());
+      await isolated.locator('#intakeForm [type="reset"]').click();
+      await isolated.waitForFunction(() => document.getElementById('selectedBodyArea').value === '');
+      assert.equal(await isolated.locator('#possibleIssuesList').textContent(), '');
+      assert.equal(await isolated.locator('#possibleIssuesTitle').textContent(), '');
+      assert.equal(await panel.isVisible(), false);
+      assert.equal(await isolated.evaluate(() => window.__submissions), 0);
+      if (scenario !== 'viewer-unavailable') assert.deepEqual(isolatedErrors, []);
+      else {
+        assert.equal(isolatedErrors.length, 1);
+        assert.match(isolatedErrors[0], /Failed to fetch dynamically imported module/);
+      }
+      areaScenarios.push({ scenario, result: 'passed', areasChecked: await isolated.locator('[data-area]').count(), clearSelection: 'passed', formReset: 'passed', formSubmissions: 0 });
       await isolated.close();
     }
-    console.log('PASS: area highlights, distinct back targets, restoration, rotation/zoom, all twelve areas, viewer cleanup, Clear Selection, keyboard, form-answer preservation, three layouts, delayed/failed model, and unavailable viewer. No form submitted.');
+    if (issue82EvidenceDir) await fs.writeFile(path.join(issue82EvidenceDir, 'browser-results.json'), JSON.stringify({
+      capturedAt: new Date().toISOString(), viewport: { width: 1280, height: 1000 },
+      loadedModelWorkflow: 'passed', responsiveWidths: [390, 768, 1280],
+      screenshots: ['area-only-model-failed.png', 'unavailable-content.png'],
+      missingContentIsTestFixture: true, areaScenarios,
+    }, null, 2) + '\n');
+    console.log('PASS: existing model workflow and all configured area-information lists, replacement, Clear Selection, form reset, three layouts, delayed/failed model, unavailable viewer, missing-content fixture, and no accidental submissions.');
   } finally {
     if (browser) await browser.close();
     await new Promise(resolve => server.close(resolve));

@@ -24,6 +24,7 @@ test('all areas show descriptions without web links before muscle selection', ()
     assert.equal(doc.getElementById('possibleIssues').hidden, false)
     assert.equal(doc.getElementById('muscleSelection').hidden, true)
     assert.equal(store.getState().muscleId, null)
+    assert.equal(store.getState().side, null)
     assert.equal(store.getState().issuesReviewed, false)
     assert.equal(doc.getElementById('possibleIssuesTitle').textContent, `Possible issues in ${area.label}`)
     const issues = getPossibleIssues(area.id)
@@ -74,4 +75,20 @@ test('body-map and form reset remove stale issues even with failed model loading
     assert.equal(doc.getElementById('possibleIssuesList').children.length, 0)
     assert.equal(store.getState().issuesReviewed, false)
   }
+})
+
+test('catalog completion and failure preserve the selected area information', () => {
+  const { doc, store } = setup()
+  store.selectArea('shoulder')
+  const list = doc.getElementById('possibleIssuesList')
+  const content = list.textContent
+  store.setCatalog({ shoulder: [{ id: 'test-muscle' }] })
+  store.selectMuscle('test-muscle')
+  store.setSide('right')
+  store.setCatalogError()
+  assert.equal(list.textContent, content)
+  assert.equal(doc.getElementById('possibleIssues').hidden, false)
+  store.reset()
+  assert.equal(list.textContent, '')
+  assert.equal(doc.getElementById('possibleIssuesTitle').textContent, '')
 })
