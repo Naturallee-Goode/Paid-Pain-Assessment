@@ -1,6 +1,6 @@
 # Issue #82 — area-information edge cases
 
-Implemented October 15, 2026 on `codex/fix/82-area-information-edge-cases`, created from `origin/main` at `f26013a`. Owner: Girwan Dhakal; selected for Iteration 2 in the Senior Design Project. This records implementation and verification for PR review; the issue remains open until integration and review are complete.
+Implemented October 15, 2026 on `fix/82-area-information-edge-cases`, created from `origin/main` at `f26013a`. Owner: Girwan Dhakal; selected for Iteration 2 in the Senior Design Project. This records implementation and verification for PR review; the issue remains open until integration and review are complete.
 
 ## Plan and scope
 
