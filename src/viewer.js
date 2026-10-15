@@ -109,6 +109,7 @@ export function getMusclesForArea(areaId) {
 
 const searchInput = document.getElementById("searchInput")
 const searchResults = document.getElementById("searchResults")
+let activeSearchResultIndex = -1
 
 const SPINE_X = 0
 const SPINE_Z = 0
@@ -415,32 +416,65 @@ function clearSearchResults() {
   if (!searchResults) return
   searchResults.innerHTML = ''
   searchResults.classList.remove('visible')
+  activeSearchResultIndex = -1
+  if (searchInput) {
+    searchInput.setAttribute('aria-expanded', 'false')
+    searchInput.removeAttribute('aria-activedescendant')
+  }
+}
+
+function setActiveSearchResult(index) {
+  if (!searchResults || !searchInput) return
+  const items = [...searchResults.querySelectorAll('.search-result-item')]
+  if (!items.length) return
+  activeSearchResultIndex = (index + items.length) % items.length
+  items.forEach((item, itemIndex) => {
+    const active = itemIndex === activeSearchResultIndex
+    item.setAttribute('aria-selected', String(active))
+    item.tabIndex = active ? 0 : -1
+  })
+  const activeItem = items[activeSearchResultIndex]
+  searchInput.setAttribute('aria-activedescendant', activeItem.id)
+  activeItem.scrollIntoView({ block: 'nearest' })
+}
+
+function chooseSearchResult(item) {
+  const label = item?.dataset.label
+  if (!label) return
+  const match = getSearchMatches(label).find(entry => entry.label === label)
+  if (!match?.meshes?.length) return
+  selectBodyMesh(match.meshes[0])
+  if (searchInput) searchInput.value = match.label
+  clearSearchResults()
 }
 
 function renderSearchResults(query) {
   if (!searchResults) return
   const matches = getSearchMatches(query)
   searchResults.innerHTML = ''
+  activeSearchResultIndex = -1
+  if (searchInput) searchInput.removeAttribute('aria-activedescendant')
   if (!matches.length) {
-    searchResults.innerHTML = '<li class="search-empty">No matches found</li>'
+    searchResults.innerHTML = '<li class="search-empty" role="option" aria-disabled="true">No matches found</li>'
     searchResults.classList.add('visible')
+    if (searchInput) searchInput.setAttribute('aria-expanded', 'true')
     return
   }
 
-  matches.forEach(({ label, meshes }) => {
+  matches.forEach(({ label }, index) => {
     const item = document.createElement('li')
     item.className = 'search-result-item'
+    item.id = `search-result-${index}`
+    item.dataset.label = label
+    item.setAttribute('role', 'option')
+    item.setAttribute('aria-selected', 'false')
+    item.tabIndex = -1
     item.textContent = label
-    item.addEventListener('click', () => {
-      if (meshes && meshes.length) {
-        selectBodyMesh(meshes[0])
-        if (searchInput) searchInput.value = label
-        clearSearchResults()
-      }
-    })
+    item.addEventListener('click', () => chooseSearchResult(item))
     searchResults.appendChild(item)
   })
   searchResults.classList.add('visible')
+  if (searchInput) searchInput.setAttribute('aria-expanded', 'true')
 }
 
 function restoreSelectedMesh() {
@@ -614,9 +648,20 @@ controls.saveState()
 if (searchInput) {
   searchInput.addEventListener('input', updateSearchResultsFromInput)
   searchInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
+    const items = searchResults ? [...searchResults.querySelectorAll('.search-result-item')] : []
+    if (event.key === 'ArrowDown' && items.length) {
       event.preventDefault()
-      selectSearchResult(searchInput.value)
+      setActiveSearchResult(activeSearchResultIndex + 1)
+    } else if (event.key === 'ArrowUp' && items.length) {
+      event.preventDefault()
+      setActiveSearchResult(activeSearchResultIndex < 0 ? items.length - 1 : activeSearchResultIndex - 1)
+    } else if (event.key === 'Escape') {
+      event.preventDefault()
+      clearSearchResults()
+    } else if (event.key === 'Enter') {
+      event.preventDefault()
+      if (activeSearchResultIndex >= 0) chooseSearchResult(items[activeSearchResultIndex])
+      else selectSearchResult(searchInput.value)
     }
   })
 }

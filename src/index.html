@@ -95,14 +95,15 @@
                     </div>
                     <div id="viewer"></div>
                     <div id="infoPanel" class="viewer-info-panel">
-                        <div id="panelToggle" class="panel-toggle" title="Collapse info panel">‹</div>
                         <div class="viewer-info-content">
                             <div id="partTitle" class="viewer-part-title">Search or select a body part</div>
                             <div id="partDescription" class="viewer-part-description"></div>
                             <div id="muscleSelection" class="viewer-search" hidden>
                                 <label for="searchInput">Search muscles (optional)</label>
-                                <input type="text" id="searchInput" placeholder="Search muscles..." autocomplete="off">
-                                <ul id="searchResults"></ul>
+                                <input type="text" id="searchInput" placeholder="Search muscles..." autocomplete="off"
+                                    role="combobox" aria-autocomplete="list" aria-controls="searchResults"
+                                    aria-expanded="false">
+                                <ul id="searchResults" role="listbox" aria-label="Muscle search results"></ul>
                             </div>
                         </div>
                     </div>
