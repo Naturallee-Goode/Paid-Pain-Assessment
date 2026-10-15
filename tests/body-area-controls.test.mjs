@@ -30,17 +30,22 @@ test('all twelve controls select exclusively and never submit', () => {
   assert.equal(submissions, 0)
 })
 
-test('Change Area and Clear Selection clear stored data and return keyboard focus', () => {
+test('Clear Selection clears stored map data, returns focus, and never submits', () => {
   const { doc, store, buttons, input } = setup()
-  for (const id of ['changeBodyArea', 'clearBodyArea']) {
-    buttons[3].click()
-    doc.getElementById(id).click()
-    assert.equal(input.value, '')
-    assert.equal(store.getState().areaId, null)
-    assert.equal(doc.querySelectorAll('[aria-pressed="true"]').length, 0)
-    assert.equal(doc.activeElement, buttons[0])
-    assert.equal(doc.getElementById(id).disabled, true)
-  }
+  let submissions = 0
+  doc.getElementById('intakeForm').addEventListener('submit', event => { event.preventDefault(); submissions++ })
+  store.setCatalog({ 'lower-back': [{ id: 'muscle.test' }] })
+  buttons[3].click()
+  store.setSide('left')
+  doc.getElementById('clearBodyArea').click()
+  assert.equal(input.value, '')
+  assert.equal(store.getState().areaId, null)
+  assert.equal(store.getState().muscleId, null)
+  assert.equal(store.getState().side, null)
+  assert.equal(doc.querySelectorAll('[aria-pressed="true"]').length, 0)
+  assert.equal(doc.activeElement, buttons[0])
+  assert.equal(doc.getElementById('clearBodyArea').disabled, false)
+  assert.equal(submissions, 0)
 })
 
 test('external store changes render without custom DOM event loops', () => {
