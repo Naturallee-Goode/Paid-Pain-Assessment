@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { getSupportedBodyAreaForRegion } from "./body-areas.js";
+import { getSupportedBodyArea, getSupportedBodyAreaForRegion } from "./body-areas.js";
 import { buildMuscleCatalog, getSourceNodeName, parseAnatomyName } from "./muscle-catalog.js";
 
 import { AREA_FOCUS_REGIONS, isWithinArea, getAreaCameraDistance } from "./body-area-focus.mjs";
@@ -464,13 +464,30 @@ function getSelectableHit(hits) {
   })?.object
 }
 
+function getCatalogAreaIdsForMesh(mesh) {
+  return Object.entries(bodyAreaMuscles)
+    .filter(([, records]) => records.some(record => record.mesh === mesh))
+    .map(([areaId]) => areaId)
+}
+
+function resolveAreaForMesh(mesh, currentAreaId, center) {
+  const catalogAreaIds = getCatalogAreaIdsForMesh(mesh)
+  if (currentAreaId && catalogAreaIds.includes(currentAreaId)) {
+    return getSupportedBodyArea(currentAreaId)
+  }
+
+  const detectedRegion = getBodyArea(center)
+  const detectedArea = getSupportedBodyAreaForRegion(detectedRegion, center.y)
+  if (detectedArea && catalogAreaIds.includes(detectedArea.id)) return detectedArea
+  return getSupportedBodyArea(catalogAreaIds[0])
+}
+
 function selectBodyMesh(mesh) {
   if (!mesh) return
   const center = new THREE.Box3().setFromObject(mesh).getCenter(new THREE.Vector3())
-  const detectedRegion = getBodyArea(center)
-  const supportedArea = getSupportedBodyAreaForRegion(detectedRegion, center.y)
-  if (!supportedArea) return
   const state = bodyMapStore.getState()
+  const supportedArea = resolveAreaForMesh(mesh, state.areaId, center)
+  if (!supportedArea) return
   if (supportedArea.id !== state.areaId) {
     bodyMapStore.selectArea(supportedArea.id, { source: 'viewer-area' })
     return
@@ -493,10 +510,11 @@ function selectBodyMesh(mesh) {
   const selectedRecord = muscleCatalog.find(record => record.mesh === mesh)
   if (selectedRecord) bodyMapStore.selectMuscle(createMuscleId(selectedRecord.sourceName), { source: 'viewer-mesh' })
 
-  const { camPos, meshCenter, horizDir } = getCameraPositionForMesh(mesh)
+  const focusedMesh = selectedMesh ?? mesh
+  const { camPos, meshCenter, horizDir } = getCameraPositionForMesh(focusedMesh)
   lastHorizDir.copy(horizDir)
   startCameraAnim(camPos, meshCenter, ZOOM_IN_DURATION)
-  updateInfoPanel(mesh, matName)
+  updateInfoPanel(focusedMesh, matName, supportedArea)
 }
 
 function selectSearchResult(query) {
@@ -520,16 +538,14 @@ function updateSearchResultsFromInput() {
   renderSearchResults(value)
 }
 
-function updateInfoPanel(mesh, matName) {
+function updateInfoPanel(mesh, matName, selectedArea = null) {
   const box = new THREE.Box3().setFromObject(mesh)
   const center = new THREE.Vector3()
   box.getCenter(center)
 
-  const detectedRegion = getBodyArea(center)
-  const supportedArea = getSupportedBodyAreaForRegion(detectedRegion, center.y)
-  const area = supportedArea?.id ?? detectedRegion
-  const areaLabel = supportedArea?.label ??
-    detectedRegion.charAt(0).toUpperCase() + detectedRegion.slice(1)
+  const supportedArea = selectedArea ?? resolveAreaForMesh(mesh, bodyMapStore.getState().areaId, center)
+  const area = supportedArea?.id ?? 'unknown'
+  const areaLabel = supportedArea?.label ?? 'selected'
 
   console.log("Selected mesh:", mesh.name)
   console.log("Material:", matName)
@@ -554,8 +570,6 @@ function updateInfoPanel(mesh, matName) {
   disclaimer.textContent = 'Educational information only. These possibilities are not a medical diagnosis.'
   descEl.replaceChildren(intro, list, disclaimer)
 
-  if (supportedArea) bodyMapStore.selectArea(area, { source: 'viewer-mesh' })
-  else if (bodyMapStore.getState().areaId) bodyMapStore.clearArea({ source: 'viewer-mesh' })
 }
 
 function handleViewerClick(e) {
@@ -633,9 +647,10 @@ bodyMapStore.subscribe((state, previous, action) => {
     return
   }
   const areaChanged = state.areaId !== previous.areaId
+  const muscleChanged = state.muscleId !== previous.muscleId
   const sideChanged = state.side !== previous.side
   const modelBecameReady = action.type === 'catalog-ready'
-  if (!areaChanged && sideChanged && highlightSelectedMuscleSide(state.side)) return
+  if (!areaChanged && (sideChanged || (muscleChanged && state.side)) && highlightSelectedMuscleSide(state.side)) return
   if ((areaChanged && action.source !== 'viewer-mesh') || sideChanged || modelBecameReady) {
     focusBodyArea(state.areaId)
   }

@@ -92,6 +92,46 @@ const server = http.createServer(async (req, res) => {
       }
     }
     assert(backTargets['upper-back'][1] > backTargets['lower-back'][1]);
+
+    // Regression: a muscle assigned to multiple areas must remain in the
+    // currently selected catalog area instead of switching by mesh position.
+    await page.locator('[data-area="upper-back"]').click();
+    await page.locator('#continueToMuscles').click();
+    await page.locator('#searchInput').fill('latissimus');
+    await page.locator('#searchResults .search-result-item', { hasText: 'Latissimus Dorsi Muscle' }).click();
+    assert.equal(await page.locator('#selectedBodyArea').inputValue(), 'upper-back');
+    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().muscleId), 'muscle.latissimus-dorsi-muscle');
+    assert.equal(await page.locator('#partTitle').textContent(), 'Latissimus Dorsi Muscle');
+    assert.equal(await page.evaluate(() => window.__viewerTest.selected() !== null), true);
+
+    // Regression: selecting a new muscle must honor a side chosen first.
+    await page.locator('[data-area="shoulder"]').click();
+    await page.locator('input[name="painSide"][value="right"]').check();
+    await page.locator('#continueToMuscles').click();
+    await page.locator('#searchInput').fill('acromial');
+    await page.locator('#searchResults .search-result-item', { hasText: 'Acromial Part Of Deltoid Muscle' }).click();
+    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().side), 'right');
+    assert.equal(await page.evaluate(() => {
+      const v = window.__viewerTest;
+      return v.muscleCatalog.find(record => record.mesh === v.selected())?.side;
+    }), 'right');
+
+    // Regression: Both must be reapplied when changing logical muscles.
+    await page.locator('input[name="painSide"][value="both"]').check();
+    await page.locator('#searchInput').fill('clavicular');
+    await page.locator('#searchResults .search-result-item', { hasText: 'Clavicular Part Of Deltoid Muscle' }).click();
+    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().side), 'both');
+    assert(await page.evaluate(() => {
+      const v = window.__viewerTest;
+      const selectedRecord = v.muscleCatalog.find(record => record.mesh === v.selected());
+      const highlighted = new Set([v.selected(), ...v.areaHighlights.keys()]);
+      const sides = new Set(v.muscleCatalog
+        .filter(record => record.displayName === selectedRecord.displayName && highlighted.has(record.mesh))
+        .map(record => record.side));
+      return sides.has('left') && sides.has('right');
+    }), 'Both must highlight both copies after changing muscles');
+
+    await page.locator('#clearBodyArea').click();
     await page.locator('[data-area="shoulder"]').click();
     await page.locator('input[name="painSide"][value="left"]').check();
     assert(await page.evaluate(() => {
