@@ -1,7 +1,9 @@
 import { initializeBodyAreaControls } from './body-area-controls.mjs'
 import { bodyMapStore } from './body-map-store.mjs'
+import { initializeAreaInformation } from './common-issues.mjs'
 
 initializeBodyAreaControls(document, bodyMapStore)
+initializeAreaInformation(document, bodyMapStore)
 
 const form = document.getElementById('intakeForm')
 if (form) {

@@ -1,0 +1,60 @@
+{
+  "capturedAt": "2026-10-15T19:45:17.746Z",
+  "viewport": {
+    "width": 1280,
+    "height": 1000
+  },
+  "loadedModelWorkflow": "passed",
+  "responsiveWidths": [
+    390,
+    768,
+    1280
+  ],
+  "screenshots": [
+    "area-only-model-failed.png",
+    "unavailable-content.png"
+  ],
+  "missingContentIsTestFixture": true,
+  "areaScenarios": [
+    {
+      "scenario": "delayed",
+      "result": "passed",
+      "areasChecked": 12,
+      "clearSelection": "passed",
+      "formReset": "passed",
+      "formSubmissions": 0
+    },
+    {
+      "scenario": "delayed-reset",
+      "result": "passed",
+      "areasChecked": 12,
+      "clearSelection": "passed",
+      "formReset": "passed",
+      "formSubmissions": 0
+    },
+    {
+      "scenario": "failed",
+      "result": "passed",
+      "areasChecked": 12,
+      "clearSelection": "passed",
+      "formReset": "passed",
+      "formSubmissions": 0
+    },
+    {
+      "scenario": "viewer-unavailable",
+      "result": "passed",
+      "areasChecked": 12,
+      "clearSelection": "passed",
+      "formReset": "passed",
+      "formSubmissions": 0
+    },
+    {
+      "scenario": "missing-content",
+      "result": "passed",
+      "areasChecked": 12,
+      "clearSelection": "passed",
+      "formReset": "passed",
+      "formSubmissions": 0
+    }
+  ]
+}

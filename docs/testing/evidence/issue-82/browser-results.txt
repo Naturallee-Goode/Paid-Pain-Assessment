@@ -1,0 +1,5 @@
+
+> test:browser
+> node tests/body-area-browser.cjs
+
+PASS: existing model workflow and all configured area-information lists, replacement, Clear Selection, form reset, three layouts, delayed/failed model, unavailable viewer, missing-content fixture, and no accidental submissions.
