@@ -92,6 +92,84 @@ const server = http.createServer(async (req, res) => {
       }
     }
     assert(backTargets['upper-back'][1] > backTargets['lower-back'][1]);
+
+    // Regression: a muscle assigned to multiple areas must remain in the
+    // currently selected catalog area instead of switching by mesh position.
+    await page.locator('[data-area="upper-back"]').click();
+    await page.locator('#continueToMuscles').click();
+    await page.locator('#searchInput').fill('latissimus');
+    await page.locator('#searchResults .search-result-item', { hasText: 'Latissimus Dorsi Muscle' }).click();
+    assert.equal(await page.locator('#selectedBodyArea').inputValue(), 'upper-back');
+    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().muscleId), 'muscle.latissimus-dorsi-muscle');
+    assert.equal(await page.locator('#partTitle').textContent(), 'Latissimus Dorsi Muscle');
+    assert.equal(await page.evaluate(() => window.__viewerTest.selected() !== null), true);
+
+    // Regression: selecting a new muscle must honor a side chosen first.
+    await page.locator('[data-area="shoulder"]').click();
+    await page.locator('input[name="painSide"][value="right"]').check();
+    await page.locator('#continueToMuscles').click();
+    await page.locator('#searchInput').fill('acromial');
+    await page.locator('#searchResults .search-result-item', { hasText: 'Acromial Part Of Deltoid Muscle' }).click();
+    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().side), 'right');
+    assert.equal(await page.evaluate(() => {
+      const v = window.__viewerTest;
+      return v.muscleCatalog.find(record => record.mesh === v.selected())?.side;
+    }), 'right');
+
+    const captureSelectionState = () => page.evaluate(() => {
+      const v = window.__viewerTest;
+      return {
+        muscleId: v.bodyMapStore.getState().muscleId,
+        side: v.bodyMapStore.getState().side,
+        checkedSide: document.querySelector('input[name="painSide"]:checked')?.value ?? null,
+        selectedMesh: v.selected()?.uuid ?? null,
+        highlightedMeshes: [v.selected(), ...v.areaHighlights.keys()]
+          .filter(Boolean)
+          .map(mesh => mesh.uuid)
+          .sort(),
+        title: document.querySelector('#partTitle').textContent,
+        details: document.querySelector('#partDescription').textContent,
+        camera: v.camera.position.toArray(),
+        target: v.controls.target.toArray(),
+      };
+    });
+
+    // Regression: selecting the same search result again is a no-op for every
+    // side state, whether the result is chosen by click or Enter.
+    for (const side of ['right', 'left', 'both', null]) {
+      await page.locator('#clearBodyArea').click();
+      await page.locator('[data-area="shoulder"]').click();
+      if (side) await page.locator(`input[name="painSide"][value="${side}"]`).check();
+      await page.locator('#continueToMuscles').click();
+      await page.locator('#searchInput').fill('acromial');
+      await page.locator('#searchResults .search-result-item', { hasText: 'Acromial Part Of Deltoid Muscle' }).click();
+      const initialState = await captureSelectionState();
+
+      await page.locator('#searchInput').fill('acromial');
+      await page.locator('#searchResults .search-result-item', { hasText: 'Acromial Part Of Deltoid Muscle' }).click();
+      assert.deepEqual(await captureSelectionState(), initialState, `Repeated click changed the ${side ?? 'unspecified'}-side selection`);
+
+      await page.locator('#searchInput').fill('acromial');
+      await page.locator('#searchInput').press('Enter');
+      assert.deepEqual(await captureSelectionState(), initialState, `Repeated Enter changed the ${side ?? 'unspecified'}-side selection`);
+    }
+
+    // Regression: Both must be reapplied when changing logical muscles.
+    await page.locator('input[name="painSide"][value="both"]').check();
+    await page.locator('#searchInput').fill('clavicular');
+    await page.locator('#searchResults .search-result-item', { hasText: 'Clavicular Part Of Deltoid Muscle' }).click();
+    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().side), 'both');
+    assert(await page.evaluate(() => {
+      const v = window.__viewerTest;
+      const selectedRecord = v.muscleCatalog.find(record => record.mesh === v.selected());
+      const highlighted = new Set([v.selected(), ...v.areaHighlights.keys()]);
+      const sides = new Set(v.muscleCatalog
+        .filter(record => record.displayName === selectedRecord.displayName && highlighted.has(record.mesh))
+        .map(record => record.side));
+      return sides.has('left') && sides.has('right');
+    }), 'Both must highlight both copies after changing muscles');
+
+    await page.locator('#clearBodyArea').click();
     await page.locator('[data-area="shoulder"]').click();
     await page.locator('input[name="painSide"][value="left"]').check();
     assert(await page.evaluate(() => {
@@ -136,6 +214,17 @@ const server = http.createServer(async (req, res) => {
     assert.match(await page.locator('#partDescription').textContent(), /not a medical diagnosis/);
     const selectedMuscleTitle = await page.locator('#partTitle').textContent();
     assert.equal(await page.locator('input[name="painSide"][required]').count(), 0);
+    assert.equal(await page.locator('input[name="painSide"][value="left"]').isChecked(), true);
+    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().side), 'left');
+    await page.evaluate(() => {
+      const v = window.__viewerTest;
+      const selectedRecord = v.muscleCatalog.find(record => record.mesh === window.__testMesh);
+      const rightRecord = v.muscleCatalog.find(record => record.displayName === selectedRecord.displayName && record.side === 'right');
+      v.selectBodyMesh(rightRecord.mesh);
+    });
+    assert.equal(await page.locator('input[name="painSide"][value="right"]').isChecked(), true);
+    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().side), 'right');
+    await page.locator('#clearPainSide').click();
     assert.equal(await page.locator('input[name="painSide"]:checked').count(), 0);
     if (evidenceDir) await page.locator('.side-selector').screenshot({ path: path.join(evidenceDir, 'side-not-specified.png') });
     for (const side of ['left', 'right']) {
