@@ -32,12 +32,28 @@ test('all areas show descriptions without web links before muscle selection', ()
     assert.equal(doc.querySelectorAll('#possibleIssuesList li').length, issues.length)
     for (const issue of issues) {
       assert(doc.getElementById('possibleIssuesList').textContent.includes(issue.description))
-      assert.match(issue.source, /^https:\/\/www.nhs.uk\//)
+      assert.match(issue.source, /^https:\/\/(www.nhs.uk|orthoinfo.aaos.org)\//)
     }
     assert.equal(doc.querySelectorAll('#possibleIssuesList input, #possibleIssuesList button').length, 0)
     assert.equal(doc.querySelectorAll('#possibleIssuesList a').length, 0)
     assert.match(doc.getElementById('issuesDisclaimer').textContent, /not a medical diagnosis/)
   }
+})
+
+test('sponsor-reviewed Elbow content replaces tendon irritation and preserves other tendon entries', () => {
+  const { doc } = setup()
+  doc.querySelector('[data-area="elbow"]').click()
+  const content = doc.getElementById('possibleIssuesList').textContent
+  assert.match(content, /Tennis Elbow/)
+  assert.match(content, /outside of the elbow/)
+  assert.match(content, /Bursitis/)
+  assert.doesNotMatch(content, /Tendon irritation|tendonitis/i)
+  for (const area of ['arm', 'leg']) {
+    assert(getPossibleIssues(area).some(issue => issue.name === 'Tendon irritation (tendonitis)'))
+  }
+  assert.deepEqual(getPossibleIssues('shoulder').map(issue => issue.name), [
+    'Rotator cuff tear or tendon irritation', 'Shoulder impingement', 'Frozen shoulder', 'Shoulder bursitis',
+  ])
 })
 
 test('Continue reveals optional muscles; changing area replaces issues and resets review and muscle', () => {

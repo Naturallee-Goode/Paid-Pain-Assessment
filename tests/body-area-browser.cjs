@@ -279,6 +279,9 @@ const server = http.createServer(async (req, res) => {
     await page.locator('[data-area="elbow"]').focus();
     await page.keyboard.press('Enter');
     assert.equal(await page.locator('#selectedBodyArea').inputValue(), 'elbow');
+    assert.match(await page.locator('#possibleIssuesList').textContent(), /Tennis Elbow/);
+    assert.doesNotMatch(await page.locator('#possibleIssuesList').textContent(), /tendon irritation|tendonitis/i);
+    await page.screenshot({ path: 'docs/testing/evidence/issue-82/elbow-sponsor-content.png', fullPage: true });
     await page.locator('[data-area="hip"]').focus();
     await page.keyboard.press('Space');
     assert.equal(await page.locator('#selectedBodyArea').inputValue(), 'hip');
@@ -348,7 +351,7 @@ const server = http.createServer(async (req, res) => {
       await page.setViewportSize({ width, height: 960 });
       await page.locator(`[data-area="${area}"]`).click();
       const content = await page.locator('#possibleIssuesList').textContent();
-      assert.match(content, area === 'foot' ? /Plantar fasciitis/ : /Bursitis/);
+      assert.match(content, area === 'foot' ? /Plantar fasciitis/ : /Shoulder bursitis/);
       assert.doesNotMatch(content, area === 'foot' ? /Bursitis/ : /Plantar fasciitis/);
       assert.equal(await page.locator('#muscleSelection').isVisible(), false);
       if (evidenceDir) {
