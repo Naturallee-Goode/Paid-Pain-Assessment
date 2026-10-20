@@ -277,13 +277,27 @@ const server = http.createServer(async (req, res) => {
     await page.keyboard.press('ArrowDown');
     assert.equal(await page.locator('#searchResults [aria-selected="true"]').count(), 1);
     assert(await page.locator('#searchInput').getAttribute('aria-activedescendant'));
+    assert.equal(await page.locator('#searchResults .search-result-item[tabindex="0"]').count(), 0);
+    await page.keyboard.press('Tab');
+    assert.equal(await page.evaluate(() => document.querySelector('#searchResults').contains(document.activeElement)), false, 'Tab must skip search results');
+
+    await page.locator('#searchInput').focus();
+    await page.locator('#searchInput').fill('Clavicular Part Of Deltoid Muscle');
+    await page.keyboard.press('ArrowDown');
+    const activeResultLabel = await page.locator('#searchResults [aria-selected="true"]').textContent();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('#partTitle').textContent(), activeResultLabel);
+    assert.equal(await page.locator('#searchResults').isVisible(), false);
+
+    await page.locator('#searchInput').fill('a');
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('#searchResults').isVisible(), false);
     assert.equal(await page.locator('#searchInput').getAttribute('aria-expanded'), 'false');
     await page.evaluate(() => {
       document.querySelector('#searchInput').value = 'old search';
     });
-    assert.equal(await page.evaluate(() => window.__viewerTest.selected() === window.__testMesh), true);
+    assert.equal(await page.evaluate(() => window.__viewerTest.selected() !== null), true);
     await page.locator('[data-area="foot"]').click();
     assert.equal(await page.evaluate(() => window.__testMesh.material === window.__viewerTest.highlightMat), false);
     assert.equal(await page.locator('#searchInput').inputValue(), '');

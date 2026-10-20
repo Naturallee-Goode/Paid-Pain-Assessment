@@ -30,4 +30,4 @@ The checks confirm that:
 - Search results render below the search field in normal page flow.
 - The information panel and result list do not introduce an unnecessary nested scrollbar.
 - The layout remains within the viewport at 390px and 1280px widths.
-- Arrow-key navigation marks one result as active and Escape closes the result list.
+- Arrow-key navigation marks one result as active while focus remains on the search field, Tab skips the results, Enter selects the active result, and Escape closes the result list.

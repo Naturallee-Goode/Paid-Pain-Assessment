@@ -431,7 +431,7 @@ function setActiveSearchResult(index) {
   items.forEach((item, itemIndex) => {
     const active = itemIndex === activeSearchResultIndex
     item.setAttribute('aria-selected', String(active))
-    item.tabIndex = active ? 0 : -1
+    item.tabIndex = -1
   })
   const activeItem = items[activeSearchResultIndex]
   searchInput.setAttribute('aria-activedescendant', activeItem.id)
