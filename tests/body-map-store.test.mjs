@@ -15,11 +15,13 @@ test('store publishes coherent area, muscle, side, and reset transitions', () =>
 
   store.setCatalog(options)
   store.selectArea('elbow')
+  store.continueToMuscles()
   store.selectMuscle('muscle.anconeus-muscle')
   store.setSide('right')
   assert.deepEqual(store.getState(), {
     areaId: 'elbow',
     muscleId: 'muscle.anconeus-muscle',
+    issuesReviewed: true,
     side: 'right',
     catalogStatus: 'ready',
     optionsByArea: options,
@@ -52,4 +54,12 @@ test('catalog readiness replays to late subscribers', () => {
   assert.equal(snapshot.catalogStatus, 'ready')
   assert.equal(snapshot.areaId, 'elbow')
   assert.equal(snapshot.optionsByArea.elbow[0].name, 'Anconeus Muscle')
+})
+
+test('reset publishes even when selection state is already empty so the camera can recover', () => {
+  const store = createBodyMapStore()
+  const actions = []
+  store.subscribe((_state, _previous, action) => actions.push(action))
+  store.reset({ source: 'body-map' })
+  assert.deepEqual(actions.at(-1), { type: 'reset', source: 'body-map' })
 })

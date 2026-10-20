@@ -3,110 +3,86 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { JSDOM } from 'jsdom'
 import { SUPPORTED_BODY_AREAS } from '../src/body-areas.js'
-import { COMMON_ISSUE_CONTENT, getCommonIssueContent } from '../src/common-issues-data.mjs'
-import { renderCommonIssues } from '../src/common-issues.mjs'
+import { POSSIBLE_ISSUES_BY_AREA, ISSUE_CONTENT_REVIEW_BY_AREA, getPossibleIssues } from '../src/possible-issues-data.mjs'
+import { initializePossibleIssues, renderCommonIssues, renderIssueItems } from '../src/possible-issues.mjs'
+import { createBodyMapStore } from '../src/body-map-store.mjs'
 
 const reviewDoc = readFileSync(new URL('../docs/content/common-issues-review.md', import.meta.url), 'utf8')
-const statusLabels = { pending: 'Pending', approved: 'Approved', 'changes-requested': 'Changes requested', unavailable: 'Unavailable' }
-const approvedReview = { status: 'approved', reviewer: 'Mia Miller', date: '2026-10-13', evidence: 'TEST FIXTURE ONLY', requestedChanges: null }
-const createRoot = () => new JSDOM('<div id="content"></div>').window.document.getElementById('content')
+const html = readFileSync(new URL('../src/index.html', import.meta.url), 'utf8')
 
-test('content and review documentation match every supported ID without orphan records', () => {
-  assert.deepEqual(Object.keys(COMMON_ISSUE_CONTENT).sort(), SUPPORTED_BODY_AREAS.map(area => area.id).sort())
+test('every configured area has sourced content and an accurate review record', () => {
+  const ids = SUPPORTED_BODY_AREAS.map(area => area.id).sort()
+  assert.deepEqual(Object.keys(POSSIBLE_ISSUES_BY_AREA).sort(), ids)
+  assert.deepEqual(Object.keys(ISSUE_CONTENT_REVIEW_BY_AREA).sort(), ids)
   for (const area of SUPPORTED_BODY_AREAS) {
-    const record = getCommonIssueContent(area.id)
-    const row = reviewDoc.split('\n').find(line => line.startsWith(`| \`${area.id}\` |`))
+    const row = reviewDoc.split('\n').find(line => line.startsWith('| `' + area.id + '` |'))
     assert(row, `Missing review row for ${area.id}`)
-    assert(row.includes(`| ${statusLabels[record.review.status]} |`), `Review status mismatch for ${area.id}`)
-    assert(record.items.length || record.review.status === 'unavailable')
-    assert.equal(new Set(record.items.map(item => item.name)).size, record.items.length)
-    for (const item of record.items) {
-      assert(row.includes(item.name), `Review row must include ${item.name}`)
-      assert(item.name && item.description && item.sources.length)
-      for (const source of item.sources) {
-        assert.match(source, /^https:\/\//)
-        assert(reviewDoc.includes(source), `Undocumented source: ${source}`)
-      }
+    for (const item of getPossibleIssues(area.id)) {
+      assert(row.includes(item.name))
+      assert(item.description)
+      assert.match(item.source, /^https:\/\//)
+      assert(reviewDoc.includes(item.source))
     }
-    assert(['pending', 'approved', 'changes-requested', 'unavailable'].includes(record.review.status))
-    if (record.review.status === 'pending') {
-      assert.equal(record.review.reviewer, null)
-      assert.equal(record.review.evidence, null)
-      assert.equal(record.review.date, null)
-      assert.equal(record.review.requestedChanges, null)
-    }
-    if (['approved', 'changes-requested'].includes(record.review.status)) {
-      assert.equal(record.review.reviewer, 'Mia Miller')
-      assert(record.review.date && record.review.evidence)
+    const review = ISSUE_CONTENT_REVIEW_BY_AREA[area.id]
+    assert.notEqual(review.status, 'approved')
+    assert.equal(review.date, null, 'Do not invent a correspondence or approval date')
+    if (area.id === 'elbow') {
+      assert.equal(review.status, 'revision-applied')
+      assert.equal(review.reviewer, 'Mia Miller')
+      assert.match(review.requestedChanges, /Tennis Elbow/)
+      assert(reviewDoc.includes(review.evidence))
+      assert.match(review.limitation, /not separately reviewed/)
+    } else {
+      assert.equal(review.status, 'pending')
+      assert.equal(review.reviewer, null)
     }
   }
 })
 
-test('all configured areas show readable content without citations, review labels, or added disclaimer', () => {
-  const root = createRoot()
+test('area and selected-muscle details show identical regional issue names and descriptions', () => {
+  const doc = new JSDOM(html).window.document
+  const store = createBodyMapStore()
+  const dispose = initializePossibleIssues(doc, store)
+  const detail = doc.getElementById('partDescription')
   for (const area of SUPPORTED_BODY_AREAS) {
-    const record = getCommonIssueContent(area.id)
-    renderCommonIssues(root, area.id)
-    assert.equal(root.querySelector('strong').textContent, `Common ${area.label} issues`)
-    assert.equal(root.querySelectorAll('li').length, record.items.length)
-    assert.equal(root.querySelectorAll('a, input, button').length, 0)
-    assert.doesNotMatch(root.textContent, /These examples support education|https?:\/\//)
-    for (const item of record.items) assert(root.textContent.includes(item.description))
-    assert.doesNotMatch(root.textContent, /Draft|pending review/)
+    store.selectArea(area.id)
+    renderCommonIssues(detail, area.id)
+    assert.equal(doc.getElementById('possibleIssuesTitle').textContent, `Common ${area.label} issues`)
+    assert.equal(detail.querySelector('strong').textContent, `Common ${area.label} issues`)
+    assert.deepEqual([...detail.querySelectorAll('li')].map(li => li.textContent),
+      [...doc.querySelectorAll('#possibleIssuesList li')].map(li => li.textContent))
+    assert.equal(detail.querySelectorAll('a, input, button').length, 0)
+    assert.match(detail.textContent, /do not identify the cause of your pain/)
+    assert.match(detail.textContent, /not a medical diagnosis/)
+    assert.doesNotMatch(detail.textContent, /Possible diagnoses|approved/i)
+  }
+  renderCommonIssues(detail, 'foot')
+  assert.doesNotMatch(detail.textContent, /Frozen shoulder/)
+  renderCommonIssues(detail, null)
+  assert.equal(detail.textContent, '')
+  dispose()
+})
+
+test('empty content replaces stale items and unknown IDs cannot access inherited properties', () => {
+  const doc = new JSDOM('<ul></ul>').window.document
+  const list = doc.querySelector('ul')
+  renderIssueItems(list, 'shoulder')
+  renderIssueItems(list, 'foot', [])
+  assert.equal(list.children.length, 1)
+  assert.equal(list.textContent, 'Content is not available for this area yet.')
+  for (const id of ['unknown', '__proto__', 'constructor']) {
+    assert.deepEqual(getPossibleIssues(id), [])
+    renderIssueItems(list, id)
+    assert.equal(list.textContent, '')
   }
 })
 
-test('pending and approved content render while incomplete approvals and requested changes are unavailable', () => {
-  const root = createRoot()
-  const record = { ...getCommonIssueContent('shoulder'), review: approvedReview }
-  renderCommonIssues(root, 'shoulder', record)
-  assert.equal(root.querySelectorAll('li').length, record.items.length)
-  assert.equal(root.querySelector('.common-issues-review-status'), null)
-  for (const review of [
-    { ...approvedReview, reviewer: 'Team' },
-    { ...approvedReview, date: null },
-    { ...approvedReview, evidence: null },
-    { ...approvedReview, status: 'changes-requested' },
-  ]) {
-    renderCommonIssues(root, 'shoulder', { ...record, review })
-    assert.equal(root.querySelectorAll('li').length, 0)
-    assert.match(root.textContent, /not available/)
-  }
-})
-
-test('missing and empty records clear stale copy and use an explicit unavailable state', () => {
-  const root = createRoot()
-  for (const record of [null, { items: [], review: approvedReview }, { items: [], review: { status: 'unavailable' } }]) {
-    renderCommonIssues(root, 'shoulder')
-    renderCommonIssues(root, 'foot', record)
-    assert.equal(root.querySelector('strong').textContent, 'Common Foot issues')
-    assert.equal(root.querySelectorAll('li').length, 0)
-    assert.match(root.textContent, /not available/)
-    assert.doesNotMatch(root.textContent, /Frozen shoulder/)
-  }
-  for (const id of ['future-area', '__proto__', 'constructor']) {
-    assert.equal(getCommonIssueContent(id).review.status, 'unavailable')
-    assert.deepEqual(getCommonIssueContent(id).items, [])
-  }
-  renderCommonIssues(root, null)
-  assert.equal(root.textContent, '')
-})
-
-test('content is rendered as text, so researched or reviewed copy cannot inject markup', () => {
-  const root = createRoot()
+test('content stays plain text and cannot inject markup', () => {
+  const doc = new JSDOM('<ul></ul>').window.document
+  const list = doc.querySelector('ul')
   const item = { name: '<img src=x onerror=alert(1)>', description: '<script>example</script>' }
-  renderCommonIssues(root, 'shoulder', { items: [item], review: approvedReview })
-  assert(root.textContent.includes(item.name))
-  assert(root.textContent.includes(item.description))
-  assert.equal(root.querySelectorAll('img, script, a').length, 0)
-})
-
-test('educational form wording remains and both panels use the same content renderer', () => {
-  const html = readFileSync(new URL('../src/index.html', import.meta.url), 'utf8')
-  assert.match(html, /For wellness education and movement support \(non-medical\)/)
-  assert.match(html, /It is not medical diagnosis or treatment/)
-  const viewer = readFileSync(new URL('../src/viewer.js', import.meta.url), 'utf8')
-  assert.match(viewer, /renderCommonIssues\(document.getElementById\('partDescription'\), id\)/)
-  assert.match(viewer, /renderCommonIssues\(descEl, supportedArea\?\.id\)/)
-  assert.doesNotMatch(viewer, /DIAGNOSES|Common.*Diagnoses/)
+  renderIssueItems(list, 'shoulder', [item])
+  assert(list.textContent.includes(item.name))
+  assert(list.textContent.includes(item.description))
+  assert.equal(list.querySelectorAll('img, script, a').length, 0)
 })

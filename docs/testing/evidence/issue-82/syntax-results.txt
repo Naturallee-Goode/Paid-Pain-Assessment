@@ -1,0 +1,1 @@
+PASS: all 19 source JavaScript files pass node --check.

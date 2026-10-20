@@ -1,60 +1,55 @@
-# Common-issue content review — issue 81
+# Common-issue content review — #81
 
-Prepared October 13, 2026 on `feature/issue-81`. All copy below is proposed. Mia's content approval has not been recorded. A team review or a test fixture does not count as sponsor approval.
+Updated October 20, 2026 after #79 and #110 merged. The single content source is `src/possible-issues-data.mjs`; both area information and selected-muscle details use it. Sources are editorial references and are not displayed as client links.
 
-## Content and sources
+## Recorded sponsor decision
 
-`src/common-issues-data.mjs` is the content record, keyed by the supported IDs in `src/body-areas.js`. It stores names, short descriptions, source URLs, and each area's review status, reviewer, date, evidence, and requested changes. Sources are review metadata and are not rendered in the client panel.
+Mia requested: “delete tendon irritation under Elbow and add Tennis Elbow.” The supplied correspondence is recorded in [#111](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/111) and [merged PR #110](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/110). It was recorded October 18; the correspondence date was not supplied. Tennis Elbow replaces the generic tendon-irritation entry and Bursitis remains. The new NHS-based description was not separately reviewed by Mia. This decision does not establish approval of every regional entry.
 
-The draft descriptions and area assignments reuse [PR #79's content](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/blob/167db9cefa5ee1c9e4320c9846fcb09ac538fa26/src/possible-issues-data.mjs) from [issue #74](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/74). Shoulder expands that draft to match the four-item preview discussed with Girwan: rotator cuff concerns, impingement, frozen shoulder, and bursitis. Other areas keep PR #79's proposed examples instead of duplicating its research. These examples are not an exhaustive list, a frequency ranking, or an assessment of an individual's symptoms. Source support for a definition does not establish sponsor approval of its inclusion in an area.
-
-Sources were checked during this session on October 13, 2026:
-
-- [NHS: sprains and strains](https://www.nhs.uk/conditions/sprains-and-strains/)
-- [NHS: tendonitis](https://www.nhs.uk/conditions/tendonitis/)
-- [NHS: bursitis](https://www.nhs.uk/conditions/bursitis/)
-- [NHS: joint pain](https://www.nhs.uk/symptoms/joint-pain/)
-- [NHS: neck pain](https://www.nhs.uk/symptoms/neck-pain-and-stiff-neck/)
-- [NHS: carpal tunnel syndrome](https://www.nhs.uk/conditions/carpal-tunnel-syndrome/)
-- [NHS: ankle pain](https://www.nhs.uk/symptoms/foot-pain/ankle-pain/)
-- [NHS: plantar fasciitis](https://www.nhs.uk/conditions/plantar-fasciitis/)
-- [AAOS: rotator cuff tears](https://www.orthoinfo.org/diseases--conditions/rotator-cuff-tears/)
-- [NHS: shoulder impingement](https://www.nhs.uk/conditions/shoulder-impingement-syndrome/)
-- [NHS: frozen shoulder](https://www.nhs.uk/conditions/frozen-shoulder/)
+The four Shoulder entries and other regions retain the content integrated by #110. Reusing these records in muscle details does not mean the selected muscle caused the client's pain. The separate older muscle-diagnosis lists are removed.
 
 ## Review table
 
-For every Pending row, the reviewer, decision date, and decision evidence are currently unset in the data. "Not recorded" means no feedback is available; it does not mean Mia requested no changes.
+| Stable area ID | Area | Current examples | Review status |
+| --- | --- | --- | --- |
+| `neck` | Neck | Position-related neck pain; Pinched nerve | Pending |
+| `shoulder` | Shoulder | Rotator cuff tear or tendon irritation; Shoulder impingement; Frozen shoulder; Shoulder bursitis | Pending |
+| `upper-back` | Upper Back | Muscle strain | Pending |
+| `lower-back` | Lower Back | Muscle strain | Pending |
+| `arm` | Arm | Muscle strain; Tendon irritation (tendonitis) | Pending |
+| `elbow` | Elbow | Tennis Elbow; Bursitis | Revision applied; description review pending |
+| `wrist-hand` | Wrist/Hand | Joint sprain; Carpal tunnel syndrome | Pending |
+| `hip` | Hip | Bursitis; Arthritis | Pending |
+| `leg` | Leg | Muscle strain; Tendon irritation (tendonitis) | Pending |
+| `knee` | Knee | Joint sprain; Bursitis | Pending |
+| `ankle` | Ankle | Joint sprain; Achilles tendon irritation | Pending |
+| `foot` | Foot | Muscle strain; Plantar fasciitis | Pending |
 
-| Stable area ID | Area | Proposed examples | Mia's decision | Requested changes | Decision evidence |
-| --- | --- | --- | --- | --- | --- |
-| `neck` | Neck | Position-related neck pain; Pinched nerve | Pending | Not recorded | Not recorded |
-| `shoulder` | Shoulder | Rotator cuff tear or tendon irritation; Shoulder impingement; Frozen shoulder; Shoulder bursitis | Pending | Not recorded | Not recorded |
-| `upper-back` | Upper Back | Muscle strain | Pending | Not recorded | Not recorded |
-| `lower-back` | Lower Back | Muscle strain | Pending | Not recorded | Not recorded |
-| `arm` | Arm | Muscle strain; Tendon irritation (tendonitis) | Pending | Not recorded | Not recorded |
-| `elbow` | Elbow | Tendon irritation (tendonitis); Bursitis | Pending | Not recorded | Not recorded |
-| `wrist-hand` | Wrist/Hand | Joint sprain; Carpal tunnel syndrome | Pending | Not recorded | Not recorded |
-| `hip` | Hip | Bursitis; Arthritis | Pending | Not recorded | Not recorded |
-| `leg` | Leg | Muscle strain; Tendon irritation (tendonitis) | Pending | Not recorded | Not recorded |
-| `knee` | Knee | Joint sprain; Bursitis | Pending | Not recorded | Not recorded |
-| `ankle` | Ankle | Joint sprain; Achilles tendon irritation | Pending | Not recorded | Not recorded |
-| `foot` | Foot | Muscle strain; Plantar fasciitis | Pending | Not recorded | Not recorded |
+`ISSUE_CONTENT_REVIEW_BY_AREA` records pending reviews and the applied Elbow revision. No record claims full approval. Reviewer and correspondence date remain unset where there is no decision. The Elbow record distinguishes its recorded date from the unknown correspondence date.
 
-## Recording Mia's review
+## Sources
 
-Review the exact names, descriptions, and area assignments in the data file with Mia. For each decision, update the area's `content([...], review)` call with `status` (`approved`, `changes-requested`, or `unavailable`), `reviewer: 'Mia Miller'`, the decision `date`, a link or file reference in `evidence`, and her `requestedChanges`. Update this table in the same change. If she approves revised copy, first apply her revisions to the list, then record approval for that exact copy. Any later copy change needs a new review and should return the entry to `pending`.
+These references were carried forward from the integrated #79/#110 content; they were not newly researched in this update.
 
-Pending copy is available in the local preview. Girwan requested removal of the visible review label; review status stays in this data and documentation, and removal of the label does not record sponsor approval. Missing records, empty lists, requested-change records, and incomplete approvals show **Content is not available for this area yet.** They do not reuse another area's content. To explicitly record an area with no available copy, use `content([], { status: 'unavailable', reviewer: null, date: null, evidence: null, requestedChanges: null })`.
+- [Source](https://www.nhs.uk/symptoms/neck-pain-and-stiff-neck/)
+- [Source](https://orthoinfo.aaos.org/en/diseases--conditions/rotator-cuff-tears/)
+- [Source](https://www.nhs.uk/conditions/shoulder-impingement-syndrome/)
+- [Source](https://www.nhs.uk/conditions/frozen-shoulder/)
+- [Source](https://www.nhs.uk/conditions/bursitis/)
+- [Source](https://www.nhs.uk/conditions/sprains-and-strains/)
+- [Source](https://www.nhs.uk/conditions/tendonitis/)
+- [Source](https://www.nhs.uk/conditions/tennis-elbow/)
+- [Source](https://www.nhs.uk/conditions/carpal-tunnel-syndrome/)
+- [Source](https://www.nhs.uk/symptoms/joint-pain/)
+- [Source](https://www.nhs.uk/symptoms/foot-pain/ankle-pain/)
+- [Source](https://www.nhs.uk/conditions/plantar-fasciitis/)
 
-The existing form header describes wellness education and movement support, and its consent section explains that the consultation does not provide medical diagnosis or treatment. Per Girwan's requested preview, the issue panel adds no extra disclaimer paragraph and displays no citations. The heading is **Common [area] issues** for both area and muscle detail; a muscle selection does not generate muscle-specific findings.
+## Remaining review
 
-## Boundaries and outstanding decisions
+Record Mia's decisions against the exact current names, descriptions, and area assignments. Her Elbow label request is implemented; approval of its new description and the remaining copy is not established by the available evidence. Keep #81 open and this PR in draft until the content acceptance criterion is resolved. The UI retains the existing educational examples without adding a review label, as previously requested; it makes no sponsor-approval claim.
 
-The current supported-area configuration remains the working baseline. [Issue #96](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/96) owns sponsor decisions about Arm/Leg subdivisions and Lower Back boundaries. No subdivisions or boundary changes are introduced here. If #96 changes the baseline, update the content records and this table, and rerun the coverage test; the implementation does not assume a permanent count of 12.
+The current configured area IDs remain the baseline. [#96](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/96) tracks boundary decisions; this PR does not change boundaries or subdivide Arm/Leg. If configuration changes, update content and review coverage together.
 
-Mia's review is outstanding. The actual app and screenshots show the proposed copy without a visible review label, per Girwan's instruction. This is an explicit deviation from the issue's visible approval distinction for this local preview. The approved screenshot is explicitly a **test fixture**, not evidence that she approved it. Issue #81 should stay open until actual decisions and their evidence are recorded. The review email lists every area's current names, descriptions, and citations; its local copy is `common-issues-review-email.html`.
+## Recording later decisions
 
-## Verification and AI use
-
-See [issue 81 verification and screenshots](../testing/issue-81.md). Codex assisted with adapting the researched draft copy, implementation, automated tests, and evidence. Girwan's implementation review and Mia's content review remain human steps. Implementation and evidence are prepared for pull-request review. No sponsor decision, merge, or formal stand-up post is represented as completed.
+Update the content, metadata, and this table in the same change. Record the reviewer, actual decision date, evidence, requested edits, and the exact copy approved. Do not infer approval from a passing test, a merge, or silence. A later copy change needs renewed review.

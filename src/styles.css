@@ -530,6 +530,23 @@ input[type="range"]::-moz-range-thumb:hover {
     margin-top: var(--spacing-sm);
 }
 
+.side-selector-label {
+    margin: 0;
+    font-weight: var(--font-weight-bold);
+}
+
+.side-selector .field-description {
+    margin: var(--spacing-xs) 0 0;
+}
+
+.side-clear {
+    margin-top: var(--spacing-md);
+}
+
+.side-status {
+    margin: var(--spacing-sm) 0 0;
+}
+
 /* Radio Groups */
 .radio-group {
     display: flex;
@@ -1146,7 +1163,7 @@ input[type="range"]::-moz-range-thumb:hover {
     display: flex;
     align-items: stretch;
     transition: max-height 0.3s ease;
-    max-height: none;
+    max-height: 300px;
     overflow: hidden;
 }
 
@@ -1194,9 +1211,6 @@ input[type="range"]::-moz-range-thumb:hover {
     line-height: 1.5;
     margin-bottom: var(--spacing-md);
 }
-
-.common-issues-list { margin: .5rem 0; padding-left: 1.25rem; }
-.common-issues-list li + li { margin-top: .5rem; }
 
 /* Search */
 .viewer-search {

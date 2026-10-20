@@ -1,6 +1,0 @@
-
-> test:browser
-> node tests/body-area-browser.cjs && node tests/common-issues-browser.cjs
-
-PASS: area highlights, distinct back targets, restoration, rotation/zoom, all twelve areas, viewer cleanup, Change/Clear, keyboard, reset, three layouts, delayed/failed model, and unavailable viewer. No form submitted.
-PASS: after content browser checks; 6 screenshots; no page errors or form submission.

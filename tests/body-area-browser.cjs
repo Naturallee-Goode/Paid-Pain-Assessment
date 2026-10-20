@@ -23,20 +23,65 @@ const server = http.createServer(async (req, res) => {
   try {
     browser = await chromium.launch({ ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}), headless: true });
     const url = `http://127.0.0.1:${server.address().port}`;
+    const evidenceDir = process.env.EVIDENCE_DIR;
+    const issue82EvidenceDir = process.env.ISSUE82_EVIDENCE_DIR;
+    const issue81EvidenceDir = process.env.ISSUE81_EVIDENCE_DIR;
+    if (issue81EvidenceDir) await fs.mkdir(issue81EvidenceDir, { recursive: true });
+    if (issue82EvidenceDir) await fs.mkdir(issue82EvidenceDir, { recursive: true });
+    if (evidenceDir) await fs.mkdir(evidenceDir, { recursive: true });
     const page = await browser.newPage({ reducedMotion: 'reduce' });
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     // Use the checked-in model as a fixture without changing the production URL.
     const model = await fs.readFile(path.join(root, 'assets/human-body2.glb'));
     await page.route('**/*.glb', route => route.fulfill({ body: model, contentType: 'model/gltf-binary' }));
-    await page.route('**/viewer.js', async route => {
+    await page.route('**/viewer.js*', async route => {
       const response = await route.fetch();
-      await route.fulfill({ response, body: await response.text() + '\nwindow.__viewerTest = { THREE, bodyMeshes, muscleCatalog, getMusclesForArea, focusRegions: AREA_FOCUS_REGIONS, isWithinArea, selectBodyMesh, clearSelection, camera, controls, areaHighlights, animating: () => animating, selected: () => selectedMesh, setRenderLoopPaused: setViewerRenderLoopPaused };' });
+      await route.fulfill({ response, body: await response.text() + '\nwindow.__viewerTest = { THREE, bodyMeshes, muscleCatalog, getMusclesForArea, getBodyArea, getSupportedBodyAreaForRegion, bodyMapStore, focusRegions: AREA_FOCUS_REGIONS, isWithinArea, selectBodyMesh, clearSelection, camera, controls, areaHighlights, highlightMat, animating: () => animating, selected: () => selectedMesh, setRenderLoopPaused: setViewerRenderLoopPaused };' });
     });
     await page.goto(url);
     await page.waitForFunction(() => window.__viewerTest?.bodyMeshes.length > 0, null, { timeout: 60000 });
     await page.locator('#loadingOverlay').waitFor({ state: 'hidden' });
     await page.evaluate(() => window.__viewerTest.setRenderLoopPaused(true));
+    const captureContent = async name => {
+      if (!issue81EvidenceDir) return;
+      await page.evaluate(() => {
+        const v = window.__viewerTest;
+        v.setRenderLoopPaused(false);
+        requestAnimationFrame(() => v.setRenderLoopPaused(true));
+      });
+      await page.locator('#intakeForm fieldset').nth(1).screenshot({ path: path.join(issue81EvidenceDir, name + '.png'), animations: 'disabled' });
+    };
+    for (const button of await page.locator('[data-area]').all()) {
+      await button.click();
+      const label = await button.textContent();
+      const areaId = await button.getAttribute('data-area');
+      assert.equal(await page.locator('#possibleIssuesTitle').textContent(), `Common ${label} issues`);
+      const items = await page.locator('#possibleIssuesList li').allTextContents();
+      await page.locator('#continueToMuscles').click();
+      const name = await page.evaluate(id => window.__viewerTest.getMusclesForArea(id)[0].displayName, areaId);
+      await page.locator('#searchInput').fill(name);
+      await page.locator('#searchResults .search-result-item').first().click();
+      assert.equal(await page.locator('#partTitle').textContent(), name);
+      assert.equal(await page.locator('#partDescription > strong').textContent(), `Common ${label} issues`);
+      assert.deepEqual(await page.locator('#partDescription li').allTextContents(), items);
+      assert.match(await page.locator('#partDescription').textContent(), /not a medical diagnosis/);
+      assert.equal(await page.locator('#partDescription a').count(), 0);
+    }
+    await page.locator('#clearBodyArea').click();
+    await page.locator('[data-area="shoulder"]').click();
+    await captureContent('shoulder-area');
+    await page.locator('#continueToMuscles').click();
+    await page.locator('#searchInput').fill('acromial');
+    await page.locator('#searchResults .search-result-item', { hasText: 'Acromial Part Of Deltoid Muscle' }).click();
+    await captureContent('shoulder-muscle');
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    await captureContent('shoulder-mobile');
+    await page.setViewportSize({ width: 1280, height: 1000 });
+    await page.locator('[data-area="elbow"]').click();
+    await captureContent('elbow-area');
+    await page.locator('#clearBodyArea').click();
     const sides = await page.evaluate(() => {
       const catalog = window.__viewerTest.muscleCatalog;
       return ['left', 'right', null].map(side => catalog.filter(record => record.side === side).length);
@@ -55,6 +100,11 @@ const server = http.createServer(async (req, res) => {
       assert.equal(await page.locator('[aria-pressed="true"]').count(), 1);
       assert.equal(await page.locator('#partTitle').textContent(), await button.textContent());
       assert.equal(await page.evaluate(() => window.__viewerTest.selected()), null);
+      assert.equal(await page.locator('#possibleIssues').isVisible(), true);
+      assert.equal(await page.locator('#muscleSelection').isVisible(), false);
+      assert.equal(await page.locator('#possibleIssuesList li').count() > 0, true);
+      assert.equal(await page.locator('#possibleIssuesList a').count(), 0);
+      assert.match(await page.locator('#issuesDisclaimer').textContent(), /not a medical diagnosis/);
       await page.waitForFunction(() => !window.__viewerTest.animating());
       const state = await page.evaluate(() => {
         const v=window.__viewerTest;
@@ -62,17 +112,12 @@ const server = http.createServer(async (req, res) => {
       });
       assert(state.count > 0, `No highlighted region: ${id}`);
       assert(state.restored, `Stale highlight after switching to ${id}`);
-      if (id === 'arm' || id === 'leg') {
-        assert(await page.evaluate(areaId => {
-          const v = window.__viewerTest;
-          const area = v.focusRegions.find(region => region.id === areaId);
-          const meshes = v.bodyMeshes.filter(mesh => {
-            const center = new v.THREE.Box3().setFromObject(mesh).getCenter(new v.THREE.Vector3());
-            return v.isWithinArea(center, area);
-          });
-          return meshes.length === v.areaHighlights.size && meshes.every(mesh => v.areaHighlights.has(mesh));
-        }, id), `${id} must highlight every mesh in its spatial region`);
-      }
+      assert(await page.evaluate(areaId => {
+        const v = window.__viewerTest;
+        const expected = new Set(v.getMusclesForArea(areaId).map(record => record.mesh));
+        return expected.size === v.areaHighlights.size
+          && [...expected].every(mesh => v.areaHighlights.has(mesh));
+      }, id), `${id} must highlight exactly its anatomically assigned meshes`);
       if (['neck', 'lower-back', 'hip'].includes(id)) {
         const names = await page.evaluate(() => window.__viewerTest.muscleCatalog
           .filter(record => window.__viewerTest.areaHighlights.has(record.mesh))
@@ -90,28 +135,194 @@ const server = http.createServer(async (req, res) => {
       }
     }
     assert(backTargets['upper-back'][1] > backTargets['lower-back'][1]);
+
+    // Regression: a muscle assigned to multiple areas must remain in the
+    // currently selected catalog area instead of switching by mesh position.
+    await page.locator('[data-area="upper-back"]').click();
+    await page.locator('#continueToMuscles').click();
+    await page.locator('#searchInput').fill('latissimus');
+    await page.locator('#searchResults .search-result-item', { hasText: 'Latissimus Dorsi Muscle' }).click();
+    assert.equal(await page.locator('#selectedBodyArea').inputValue(), 'upper-back');
+    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().muscleId), 'muscle.latissimus-dorsi-muscle');
+    assert.equal(await page.locator('#partTitle').textContent(), 'Latissimus Dorsi Muscle');
+    assert.equal(await page.evaluate(() => window.__viewerTest.selected() !== null), true);
+
+    // Regression: selecting a new muscle must honor a side chosen first.
+    await page.locator('[data-area="shoulder"]').click();
+    await page.locator('input[name="painSide"][value="right"]').check();
+    await page.locator('#continueToMuscles').click();
+    await page.locator('#searchInput').fill('acromial');
+    await page.locator('#searchResults .search-result-item', { hasText: 'Acromial Part Of Deltoid Muscle' }).click();
+    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().side), 'right');
+    assert.equal(await page.evaluate(() => {
+      const v = window.__viewerTest;
+      return v.muscleCatalog.find(record => record.mesh === v.selected())?.side;
+    }), 'right');
+
+    const captureSelectionState = () => page.evaluate(() => {
+      const v = window.__viewerTest;
+      return {
+        muscleId: v.bodyMapStore.getState().muscleId,
+        side: v.bodyMapStore.getState().side,
+        checkedSide: document.querySelector('input[name="painSide"]:checked')?.value ?? null,
+        selectedMesh: v.selected()?.uuid ?? null,
+        highlightedMeshes: [v.selected(), ...v.areaHighlights.keys()]
+          .filter(Boolean)
+          .map(mesh => mesh.uuid)
+          .sort(),
+        title: document.querySelector('#partTitle').textContent,
+        details: document.querySelector('#partDescription').textContent,
+        camera: v.camera.position.toArray(),
+        target: v.controls.target.toArray(),
+      };
+    });
+
+    // Regression: selecting the same search result again is a no-op for every
+    // side state, whether the result is chosen by click or Enter.
+    for (const side of ['right', 'left', 'both', null]) {
+      await page.locator('#clearBodyArea').click();
+      await page.locator('[data-area="shoulder"]').click();
+      if (side) await page.locator(`input[name="painSide"][value="${side}"]`).check();
+      await page.locator('#continueToMuscles').click();
+      await page.locator('#searchInput').fill('acromial');
+      await page.locator('#searchResults .search-result-item', { hasText: 'Acromial Part Of Deltoid Muscle' }).click();
+      const initialState = await captureSelectionState();
+
+      await page.locator('#searchInput').fill('acromial');
+      await page.locator('#searchResults .search-result-item', { hasText: 'Acromial Part Of Deltoid Muscle' }).click();
+      assert.deepEqual(await captureSelectionState(), initialState, `Repeated click changed the ${side ?? 'unspecified'}-side selection`);
+
+      await page.locator('#searchInput').fill('acromial');
+      await page.locator('#searchInput').press('Enter');
+      assert.deepEqual(await captureSelectionState(), initialState, `Repeated Enter changed the ${side ?? 'unspecified'}-side selection`);
+    }
+
+    // Regression: Both must be reapplied when changing logical muscles.
+    await page.locator('input[name="painSide"][value="both"]').check();
+    await page.locator('#searchInput').fill('clavicular');
+    await page.locator('#searchResults .search-result-item', { hasText: 'Clavicular Part Of Deltoid Muscle' }).click();
+    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().side), 'both');
+    assert(await page.evaluate(() => {
+      const v = window.__viewerTest;
+      const selectedRecord = v.muscleCatalog.find(record => record.mesh === v.selected());
+      const highlighted = new Set([v.selected(), ...v.areaHighlights.keys()]);
+      const sides = new Set(v.muscleCatalog
+        .filter(record => record.displayName === selectedRecord.displayName && highlighted.has(record.mesh))
+        .map(record => record.side));
+      return sides.has('left') && sides.has('right');
+    }), 'Both must highlight both copies after changing muscles');
+
     await page.locator('#clearBodyArea').click();
-    // Switching from a selected mesh must restore its material and clear search.
+    await page.locator('[data-area="shoulder"]').click();
+    await page.locator('input[name="painSide"][value="left"]').check();
+    assert(await page.evaluate(() => {
+      const v = window.__viewerTest;
+      const highlighted = v.muscleCatalog.filter(record => v.areaHighlights.has(record.mesh));
+      return highlighted.length > 0 && highlighted.every(record => record.side === 'left');
+    }), 'Left must highlight only left-side muscles in the selected area');
+    const leftCount = await page.evaluate(() => window.__viewerTest.areaHighlights.size);
+    await page.locator('input[name="painSide"][value="right"]').check();
+    assert(await page.evaluate(() => {
+      const v = window.__viewerTest;
+      const highlighted = v.muscleCatalog.filter(record => v.areaHighlights.has(record.mesh));
+      return highlighted.length > 0 && highlighted.every(record => record.side === 'right');
+    }), 'Right must highlight only right-side muscles in the selected area');
+    await page.locator('input[name="painSide"][value="both"]').check();
+    assert(await page.evaluate(() => {
+      const v = window.__viewerTest;
+      const sides = new Set(v.muscleCatalog.filter(record => v.areaHighlights.has(record.mesh)).map(record => record.side));
+      return sides.has('left') && sides.has('right');
+    }), 'Both must highlight muscles on both sides of the selected area');
+    assert((await page.evaluate(() => window.__viewerTest.areaHighlights.size)) > leftCount);
+    await page.locator('#clearBodyArea').click();
+    // A model click first chooses an area; the next click can select a muscle without Continue.
     await page.evaluate(() => {
-      const mesh = window.__viewerTest.bodyMeshes[0];
-      window.__originalMaterial = mesh.material;
-      window.__viewerTest.selectBodyMesh(mesh);
+      const v = window.__viewerTest;
+      const record = v.muscleCatalog.find(candidate => {
+        if (candidate.side !== 'left') return false;
+        if (!v.muscleCatalog.some(peer => peer.displayName === candidate.displayName && peer.side === 'right')) return false;
+        const center = new v.THREE.Box3().setFromObject(candidate.mesh).getCenter(new v.THREE.Vector3());
+        return v.getSupportedBodyAreaForRegion(v.getBodyArea(center), center.y)?.id === 'shoulder';
+      });
+      window.__testMesh = record.mesh;
+      v.selectBodyMesh(window.__testMesh);
+    });
+    assert.equal(await page.locator('#selectedBodyArea').inputValue(), 'shoulder');
+    assert.equal(await page.evaluate(() => window.__viewerTest.selected()), null);
+    await page.evaluate(() => window.__viewerTest.selectBodyMesh(window.__testMesh));
+    assert.equal(await page.evaluate(() => window.__viewerTest.selected() === window.__testMesh), true);
+    assert.match(await page.locator('#partDescription').textContent(), /Common Shoulder issues/);
+    assert.equal(await page.locator('#partDescription li').count() > 0, true);
+    assert.equal(await page.locator('#partDescription a').count(), 0);
+    assert.match(await page.locator('#partDescription').textContent(), /not a medical diagnosis/);
+    const selectedMuscleTitle = await page.locator('#partTitle').textContent();
+    assert.equal(await page.locator('input[name="painSide"][required]').count(), 0);
+    assert.equal(await page.locator('input[name="painSide"][value="left"]').isChecked(), true);
+    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().side), 'left');
+    await page.evaluate(() => {
+      const v = window.__viewerTest;
+      const selectedRecord = v.muscleCatalog.find(record => record.mesh === window.__testMesh);
+      const rightRecord = v.muscleCatalog.find(record => record.displayName === selectedRecord.displayName && record.side === 'right');
+      v.selectBodyMesh(rightRecord.mesh);
+    });
+    assert.equal(await page.locator('input[name="painSide"][value="right"]').isChecked(), true);
+    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().side), 'right');
+    await page.locator('#clearPainSide').click();
+    assert.equal(await page.locator('input[name="painSide"]:checked').count(), 0);
+    if (evidenceDir) await page.locator('.side-selector').screenshot({ path: path.join(evidenceDir, 'side-not-specified.png') });
+    for (const side of ['left', 'right']) {
+      await page.locator(`input[name="painSide"][value="${side}"]`).check();
+      assert.equal(await page.locator('#partTitle').textContent(), selectedMuscleTitle);
+      assert.match(await page.locator('#partDescription').textContent(), /Common Shoulder issues/);
+      assert.equal(await page.evaluate(expectedSide => {
+        const v = window.__viewerTest;
+        return v.muscleCatalog.find(record => record.mesh === v.selected())?.side;
+      }, side), side);
+      if (side === 'left' && evidenceDir) await page.locator('.side-selector').screenshot({ path: path.join(evidenceDir, 'side-left-selected.png') });
+    }
+    await page.locator('input[name="painSide"][value="both"]').check();
+    assert.equal(await page.locator('#partTitle').textContent(), selectedMuscleTitle);
+    assert(await page.evaluate(() => {
+      const v = window.__viewerTest;
+      const selectedRecord = v.muscleCatalog.find(record => record.mesh === v.selected());
+      const highlighted = [v.selected(), ...v.areaHighlights.keys()];
+      const sides = new Set(v.muscleCatalog
+        .filter(record => record.displayName === selectedRecord.displayName && highlighted.includes(record.mesh))
+        .map(record => record.side));
+      return sides.has('left') && sides.has('right');
+    }), 'Both must preserve the selected muscle and highlight its left and right copies');
+    await page.locator('#clearPainSide').focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('input[name="painSide"]:checked').count(), 0);
+    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().side), null);
+    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().muscleId !== null), true);
+    assert.equal(await page.locator('input[name="painSide"][value="left"]').evaluate(el => el === document.activeElement), true);
+    await page.locator('#continueToMuscles').focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('#searchInput').evaluate(el => el === document.activeElement), true);
+    assert.equal(await page.locator('#partTitle').textContent(), selectedMuscleTitle);
+    await page.evaluate(() => {
       document.querySelector('#searchInput').value = 'old search';
     });
-    await page.locator('[data-area="neck"]').click();
-    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMeshes[0].material === window.__originalMaterial), true);
+    assert.equal(await page.evaluate(() => window.__viewerTest.selected() === window.__testMesh), true);
+    await page.locator('[data-area="foot"]').click();
+    assert.equal(await page.evaluate(() => window.__testMesh.material === window.__viewerTest.highlightMat), false);
     assert.equal(await page.locator('#searchInput').inputValue(), '');
-    for (const id of ['changeBodyArea', 'clearBodyArea']) {
-      await page.locator('[data-area="knee"]').click();
-      await page.locator(`#${id}`).click();
-      assert.equal(await page.locator('#selectedBodyArea').inputValue(), '');
-      assert.equal(await page.evaluate(() => window.__viewerTest.areaHighlights.size), 0);
-      assert.equal(await page.locator('[aria-pressed="true"]').count(), 0);
-      assert.equal(await page.locator('[data-area="neck"]').evaluate(el => el === document.activeElement), true);
-    }
+    await page.locator('[data-area="knee"]').click();
+    await page.locator('#fullName').fill('Keep This Answer');
+    await page.locator('#clearBodyArea').focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('#selectedBodyArea').inputValue(), '');
+    assert.equal(await page.evaluate(() => window.__viewerTest.areaHighlights.size), 0);
+    assert.equal(await page.locator('[aria-pressed="true"]').count(), 0);
+    assert.equal(await page.locator('[data-area="neck"]').evaluate(el => el === document.activeElement), true);
+    assert.equal(await page.locator('#fullName').inputValue(), 'Keep This Answer');
     await page.locator('[data-area="elbow"]').focus();
     await page.keyboard.press('Enter');
     assert.equal(await page.locator('#selectedBodyArea').inputValue(), 'elbow');
+    assert.match(await page.locator('#possibleIssuesList').textContent(), /Tennis Elbow/);
+    assert.doesNotMatch(await page.locator('#possibleIssuesList').textContent(), /tendon irritation|tendonitis/i);
+    if (issue82EvidenceDir) await page.screenshot({ path: path.join(issue82EvidenceDir, 'elbow-sponsor-content.png'), fullPage: true });
     await page.locator('[data-area="hip"]').focus();
     await page.keyboard.press('Space');
     assert.equal(await page.locator('#selectedBodyArea').inputValue(), 'hip');
@@ -140,6 +351,7 @@ const server = http.createServer(async (req, res) => {
       }
     }
     // Area focus must not disable user-controlled camera motion.
+    await page.locator('#fullName').fill('Keep This Answer');
     await page.waitForFunction(() => !window.__viewerTest.animating());
     const canvas=page.locator('#viewer canvas');
     await canvas.scrollIntoViewIfNeeded();
@@ -155,39 +367,148 @@ const server = http.createServer(async (req, res) => {
     await page.mouse.wheel(0,-150);
     await page.waitForTimeout(300);
     assert.notEqual(await page.evaluate(() => window.__viewerTest.camera.position.distanceTo(window.__viewerTest.controls.target)),distance);
+    if (evidenceDir) await page.screenshot({ path: path.join(evidenceDir, 'before-reset.png') });
+    await page.locator('#clearBodyArea').click();
+    assert.deepEqual(await page.evaluate(() => window.__viewerTest.camera.position.toArray()), [0, 0.85, 2]);
+    assert.deepEqual(await page.evaluate(() => window.__viewerTest.controls.target.toArray()), [0, 0.85, 0]);
+    assert.equal(await page.evaluate(() => window.__viewerTest.animating()), false);
+    assert.equal(await page.locator('#fullName').inputValue(), 'Keep This Answer');
+    if (evidenceDir) await page.screenshot({ path: path.join(evidenceDir, 'after-reset.png') });
+
+    // Reset remains useful with no area selected when only the camera has moved.
+    await page.evaluate(() => {
+      const v = window.__viewerTest;
+      v.camera.position.set(3, 4, 5);
+      v.controls.target.set(1, 1, 1);
+      v.controls.update();
+    });
+    assert.equal(await page.locator('#selectedBodyArea').inputValue(), '');
+    assert.equal(await page.locator('#clearBodyArea').isEnabled(), true);
+    await page.locator('#clearBodyArea').click();
+    assert.deepEqual(await page.evaluate(() => window.__viewerTest.camera.position.toArray()), [0, 0.85, 2]);
+    assert.deepEqual(await page.evaluate(() => window.__viewerTest.controls.target.toArray()), [0, 0.85, 0]);
+    // Reproducible issue evidence: two different areas and a mobile layout.
+    for (const [area, width] of [['shoulder', 1280], ['foot', 1280], ['shoulder', 390]]) {
+      await page.setViewportSize({ width, height: 960 });
+      await page.locator(`[data-area="${area}"]`).click();
+      const content = await page.locator('#possibleIssuesList').textContent();
+      assert.match(content, area === 'foot' ? /Plantar fasciitis/ : /Shoulder bursitis/);
+      assert.doesNotMatch(content, area === 'foot' ? /Bursitis/ : /Plantar fasciitis/);
+      assert.equal(await page.locator('#muscleSelection').isVisible(), false);
+      if (evidenceDir) {
+        await page.locator('#bodyAreaControls').scrollIntoViewIfNeeded();
+        await page.screenshot({ path: path.join(evidenceDir, `${area}-${width}.png`) });
+      }
+      await page.locator('#continueToMuscles').click();
+      assert.equal(await page.locator('#muscleSelection').isVisible(), true);
+    }
     assert.deepEqual(errors, []);
 
     // Controls must not depend on model availability or even successful viewer startup.
-    for (const scenario of ['delayed', 'failed', 'viewer-unavailable']) {
-      const isolated = await browser.newPage({ reducedMotion: 'reduce' });
+    const areaScenarios = [];
+    for (const scenario of ['delayed', 'delayed-reset', 'failed', 'viewer-unavailable', 'missing-content']) {
+      const isolated = await browser.newPage({ reducedMotion: 'reduce', viewport: { width: 1280, height: 1000 } });
+      const isolatedErrors = [];
+      isolated.on('pageerror', error => isolatedErrors.push(error.message));
+      await isolated.addInitScript(() => {
+        window.__submissions = 0;
+        document.addEventListener('submit', event => { event.preventDefault(); window.__submissions++; });
+      });
+      if (scenario === 'missing-content') {
+        // Replace only Foot's content in this browser; production data stays intact.
+        await isolated.route('**/possible-issues-data.mjs', async route => {
+          const response = await route.fetch();
+          const body = (await response.text()).replace('export function getPossibleIssues(areaId) {',
+            "export function getPossibleIssues(areaId) { if (areaId === 'foot') return [];");
+          await route.fulfill({ response, body });
+        });
+      }
       let release;
       const gate = new Promise(resolve => { release = resolve; });
       if (scenario === 'viewer-unavailable') {
-        await isolated.route('**/viewer.js', route => route.abort());
+        await isolated.route('**/viewer.js*', route => route.abort());
       } else {
-        await isolated.route('**/viewer.js', async route => {
+        await isolated.route('**/viewer.js*', async route => {
           const response = await route.fetch();
           await route.fulfill({ response, body: await response.text() + '\nsetViewerRenderLoopPaused(true);' });
         });
       }
       await isolated.route('**/*.glb', async route => {
-        if (scenario === 'delayed') { await gate; await route.fulfill({ body: model, contentType: 'model/gltf-binary' }); }
+        if (scenario.startsWith('delayed')) { await gate; await route.fulfill({ body: model, contentType: 'model/gltf-binary' }); }
         else await route.abort();
       });
       await isolated.goto(url, { waitUntil: 'domcontentloaded' });
-      await isolated.locator('[data-area="lower-back"]').click();
-      assert.equal(await isolated.locator('#selectedBodyArea').inputValue(), 'lower-back');
-      if (scenario === 'delayed') {
+      await isolated.locator('#fullName').fill('Keep this test answer');
+      const panel = isolated.locator('#possibleIssues');
+      assert.equal(await panel.isVisible(), false);
+      for (const button of await isolated.locator('[data-area]').all()) {
+        await button.click();
+        assert.equal(await panel.isVisible(), true);
+        assert.equal(await isolated.locator('#possibleIssuesTitle').textContent(), `Common ${await button.textContent()} issues`);
+        assert.equal(await isolated.locator('input[name="painSide"]:checked').count(), 0);
+        if (scenario === 'missing-content' && await button.getAttribute('data-area') === 'foot') {
+          assert.equal(await panel.locator('li').count(), 1);
+          assert.match(await panel.textContent(), /Content is not available for this area yet\./);
+          assert.doesNotMatch(await panel.textContent(), /Frozen shoulder|Achilles/);
+        } else {
+          assert((await panel.locator('li').count()) > 0);
+        }
+      }
+      const selection = await isolated.evaluate(async () => (await import('./body-map-store.mjs')).bodyMapStore.getState());
+      assert.equal(selection.muscleId, null);
+      assert.equal(selection.side, null);
+      if (scenario.startsWith('delayed')) {
+        // Reset while the request is pending; loading must not resurrect old content.
+        if (scenario === 'delayed-reset') {
+          await isolated.locator('#clearBodyArea').click();
+          assert.equal(await isolated.locator('#possibleIssuesList').textContent(), '');
+          assert.equal(await panel.isVisible(), false);
+        }
         release();
         await isolated.locator('#loadingOverlay').waitFor({ state: 'hidden', timeout: 60000 });
-        assert.equal(await isolated.locator('#selectedBodyArea').inputValue(), 'lower-back');
-        assert.equal(await isolated.locator('#partTitle').textContent(), 'Lower Back');
+        assert.equal(await panel.isVisible(), scenario === 'delayed');
+        assert.equal(await isolated.locator('#selectedBodyArea').inputValue(), scenario === 'delayed' ? 'foot' : '');
+        if (scenario === 'delayed') assert.match(await panel.textContent(), /Common Foot issues/);
+        await isolated.locator('[data-area="lower-back"]').click();
+        assert.match(await panel.textContent(), /Common Lower Back issues/);
+      }
+      if (scenario === 'failed' || scenario === 'missing-content') {
+        await isolated.waitForFunction(() => document.getElementById('loadingLabel').textContent === 'Failed to load model');
+        if (scenario === 'failed') await isolated.locator('[data-area="shoulder"]').click();
+        if (issue82EvidenceDir) await isolated.locator('#intakeForm fieldset').nth(1).screenshot({
+          path: path.join(issue82EvidenceDir, scenario === 'failed' ? 'area-only-model-failed.png' : 'unavailable-content.png'),
+        });
+        if (issue81EvidenceDir && scenario === 'missing-content') await isolated.locator('#intakeForm fieldset').nth(1).screenshot({ path: path.join(issue81EvidenceDir, 'unavailable-content.png') });
       }
       await isolated.locator('#clearBodyArea').click();
       assert.equal(await isolated.locator('#selectedBodyArea').inputValue(), '');
+      assert.equal(await panel.isVisible(), false);
+      assert.equal(await isolated.locator('#possibleIssuesList').textContent(), '');
+      assert.equal(await isolated.locator('#possibleIssuesTitle').textContent(), '');
+      assert.equal(await isolated.locator('#fullName').inputValue(), 'Keep this test answer');
+      await isolated.locator('[data-area="shoulder"]').click();
+      isolated.once('dialog', dialog => dialog.accept());
+      await isolated.locator('#intakeForm [type="reset"]').click();
+      await isolated.waitForFunction(() => document.getElementById('selectedBodyArea').value === '');
+      assert.equal(await isolated.locator('#possibleIssuesList').textContent(), '');
+      assert.equal(await isolated.locator('#possibleIssuesTitle').textContent(), '');
+      assert.equal(await panel.isVisible(), false);
+      assert.equal(await isolated.evaluate(() => window.__submissions), 0);
+      if (scenario !== 'viewer-unavailable') assert.deepEqual(isolatedErrors, []);
+      else {
+        assert.equal(isolatedErrors.length, 1);
+        assert.match(isolatedErrors[0], /Failed to fetch dynamically imported module/);
+      }
+      areaScenarios.push({ scenario, result: 'passed', areasChecked: await isolated.locator('[data-area]').count(), clearSelection: 'passed', formReset: 'passed', formSubmissions: 0 });
       await isolated.close();
     }
-    console.log('PASS: area highlights, distinct back targets, restoration, rotation/zoom, all twelve areas, viewer cleanup, Change/Clear, keyboard, reset, three layouts, delayed/failed model, and unavailable viewer. No form submitted.');
+    if (issue82EvidenceDir) await fs.writeFile(path.join(issue82EvidenceDir, 'browser-results.json'), JSON.stringify({
+      capturedAt: new Date().toISOString(), viewport: { width: 1280, height: 1000 },
+      loadedModelWorkflow: 'passed', responsiveWidths: [390, 768, 1280],
+      screenshots: ['area-only-model-failed.png', 'unavailable-content.png'],
+      missingContentIsTestFixture: true, areaScenarios,
+    }, null, 2) + '\n');
+    console.log('PASS: existing model workflow and all configured area-information lists, replacement, Clear Selection, form reset, three layouts, delayed/failed model, unavailable viewer, missing-content fixture, and no accidental submissions.');
   } finally {
     if (browser) await browser.close();
     await new Promise(resolve => server.close(resolve));
