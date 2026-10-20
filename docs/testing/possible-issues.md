@@ -10,7 +10,24 @@ Choose one of the twelve area buttons. Its possible issues and short description
 
 ## Content sources
 
-Short descriptions were paraphrased from these NHS pages, checked September 30, 2026. Source URLs remain in the data and documentation for review, but the possible-issues UI does not display web links. These are illustrative examples, not an exhaustive list, probability ranking, or symptom assessment. No treatment recommendations or inferred diagnoses are generated. The sponsor has not yet reviewed this new copy.
+Short descriptions were paraphrased from NHS and AAOS sources. The original NHS copy was checked September 30, 2026; the added Shoulder and Tennis Elbow sources were checked October 18, 2026. Source URLs remain in the data and documentation for review, but the possible-issues UI does not display web links. These are illustrative examples, not an exhaustive list, probability ranking, or symptom assessment. No treatment recommendations or inferred diagnoses are generated.
+
+## Sponsor content review — #81 / #111
+
+Girwan supplied the proposed twelve-region content email and Mia Miller's reply. Her requested revision was: “delete tendon irritation under Elbow and add Tennis Elbow.” The correspondence date was not supplied. Recorded October 18, 2026, in PR #110 as implementation evidence for #111, linked to the content review tracked by #81.
+
+The common-region content now matches the supplied proposal with that Elbow revision: Tennis Elbow and Bursitis. Its new short description is paraphrased from NHS Tennis elbow; Mia requested the label replacement but did not supply or separately review this new description. Shoulder now contains the four proposed entries: rotator cuff tear or tendon irritation, shoulder impingement, frozen shoulder, and shoulder bursitis. Other region entries retain the supplied wording. The stable Elbow ID and educational disclaimer remain unchanged.
+
+The selected-muscle panel uses a separate list in `src/muscle-diagnoses.mjs`, which already includes Tennis elbow and does not list generic tendon irritation under Elbow. This correspondence concerns the common-region proposal, and does not establish sponsor approval of the separate selected-muscle list.
+
+- [Issue #111](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/111)
+- [PR #110](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/110)
+- [Tennis elbow — NHS](https://www.nhs.uk/conditions/tennis-elbow/)
+- [Rotator cuff tears — AAOS](https://orthoinfo.aaos.org/en/diseases--conditions/rotator-cuff-tears/); [Tendonitis — NHS](https://www.nhs.uk/conditions/tendonitis/)
+- [Shoulder impingement — NHS](https://www.nhs.uk/conditions/shoulder-impingement-syndrome/)
+- [Frozen shoulder — NHS](https://www.nhs.uk/conditions/frozen-shoulder/)
+
+### Original source list
 
 - [Neck pain](https://www.nhs.uk/symptoms/neck-pain-and-stiff-neck/)
 - [Sprains and strains](https://www.nhs.uk/conditions/sprains-and-strains/)

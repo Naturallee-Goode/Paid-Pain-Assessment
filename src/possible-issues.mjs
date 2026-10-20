@@ -29,7 +29,14 @@ export function initializePossibleIssues(doc, store) {
       const results = doc.getElementById('searchResults')
       results.replaceChildren()
       results.classList.remove('visible')
-      for (const issue of getPossibleIssues(state.areaId)) {
+      const issues = getPossibleIssues(state.areaId)
+      // Missing copy must not block the optional muscle-selection step.
+      if (area && !issues.length) {
+        const item = doc.createElement('li')
+        item.textContent = 'Content is not available for this area yet.'
+        list.append(item)
+      }
+      for (const issue of issues) {
         const item = doc.createElement('li')
         const heading = doc.createElement('strong')
         heading.textContent = issue.name

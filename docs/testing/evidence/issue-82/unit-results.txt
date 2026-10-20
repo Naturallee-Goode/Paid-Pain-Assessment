@@ -1,0 +1,9 @@
+Integration baseline: origin/main at f2d632dbbc9a2727331e02ada849b26433aff503 (merged PR #79).
+Recorded command result: npm run test:body-map
+tests 45
+pass 45
+fail 0
+cancelled 0
+skipped 0
+todo 0
+duration_ms 38362.9773

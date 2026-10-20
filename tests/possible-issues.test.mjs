@@ -24,6 +24,7 @@ test('all areas show descriptions without web links before muscle selection', ()
     assert.equal(doc.getElementById('possibleIssues').hidden, false)
     assert.equal(doc.getElementById('muscleSelection').hidden, true)
     assert.equal(store.getState().muscleId, null)
+    assert.equal(store.getState().side, null)
     assert.equal(store.getState().issuesReviewed, false)
     assert.equal(doc.getElementById('possibleIssuesTitle').textContent, `Possible issues in ${area.label}`)
     const issues = getPossibleIssues(area.id)
@@ -31,12 +32,28 @@ test('all areas show descriptions without web links before muscle selection', ()
     assert.equal(doc.querySelectorAll('#possibleIssuesList li').length, issues.length)
     for (const issue of issues) {
       assert(doc.getElementById('possibleIssuesList').textContent.includes(issue.description))
-      assert.match(issue.source, /^https:\/\/www.nhs.uk\//)
+      assert.match(issue.source, /^https:\/\/(www.nhs.uk|orthoinfo.aaos.org)\//)
     }
     assert.equal(doc.querySelectorAll('#possibleIssuesList input, #possibleIssuesList button').length, 0)
     assert.equal(doc.querySelectorAll('#possibleIssuesList a').length, 0)
     assert.match(doc.getElementById('issuesDisclaimer').textContent, /not a medical diagnosis/)
   }
+})
+
+test('sponsor-reviewed Elbow content replaces tendon irritation and preserves other tendon entries', () => {
+  const { doc } = setup()
+  doc.querySelector('[data-area="elbow"]').click()
+  const content = doc.getElementById('possibleIssuesList').textContent
+  assert.match(content, /Tennis Elbow/)
+  assert.match(content, /outside of the elbow/)
+  assert.match(content, /Bursitis/)
+  assert.doesNotMatch(content, /Tendon irritation|tendonitis/i)
+  for (const area of ['arm', 'leg']) {
+    assert(getPossibleIssues(area).some(issue => issue.name === 'Tendon irritation (tendonitis)'))
+  }
+  assert.deepEqual(getPossibleIssues('shoulder').map(issue => issue.name), [
+    'Rotator cuff tear or tendon irritation', 'Shoulder impingement', 'Frozen shoulder', 'Shoulder bursitis',
+  ])
 })
 
 test('Continue reveals optional muscles; changing area replaces issues and resets review and muscle', () => {
@@ -74,4 +91,20 @@ test('body-map and form reset remove stale issues even with failed model loading
     assert.equal(doc.getElementById('possibleIssuesList').children.length, 0)
     assert.equal(store.getState().issuesReviewed, false)
   }
+})
+
+test('catalog completion and failure preserve the selected area information', () => {
+  const { doc, store } = setup()
+  store.selectArea('shoulder')
+  const list = doc.getElementById('possibleIssuesList')
+  const content = list.textContent
+  store.setCatalog({ shoulder: [{ id: 'test-muscle' }] })
+  store.selectMuscle('test-muscle')
+  store.setSide('right')
+  store.setCatalogError()
+  assert.equal(list.textContent, content)
+  assert.equal(doc.getElementById('possibleIssues').hidden, false)
+  store.reset()
+  assert.equal(list.textContent, '')
+  assert.equal(doc.getElementById('possibleIssuesTitle').textContent, '')
 })
