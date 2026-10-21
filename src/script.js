@@ -397,7 +397,7 @@ function populateConfirmationScreen(data) {
         summarySessions.textContent = sessionDisplay;
     }
 
-    initializeCalendly();
+    initializeCalendly(data.consultationPreference);
 }
 
 function getPainLevelEmoji(painLevel) {
@@ -410,8 +410,17 @@ function getPainLevelEmoji(painLevel) {
     return '😫';
 }
 
-function initializeCalendly() {
-    const CALENDLY_URL = 'https://calendly.com/goode-naturalleegoode/ortho-pain-assessment-call';
+function initializeCalendly(consultationPreference) {
+    const CALENDLY_URLS = {
+        'quick-check': 'https://calendly.com/griffen-bon/quick-pain-check',
+        'movement-relief': 'https://calendly.com/griffen-bon/movement-and-relief-session',
+        'full-assessment': 'https://calendly.com/griffen-bon/full-wellness-assessment'
+    };
+    const CALENDLY_URL = CALENDLY_URLS[consultationPreference];
+    if (!CALENDLY_URL) {
+        console.error('Unknown Calendly meeting type:', type);
+        return;
+    }
 
     const container = document.getElementById('calendlyContainer');
     if (!container) return;
