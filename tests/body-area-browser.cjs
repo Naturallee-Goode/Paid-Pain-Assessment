@@ -260,10 +260,46 @@ const server = http.createServer(async (req, res) => {
     await page.keyboard.press('Enter');
     assert.equal(await page.locator('#searchInput').evaluate(el => el === document.activeElement), true);
     assert.equal(await page.locator('#partTitle').textContent(), selectedMuscleTitle);
+    assert.equal(await page.locator('#panelToggle').count(), 0, 'The obsolete collapse control must be removed');
+    await page.locator('#searchInput').fill('a');
+    assert.equal(await page.locator('#searchResults').isVisible(), true);
+    assert.equal(await page.locator('#searchInput').getAttribute('aria-expanded'), 'true');
+    assert.equal(await page.locator('#searchResults').evaluate(element => getComputedStyle(element).position), 'static');
+    assert.equal(await page.locator('.viewer-info-content').evaluate(element => getComputedStyle(element).overflowY), 'visible');
+    const searchBox = await page.locator('#searchInput').boundingBox();
+    const resultsBox = await page.locator('#searchResults').boundingBox();
+    assert(resultsBox.y >= searchBox.y + searchBox.height, 'Search results must appear below the input in normal page flow');
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    if (evidenceDir) await page.locator('#infoPanel').screenshot({ path: path.join(evidenceDir, 'advanced-search-desktop.png') });
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    assert.equal(await page.locator('#searchResults').evaluate(element => getComputedStyle(element).overflowY), 'visible');
+    if (evidenceDir) await page.locator('#infoPanel').screenshot({ path: path.join(evidenceDir, 'advanced-search-phone.png') });
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.keyboard.press('ArrowDown');
+    assert.equal(await page.locator('#searchResults [aria-selected="true"]').count(), 1);
+    assert(await page.locator('#searchInput').getAttribute('aria-activedescendant'));
+    assert.equal(await page.locator('#searchResults .search-result-item[tabindex="0"]').count(), 0);
+    await page.keyboard.press('Tab');
+    assert.equal(await page.evaluate(() => document.querySelector('#searchResults').contains(document.activeElement)), false, 'Tab must skip search results');
+
+    await page.locator('#searchInput').focus();
+    await page.locator('#searchInput').fill('Clavicular Part Of Deltoid Muscle');
+    await page.keyboard.press('ArrowDown');
+    const activeResultLabel = await page.locator('#searchResults [aria-selected="true"]').textContent();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('#partTitle').textContent(), activeResultLabel);
+    assert.equal(await page.locator('#searchResults').isVisible(), false);
+
+    await page.locator('#searchInput').fill('a');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('#searchResults').isVisible(), false);
+    assert.equal(await page.locator('#searchInput').getAttribute('aria-expanded'), 'false');
     await page.evaluate(() => {
       document.querySelector('#searchInput').value = 'old search';
     });
-    assert.equal(await page.evaluate(() => window.__viewerTest.selected() === window.__testMesh), true);
+    assert.equal(await page.evaluate(() => window.__viewerTest.selected() !== null), true);
     await page.locator('[data-area="foot"]').click();
     assert.equal(await page.evaluate(() => window.__testMesh.material === window.__viewerTest.highlightMat), false);
     assert.equal(await page.locator('#searchInput').inputValue(), '');
