@@ -367,7 +367,7 @@ function resetBodyMapView() {
   restoreAreaHighlights()
   clearSearchResults()
   if (searchInput) searchInput.value = ''
-  document.getElementById('partTitle').textContent = 'Search or select a body part'
+  document.getElementById('partTitle').textContent = 'Choose a body area'
   document.getElementById('partDescription').textContent = ''
   const dampingEnabled = controls.enableDamping
   controls.enableDamping = false
@@ -402,6 +402,7 @@ function getZoomOutPosition(horizDir) {
 }
 
 function getSearchMatches(query) {
+  if (!bodyMapStore.getState().advanced) return []
   const normalized = query.trim().toLowerCase()
   if (!normalized) return []
   return [...meshLabelIndex.entries()]
@@ -492,6 +493,7 @@ function selectBodyMesh(mesh, { synchronizeSide = true } = {}) {
     bodyMapStore.selectArea(supportedArea.id, { source: 'viewer-area' })
     return
   }
+  if (!state.advanced) return
   const selectedRecord = muscleCatalog.find(record => record.mesh === mesh)
   const muscleId = selectedRecord ? createMuscleId(selectedRecord.sourceName) : null
 
@@ -652,6 +654,10 @@ document.addEventListener('click', (event) => {
 bodyMapStore.subscribe((state, previous, action) => {
   if (action.type === 'reset') {
     resetBodyMapView()
+    return
+  }
+  if (action.type === 'view' && !state.advanced) {
+    focusBodyArea(state.areaId)
     return
   }
   const areaChanged = state.areaId !== previous.areaId
