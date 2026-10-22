@@ -5,30 +5,39 @@ export function initializePossibleIssues(doc, store) {
   const panel = doc.getElementById('possibleIssues')
   const title = doc.getElementById('possibleIssuesTitle')
   const list = doc.getElementById('possibleIssuesList')
-  const next = doc.getElementById('continueToMuscles')
+  const toggle = doc.getElementById('toggleMuscleView')
+  const details = doc.getElementById('infoPanel')
   const muscles = doc.getElementById('muscleSelection')
   const hint = doc.getElementById('muscleSelectionHint')
   const search = doc.getElementById('searchInput')
 
-  const continueToMuscles = () => {
-    store.continueToMuscles()
-    search.focus()
+  const toggleView = () => {
+    store.setAdvanced(!store.getState().advanced)
+    if (store.getState().advanced && store.getState().areaId) search.focus()
+    else toggle.focus()
   }
-  next.addEventListener('click', continueToMuscles)
+  toggle.addEventListener('click', toggleView)
 
   const unsubscribe = store.subscribe((state, previous, action) => {
     const area = getSupportedBodyArea(state.areaId)
     panel.hidden = !area
-    muscles.hidden = !area || !state.issuesReviewed
-    hint.hidden = muscles.hidden
-    next.hidden = !area || state.issuesReviewed
-    if (state.areaId !== previous.areaId || action.type === 'init' || action.type === 'reset') {
-      title.textContent = area ? `Possible issues in ${area.label}` : ''
-      list.replaceChildren()
+    details.hidden = !state.advanced
+    muscles.hidden = !area || !state.advanced
+    hint.hidden = !state.advanced
+    hint.textContent = area
+      ? 'Search for a muscle or select one on the model. Muscle selection is optional.'
+      : 'Choose a body area to explore its muscles.'
+    toggle.textContent = state.advanced ? 'Return to simple view' : 'Explore muscles (advanced)'
+    toggle.setAttribute('aria-expanded', String(state.advanced))
+    if (state.areaId !== previous.areaId || state.advanced !== previous.advanced || action.type === 'init' || action.type === 'reset') {
       search.value = ''
       const results = doc.getElementById('searchResults')
       results.replaceChildren()
       results.classList.remove('visible')
+    }
+    if (state.areaId !== previous.areaId || action.type === 'init' || action.type === 'reset') {
+      title.textContent = area ? `Possible issues in ${area.label}` : ''
+      list.replaceChildren()
       const issues = getPossibleIssues(state.areaId)
       // Missing copy must not block the optional muscle-selection step.
       if (area && !issues.length) {
@@ -49,6 +58,6 @@ export function initializePossibleIssues(doc, store) {
   })
   return () => {
     unsubscribe()
-    next.removeEventListener('click', continueToMuscles)
+    toggle.removeEventListener('click', toggleView)
   }
 }
