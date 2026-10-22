@@ -39,11 +39,13 @@ const server = http.createServer(async (req, res) => {
     await page.route('**/*.glb', route => route.fulfill({ body: model, contentType: 'model/gltf-binary' }));
     await page.route('**/viewer.js*', async route => {
       const response = await route.fetch();
-      await route.fulfill({ response, body: await response.text() + '\nwindow.__viewerTest = { THREE, bodyMeshes, muscleCatalog, getMusclesForArea, getBodyArea, getSupportedBodyAreaForRegion, bodyMapStore, focusRegions: AREA_FOCUS_REGIONS, isWithinArea, selectBodyMesh, clearSelection, camera, controls, areaHighlights, highlightMat, animating: () => animating, selected: () => selectedMesh, setRenderLoopPaused: setViewerRenderLoopPaused };' });
+      await route.fulfill({ response, body: await response.text() + '\nwindow.__viewerTest = { THREE, bodyMeshes, muscleCatalog, getMusclesForArea, getBodyArea, getSupportedBodyAreaForRegion, bodyMapStore, focusRegions: AREA_FOCUS_REGIONS, isWithinArea, selectBodyMesh, clearSelection, camera, controls, areaHighlights, highlightMat, render: () => renderer.render(scene, camera), animating: () => animating, selected: () => selectedMesh, setRenderLoopPaused: setViewerRenderLoopPaused };' });
     });
     await page.goto(url);
     await page.waitForFunction(() => window.__viewerTest?.bodyMeshes.length > 0, null, { timeout: 60000 });
     await page.locator('#loadingOverlay').waitFor({ state: 'hidden' });
+    await require('./area-click-checks.cjs')(page);
+    if (process.env.ISSUE83_BEFORE === '1') return;
     // The view switch is usable before choosing an area and does not require a side.
     await page.locator('#toggleMuscleView').press('Enter');
     assert.equal(await page.locator('#toggleMuscleView').getAttribute('aria-expanded'), 'true');
