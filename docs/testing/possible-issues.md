@@ -4,7 +4,7 @@ PBI #74 adds an educational step between choosing an area and choosing a specifi
 
 ## Behavior
 
-Choose one of the twelve area buttons. Its possible issues and short descriptions appear immediately, independently of model loading. Continue to muscle selection reveals the existing search and moves keyboard focus there. The information and disclaimer remain visible. Changing the area, using Clear Selection, or confirming a form reset clears the review state and previous selection. A model click on a different supported area first opens that area's information without selecting the clicked muscle. After choosing an area, clicking a muscle in that area selects it immediately and displays a plain-text list of possible diagnoses for that area. Continue is only needed to reveal muscle search. The muscle list contains no web links and includes its own non-diagnosis disclaimer. Choosing Left or Right limits the highlight to that anatomical side. If a muscle is already selected, its name and diagnoses remain visible while the highlight switches to that muscle's requested side; Both highlights its paired copies.
+Choose one of the twelve area buttons. Its possible issues and short descriptions appear immediately, independently of model loading. Continue to muscle selection reveals the existing search and moves keyboard focus there. The information and disclaimer remain visible. Changing the area, using Clear Selection, or confirming a form reset clears the review state and previous selection. A model click on a different supported area first opens that area's information without selecting the clicked muscle. After choosing an area, clicking a muscle in that area selects it immediately and displays the same regional issue descriptions under Common [area] issues. Continue is only needed to reveal muscle search. The regional issue list contains no web links and includes its own educational disclaimer. Choosing Left or Right limits the highlight to that anatomical side. If a muscle is already selected, its name and regional issue descriptions remain visible while the highlight switches to that muscle's requested side; Both highlights its paired copies.
 
 `src/possible-issues-data.mjs` owns the area-to-issues mapping, separate from the muscle catalog. `src/possible-issues.mjs` renders it from the shared store. `issuesReviewed` records the user's Continue action for the current area only; it does not imply clinical review or diagnosis. Selecting a muscle remains optional.
 
@@ -18,7 +18,7 @@ Girwan supplied the proposed twelve-region content email and Mia Miller's reply.
 
 The common-region content now matches the supplied proposal with that Elbow revision: Tennis Elbow and Bursitis. Its new short description is paraphrased from NHS Tennis elbow; Mia requested the label replacement but did not supply or separately review this new description. Shoulder now contains the four proposed entries: rotator cuff tear or tendon irritation, shoulder impingement, frozen shoulder, and shoulder bursitis. Other region entries retain the supplied wording. The stable Elbow ID and educational disclaimer remain unchanged.
 
-The selected-muscle panel uses a separate list in `src/muscle-diagnoses.mjs`, which already includes Tennis elbow and does not list generic tendon irritation under Elbow. This correspondence concerns the common-region proposal, and does not establish sponsor approval of the separate selected-muscle list.
+PR #105 now reuses these same regional records in selected-muscle details and removes the separate older muscle-diagnosis list. The current review metadata and remaining approval work are recorded in [the #81 review table](../content/common-issues-review.md). The supplied correspondence does not establish approval of the complete current copy.
 
 - [Issue #111](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/111)
 - [PR #110](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/110)
@@ -38,7 +38,7 @@ The selected-muscle panel uses a separate list in `src/muscle-diagnoses.mjs`, wh
 - [Ankle pain](https://www.nhs.uk/symptoms/foot-pain/ankle-pain/)
 - [Plantar fasciitis](https://www.nhs.uk/conditions/plantar-fasciitis/)
 
-## Verification
+## Original #79 verification (historical)
 
 - `npm run test:body-map`: 37 passing tests, including all twelve area lists, link-free rendering, muscle-level diagnosis mappings, selected-muscle preservation during left/right/both filtering, review-state transitions, area replacement, clearing, form reset, and failed-catalog behavior.
 - `npm run lint:html`: all three pages pass.

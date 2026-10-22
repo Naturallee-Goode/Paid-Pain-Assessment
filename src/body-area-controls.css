@@ -12,7 +12,8 @@
 .possible-issues li p { margin: .25rem 0; }
 .possible-issues button { white-space: normal; max-width: 100%; min-height: 44px; }
 .possible-issues button:focus-visible { outline: 3px solid #174ba0; outline-offset: 3px; }
-.muscle-diagnosis-list { margin: .5rem 0 .75rem; padding-left: 1.25rem; }
-.muscle-diagnosis-list li + li { margin-top: .25rem; }
-.muscle-diagnosis-disclaimer { font-size: .9rem; font-style: italic; }
+.common-issues-list { margin: .5rem 0 .75rem; padding-left: 1.25rem; }
+.common-issues-list li + li { margin-top: .25rem; }
+.common-issues-list li p { margin: .25rem 0; }
+.common-issues-disclaimer { font-size: .9rem; font-style: italic; }
 #possibleIssues[hidden], #continueToMuscles[hidden], #muscleSelection[hidden], #muscleSelectionHint[hidden] { display: none; }
