@@ -588,6 +588,17 @@ function handleViewerClick(e) {
   pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
   raycaster.setFromCamera(pointer, camera)
   const hits = raycaster.intersectObjects(bodyMeshes, false)
+  if (!bodyMapStore.getState().advanced) {
+    // A familiar area follows the clicked surface, not a whole muscle's center.
+    const point = hits[0]?.point
+    if (!point) {
+      clearSelection()
+      return
+    }
+    const area = getSupportedBodyAreaForRegion(getBodyArea(point), point.y)
+    if (area) bodyMapStore.selectArea(area.id, { source: 'viewer-area' })
+    return
+  }
   const mesh = getSelectableHit(hits)
 
   if (!mesh) {
