@@ -64,7 +64,7 @@
             <!-- Section 2: Interactive Body Map -->
             <fieldset>
                 <legend>2. Interactive Body Map</legend>
-                <p class="field-description">Choose a body area to see possible issues. Click a muscle in that area on the model, or continue to muscle search.
+                <p class="field-description">Choose a body area to see possible issues. You can complete the intake without choosing a muscle or side. For optional muscle details, choose Explore muscles.
                 </p>
 
                 <div id="bodyAreaControls" class="body-area-controls">
@@ -78,9 +78,10 @@
                     <h3 id="possibleIssuesTitle"></h3>
                     <p id="issuesDisclaimer">Educational information only, not a medical diagnosis. These are examples of possible issues, not a complete list or a prediction about your pain. A qualified healthcare professional can assess your symptoms.</p>
                     <ul id="possibleIssuesList"></ul>
-                    <button type="button" id="continueToMuscles" class="btn btn-primary" aria-controls="muscleSelection">Continue to muscle selection</button>
-                    <p id="muscleSelectionHint" role="status" hidden>You can now search for a muscle or select one on the model. Muscle selection is optional.</p>
                 </section>
+
+                <button type="button" id="toggleMuscleView" class="btn btn-primary" aria-controls="infoPanel" aria-expanded="false">Explore muscles (advanced)</button>
+                <p id="muscleSelectionHint" role="status" hidden>Choose a body area to explore its muscles.</p>
 
                 <!-- 3D Viewer -->
                 <div class="viewer-wrapper">
@@ -94,9 +95,9 @@
                         </div>
                     </div>
                     <div id="viewer"></div>
-                    <div id="infoPanel" class="viewer-info-panel">
+                    <div id="infoPanel" class="viewer-info-panel" hidden>
                         <div class="viewer-info-content">
-                            <div id="partTitle" class="viewer-part-title">Search or select a body part</div>
+                            <div id="partTitle" class="viewer-part-title">Choose a body area</div>
                             <div id="partDescription" class="viewer-part-description"></div>
                             <div id="muscleSelection" class="viewer-search" hidden>
                                 <label for="searchInput">Search muscles (optional)</label>
@@ -396,7 +397,7 @@
     </div>
 
     <script type="module" src="script.js"></script>
-    <script type="module" src="body-map-app.mjs?v=4"></script>
+    <script type="module" src="body-map-app.mjs?v=6"></script>
 </body>
 
 </html>

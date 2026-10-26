@@ -6,7 +6,7 @@ export function createBodyMapStore() {
   let state = {
     areaId: null,
     muscleId: null,
-    issuesReviewed: false,
+    advanced: false,
     side: null,
     catalogStatus: 'loading',
     optionsByArea: {},
@@ -38,22 +38,22 @@ export function createBodyMapStore() {
       const area = areaId ? getSupportedBodyArea(areaId) : null
       if (areaId && !area) throw new Error(`Unknown body area: ${areaId}`)
       if ((area?.id ?? null) === state.areaId) return
-      update({ areaId: area?.id ?? null, muscleId: null, side: null, issuesReviewed: false }, { type: 'area', source })
+      update({ areaId: area?.id ?? null, muscleId: null, side: null }, { type: 'area', source })
     },
 
     clearArea(options) {
       this.selectArea(null, options)
     },
 
-    continueToMuscles() {
-      if (!state.areaId) return
-      update({ issuesReviewed: true }, { type: 'issues-reviewed', source: 'ui' })
+    setAdvanced(advanced) {
+      update({ advanced, muscleId: advanced ? state.muscleId : null }, { type: 'view', source: 'ui' })
     },
 
     selectMuscle(muscleId, { source = 'ui' } = {}) {
       if (!state.areaId) throw new Error('Select a body area before selecting a muscle')
       const option = (state.optionsByArea[state.areaId] ?? []).find(item => item.id === muscleId)
       if (!option) throw new Error(`Muscle ${muscleId} is not available in ${state.areaId}`)
+      if (!state.advanced) return
       update({ muscleId: option.id }, { type: 'muscle', source })
     },
 
@@ -77,7 +77,7 @@ export function createBodyMapStore() {
 
     reset({ source = 'form' } = {}) {
       publish(
-        { ...state, areaId: null, muscleId: null, side: null, issuesReviewed: false },
+        { ...state, areaId: null, muscleId: null, side: null, advanced: false },
         { type: 'reset', source },
       )
     },
