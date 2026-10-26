@@ -1,5 +1,5 @@
 import { bodyMapStore } from './body-map-store.mjs';
-import { buildEmailParams } from './form-submission.mjs';
+import { buildEmailParams, getBodyMapSubmission } from './form-submission.mjs';
 
 /**
  * Pain Assessment Intake Form - JavaScript
@@ -224,6 +224,11 @@ function collectFormData() {
             data[key] = data[key].join(', ');
         }
     });
+
+    // Read the authoritative selection after the user has finished editing.
+    // Hidden controls remain useful for ordinary form behavior, but cannot
+    // override a cleared or changed body-map state at submission time.
+    Object.assign(data, getBodyMapSubmission(bodyMapStore.getState()));
 
     return data;
 }
