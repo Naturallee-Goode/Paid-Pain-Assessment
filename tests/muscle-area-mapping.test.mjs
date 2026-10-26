@@ -9,9 +9,9 @@ const json=JSON.parse(model.subarray(20,20+model.readUInt32LE(12)))
 const entries=json.nodes.flatMap(n=>n.mesh===undefined?[]:json.meshes[n.mesh].primitives.map(p=>({mesh:{isMesh:true},sourceName:n.name,materialName:json.materials[p.material]?.name})))
 const catalog=buildMuscleCatalog(entries)
 
-test('real catalog yields twelve nonempty, sorted groups with distinct back lists',()=>{
+test('real catalog yields seventeen nonempty, sorted groups with distinct back lists',()=>{
  const {byArea,unmapped}=mapMusclesToAreas(catalog,{warn:()=>{}})
- assert.equal(Object.keys(byArea).length,12)
+ assert.equal(Object.keys(byArea).length,17)
  for(const records of Object.values(byArea)) {
   assert(records.length>0)
   assert.deepEqual(records.map(r=>r.displayName),records.map(r=>r.displayName).sort((a,b)=>a.localeCompare(b)))
@@ -95,4 +95,16 @@ test('sponsor reference regions preserve confirmed shared memberships and bounda
  assert(!shoulder.has('Clavicular head of pectoralis major muscle'))
  assert(!shoulder.has('Sternocostal head of pectoralis major muscle'))
  assert(!shoulder.has('External abdominal oblique muscle'))
+
+ const expectedByArea = {
+  chest: ['Clavicular head of pectoralis major muscle', 'Pectoralis minor muscle', 'Serratus anterior muscle'],
+  abdomen: ['External abdominal oblique muscle', 'Internal abdominal oblique muscle'],
+  forearm: ['Flexor carpi radialis', 'Extensor digitorum', 'Brachioradialis muscle'],
+  thigh: ['Rectus femoris muscle', 'Vastus lateralis muscle', 'Semitendinosus muscle'],
+  'lower-leg': ['Tibialis anterior muscle', 'Soleus muscle', 'Fibularis longus muscle'],
+ }
+ for (const [area, names] of Object.entries(expectedByArea)) {
+  const assigned = namesFor(area)
+  for (const name of names) assert(assigned.has(name), `${name} in ${area}`)
+ }
 })

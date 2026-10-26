@@ -8,7 +8,11 @@ test('every selectable area has one focus region', () => {
   for (const area of AREA_FOCUS_REGIONS) {
     assert(area.y[1] > area.y[0])
     assert(area.x[1] > area.x[0])
-    assert(isWithinArea({x: (area.x[0] + area.x[1]) / 2, y: (area.y[0] + area.y[1]) / 2, z: -.1}, area))
+    assert(isWithinArea({
+      x: (area.x[0] + area.x[1]) / 2,
+      y: (area.y[0] + area.y[1]) / 2,
+      z: area.front ? .1 : -.1,
+    }, area))
   }
 })
 
@@ -18,6 +22,14 @@ test('back regions are posterior and separate at the shared region boundary', ()
   for (const [y, expected] of [[1.3, [true,false]], [1.2, [false,true]], [1.25, [true,false]]]) {
     assert.deepEqual([upper,lower].map(a => isWithinArea({x:0,y,z:-.1}, a)), expected)
     assert.deepEqual([upper,lower].map(a => isWithinArea({x:0,y,z:.1}, a)), [false,false])
+  }
+})
+
+test('chest and abdomen focus only the anterior trunk', () => {
+  for (const [id, y] of [['chest', 1.2], ['abdomen', .9]]) {
+    const area = AREA_FOCUS_REGIONS.find(candidate => candidate.id === id)
+    assert(isWithinArea({x: 0, y, z: .1}, area))
+    assert.equal(isWithinArea({x: 0, y, z: -.1}, area), false)
   }
 })
 
