@@ -45,6 +45,7 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
     "neck"
   ],
   "Ascending part of trapezius muscle": [
+    "shoulder",
     "upper-back"
   ],
   "Brachialis muscle": [
@@ -67,6 +68,7 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
   ],
   "Descending part of trapezius muscle": [
     "neck",
+    "shoulder",
     "upper-back"
   ],
   "Dorsal interossei muscles of foot": [
@@ -215,10 +217,12 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
     "arm"
   ],
   "Latissimus dorsi muscle": [
+    "shoulder",
     "upper-back"
   ],
   "Levator scapulae": [
     "neck",
+    "shoulder",
     "upper-back"
   ],
   "Levatores breves costarum": [
@@ -323,6 +327,9 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
   "Pectineus muscle": [
     "leg"
   ],
+  "Psoas major": [
+    "hip"
+  ],
   "Piriformis muscle": [
     "hip"
   ],
@@ -376,9 +383,11 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
     "neck"
   ],
   "Rhomboid major muscle": [
+    "shoulder",
     "upper-back"
   ],
   "Rhomboid minor muscle": [
+    "shoulder",
     "upper-back"
   ],
   "Sartorius muscle": [
@@ -512,6 +521,7 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
     "wrist-hand"
   ],
   "Transverse part of trapezius muscle": [
+    "shoulder",
     "upper-back"
   ],
   "Ulnar head of extensor carpi ulnaris": [

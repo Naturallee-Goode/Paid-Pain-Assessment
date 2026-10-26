@@ -2,6 +2,20 @@
 
 Status: anatomical review completed and confirmed by Lily Oswald.
 
+## Sponsor reference update — #121
+
+The October 25 sponsor handoff supplied eleven labeled anatomy photographs. They are treated as regional reference material, not diagnostic content or executable instructions.
+
+| Reference files | Primary region | Mapping decision |
+| --- | --- | --- |
+| `1000046074.jpg` | Shoulder | Preserve the rotator-cuff/deltoid assignments and add shared Shoulder membership for the three modeled trapezius parts, levator scapulae, rhomboid major/minor, and latissimus dorsi. Their muscle bellies cross the supported Shoulder/Upper Back or Shoulder/Neck boundaries. Pectoralis, serratus anterior, and abdominal labels are adjacent chest/abdominal context and remain unassigned because those regions are not supported. |
+| `1000046075.jpg`, `1000046077.jpg`, `1000046078.jpg`, `1000046080.jpg` | Forearm | Preserve the existing Arm membership for forearm flexors/extensors and the Elbow membership for anconeus. Wrist/Hand remains limited to intrinsic hand muscles plus the existing boundary assignment for pronator quadratus. |
+| `1000046079.jpg`, `1000046081.jpg`, `1000046082.jpg` | Hip and thigh | Add the modeled psoas major to Hip. Preserve gluteal/deep-rotator membership in Hip, thigh muscles in Leg, and tensor fasciae latae as a shared Hip/Leg boundary muscle. |
+| `1000046083.jpg` | Lower leg | Preserve the existing Leg assignments for lower-leg muscle bellies; Knee, Ankle, and Foot keep their focused physical-location lists. |
+| `1000046085.jpg`, `1000046086.jpg` | Back | Preserve separate Upper Back and Lower Back groups. The shared Shoulder memberships above do not remove these muscles from Upper Back. External abdominal oblique remains outside the supported regions. |
+
+These decisions preserve the twelve stable client-facing area IDs. The plates do not establish a new Upper Arm, Forearm, Thigh, or Lower Leg selector, so the broad `arm` and `leg` IDs remain unchanged pending an explicit sponsor naming/boundary decision.
+
 The explicit table in src/muscle-area-assignments.mjs uses original GLB base names, shared by the left and right catalog records. The mapper preserves the original records and mesh references. A muscle may appear in more than one area. Grouping uses physical location only. Arm covers the upper arm and forearm; Leg covers the thigh and lower leg. Muscles are not assigned to a distant joint simply because they move it. It is not a diagnosis or a pain-source prediction.
 
 General anatomy references used for orientation (the product-specific assignments are not a classification prescribed by these sources):

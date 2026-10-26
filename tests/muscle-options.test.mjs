@@ -28,7 +28,7 @@ test('logical options are stable, sorted, unique, and retain side records privat
   assert.equal(optionsByArea.elbow[0].name, 'Anconeus Muscle')
   assert.deepEqual(optionsByArea.elbow[0].availableSides, ['left', 'right'])
   assert.deepEqual(recordsById.get(optionsByArea.elbow[0].id).map(record => record.side).sort(), ['left', 'right'])
-  assert.equal(new Set(all.map(item => item.id)).size, 175)
+  assert.equal(new Set(all.map(item => item.id)).size, 176)
 })
 
 test('multi-area muscles keep one area-neutral ID', () => {

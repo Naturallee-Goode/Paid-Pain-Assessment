@@ -70,3 +70,29 @@ test('Arm and Leg include limb muscles by location and preserve both sides', () 
  assert(!byArea.arm.some(r=>/pectoralis|of hand/i.test(r.sourceName)))
  assert(!byArea.leg.some(r=>/gluteus|of foot|of hand|carpi|pollicis/i.test(r.sourceName)))
 })
+
+test('sponsor reference regions preserve confirmed shared memberships and boundaries', () => {
+ const {byArea, unmapped}=mapMusclesToAreas(catalog,{warn:()=>{}})
+ const namesFor = area => new Set(byArea[area].map(record => record.sourceName.replace(/\.[a-z]$/i,'')))
+
+ const shoulder = namesFor('shoulder')
+ for (const name of [
+  'Ascending part of trapezius muscle',
+  'Descending part of trapezius muscle',
+  'Transverse part of trapezius muscle',
+  'Levator scapulae',
+  'Rhomboid major muscle',
+  'Rhomboid minor muscle',
+  'Latissimus dorsi muscle',
+ ]) assert(shoulder.has(name), name)
+
+ const hip = namesFor('hip')
+ assert(hip.has('Psoas major'))
+ assert(!unmapped.some(record => record.sourceName.startsWith('Psoas major.')))
+
+ // Labels at the edge of a regional plate remain contextual when their muscle
+ // bellies are in unsupported chest or abdominal regions.
+ assert(!shoulder.has('Clavicular head of pectoralis major muscle'))
+ assert(!shoulder.has('Sternocostal head of pectoralis major muscle'))
+ assert(!shoulder.has('External abdominal oblique muscle'))
+})
