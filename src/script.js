@@ -345,6 +345,9 @@ function populateConfirmationScreen(data) {
     const summaryName = document.getElementById('summaryName');
     const summaryEmail = document.getElementById('summaryEmail');
     const summaryPhone = document.getElementById('summaryPhone');
+    const summaryBodyArea = document.getElementById('summaryBodyArea');
+    const summaryMuscle = document.getElementById('summaryMuscle');
+    const summarySide = document.getElementById('summarySide');
     const summaryPainLevel = document.getElementById('summaryPainLevel');
     const summaryWellnessGoal = document.getElementById('summaryWellnessGoal');
     const summarySessions = document.getElementById('summarySessions');
@@ -359,6 +362,18 @@ function populateConfirmationScreen(data) {
 
     if (summaryPhone) {
         summaryPhone.textContent = data.phone || 'Not provided';
+    }
+
+    if (summaryBodyArea) {
+        summaryBodyArea.textContent = data.selectedBodyArea || 'Not provided';
+    }
+
+    if (summaryMuscle) {
+        summaryMuscle.textContent = data.selectedMuscle || 'Not provided';
+    }
+
+    if (summarySide) {
+        summarySide.textContent = data.painSide || 'Not provided';
     }
 
     const painLevel = data.painLevel || 'Not provided';

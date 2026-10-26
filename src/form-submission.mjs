@@ -5,6 +5,7 @@ export function buildEmailParams(data) {
     from_email: data.email || 'Not provided',
     phone: data.phone || 'Not provided',
     body_area: data.selectedBodyArea || 'Not selected',
+    muscle: data.selectedMuscle || 'Not selected',
     pain_side: data.painSide || 'Not specified',
     pain_duration: data.painDuration || 'Not specified',
     discomfort_type: data.discomfortType || 'Not specified',
