@@ -6,6 +6,7 @@ const path = require('node:path')
 const sourceDirectory = path.resolve(__dirname, '..', 'src')
 const indexHtml = fs.readFileSync(path.join(sourceDirectory, 'index.html'), 'utf8')
 const viewerJavaScript = fs.readFileSync(path.join(sourceDirectory, 'viewer.js'), 'utf8')
+const stylesCss = fs.readFileSync(path.join(sourceDirectory, 'styles.css'), 'utf8')
 const bodyAreasJavaScript = fs.readFileSync(path.join(sourceDirectory, 'body-areas.js'), 'utf8')
 
 // Load the browser module without changing the CommonJS test setup.
@@ -33,6 +34,17 @@ test('index.html loads one body-map entry point and external form assets', () =>
   assert.match(indexHtml, /<link rel="stylesheet" href="styles\.css">/)
   assert.doesNotMatch(indexHtml, /<style>/)
   assert.doesNotMatch(indexHtml, /<script type="module">/)
+})
+
+test('body-map information and advanced search use an accessible non-collapsing layout', () => {
+  assert.doesNotMatch(indexHtml, /id="panelToggle"/)
+  assert.doesNotMatch(stylesCss, /\.viewer-info-panel\.collapsed/)
+  assert.doesNotMatch(stylesCss, /\.panel-toggle/)
+  assert.match(indexHtml, /id="searchInput"[^>]*role="combobox"/)
+  assert.match(indexHtml, /id="searchResults"[^>]*role="listbox"/)
+  assert.match(viewerJavaScript, /event\.key === 'ArrowDown'/)
+  assert.match(viewerJavaScript, /event\.key === 'ArrowUp'/)
+  assert.match(viewerJavaScript, /event\.key === 'Escape'/)
 })
 
 test('viewer.js retains the body-map dependencies and interactions', () => {
