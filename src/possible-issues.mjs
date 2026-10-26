@@ -25,7 +25,11 @@ export function initializePossibleIssues(doc, store) {
     muscles.hidden = !area || !state.advanced
     hint.hidden = !state.advanced
     hint.textContent = area
-      ? 'Search for a muscle or select one on the model. Muscle selection is optional.'
+      ? state.catalogStatus === 'error'
+        ? 'Muscle data is unavailable. You can continue with your body area.'
+        : state.catalogStatus === 'loading'
+          ? 'Muscle data is loading. You can continue with your body area.'
+          : 'Browse or search muscles in this area, or select one on the model. Muscle selection is optional.'
       : 'Choose a body area to explore its muscles.'
     toggle.textContent = state.advanced ? 'Return to simple view' : 'Explore muscles (advanced)'
     toggle.setAttribute('aria-expanded', String(state.advanced))

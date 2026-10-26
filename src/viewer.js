@@ -8,6 +8,7 @@ import { AREA_FOCUS_REGIONS, isWithinArea, getAreaCameraDistance } from "./body-
 
 import { mapMusclesToAreas } from "./muscle-area-mapping.mjs";
 import { buildMuscleOptions, createMuscleId } from "./muscle-options.mjs";
+import { buildAreaMuscleSearchIndex, findAreaMuscles } from "./area-muscle-search.mjs";
 import { bodyMapStore } from "./body-map-store.mjs";
 import { easeInOutQuad, getAnimationProgress } from "./animation-timing.mjs";
 import { getPossibleMuscleDiagnoses } from "./muscle-diagnoses.mjs";
@@ -95,13 +96,13 @@ const pointer = new THREE.Vector2()
 const bodyMeshes = []
 const meshVolume = new Map()
 const meshMatName = new Map()
-const meshLabelIndex = new Map()
 const meshSourceName = new Map()
 const meshSide = new Map()
 const meshBaseAppearance = new Map()
 const muscleCatalog = []
 let bodyAreaMuscles = {}
 let muscleRecordsById = new Map()
+let areaSearchIndex = new Map()
 // Follow-up muscle-list UI can consume this without changing catalog ownership.
 export function getMusclesForArea(areaId) {
   return Object.hasOwn(bodyAreaMuscles, areaId) ? [...bodyAreaMuscles[areaId]] : []
@@ -212,13 +213,8 @@ loader.load(
     bodyAreaMuscles = mapMusclesToAreas(muscleCatalog).byArea
     const muscleOptions = buildMuscleOptions(bodyAreaMuscles)
     muscleRecordsById = muscleOptions.recordsById
+    areaSearchIndex = buildAreaMuscleSearchIndex(muscleOptions.optionsByArea, bodyAreaMuscles)
     bodyMapStore.setCatalog(muscleOptions.optionsByArea)
-    muscleCatalog.forEach(record => {
-      const key = record.displayName.toLowerCase()
-      const entry = meshLabelIndex.get(key) ?? { label: record.displayName, meshes: [] }
-      entry.meshes.push(record.mesh)
-      meshLabelIndex.set(key, entry)
-    })
 
     // Hide loading overlay
     const overlay = document.getElementById("loadingOverlay")
@@ -403,14 +399,9 @@ function getZoomOutPosition(horizDir) {
 }
 
 function getSearchMatches(query) {
-  if (!bodyMapStore.getState().advanced) return []
-  const normalized = query.trim().toLowerCase()
-  if (!normalized) return []
-  return [...meshLabelIndex.entries()]
-    .filter(([key]) => key.includes(normalized))
-    .map(([, entry]) => entry)
-    .sort((a, b) => a.label.localeCompare(b.label))
-    .slice(0, 10)
+  const state = bodyMapStore.getState()
+  if (!state.advanced || !state.areaId || state.catalogStatus !== 'ready') return []
+  return findAreaMuscles(areaSearchIndex, state.areaId, query)
 }
 
 function clearSearchResults() {
@@ -440,11 +431,11 @@ function setActiveSearchResult(index) {
 }
 
 function chooseSearchResult(item) {
-  const label = item?.dataset.label
-  if (!label) return
-  const match = getSearchMatches(label).find(entry => entry.label === label)
-  if (!match?.meshes?.length) return
-  selectBodyMesh(match.meshes[0], { synchronizeSide: false })
+  const match = getSearchMatches('').find(entry => entry.id === item?.dataset.id)
+  if (!match) return
+  const side = bodyMapStore.getState().side
+  const record = match.records.find(candidate => candidate.side === side) ?? match.records[0]
+  selectBodyMesh(record.mesh, { synchronizeSide: false })
   if (searchInput) searchInput.value = match.label
   clearSearchResults()
 }
@@ -455,18 +446,28 @@ function renderSearchResults(query) {
   searchResults.innerHTML = ''
   activeSearchResultIndex = -1
   if (searchInput) searchInput.removeAttribute('aria-activedescendant')
+  const state = bodyMapStore.getState()
+  if (state.catalogStatus !== 'ready') {
+    const message = state.catalogStatus === 'error'
+      ? 'Muscle data is unavailable. You can continue with your body area.'
+      : 'Muscle data is loading.'
+    searchResults.innerHTML = `<li class="search-empty" role="option" aria-disabled="true">${message}</li>`
+    searchResults.classList.add('visible')
+    if (searchInput) searchInput.setAttribute('aria-expanded', 'true')
+    return
+  }
   if (!matches.length) {
-    searchResults.innerHTML = '<li class="search-empty" role="option" aria-disabled="true">No matches found</li>'
+    searchResults.innerHTML = '<li class="search-empty" role="option" aria-disabled="true">No muscles found in this area</li>'
     searchResults.classList.add('visible')
     if (searchInput) searchInput.setAttribute('aria-expanded', 'true')
     return
   }
 
-  matches.forEach(({ label }, index) => {
+  matches.forEach(({ id, label }, index) => {
     const item = document.createElement('li')
     item.className = 'search-result-item'
     item.id = `search-result-${index}`
-    item.dataset.label = label
+    item.dataset.id = id
     item.setAttribute('role', 'option')
     item.setAttribute('aria-selected', 'false')
     item.tabIndex = -1
@@ -564,21 +565,17 @@ function selectBodyMesh(mesh, { synchronizeSide = true } = {}) {
 function selectSearchResult(query) {
   const matches = getSearchMatches(query)
   if (!matches.length) return
-  const { label, meshes } = matches[0]
-  if (meshes && meshes.length) {
-    selectBodyMesh(meshes[0], { synchronizeSide: false })
-    if (searchInput) searchInput.value = label
-    clearSearchResults()
-  }
+  const match = matches[0]
+  const side = bodyMapStore.getState().side
+  const record = match.records.find(candidate => candidate.side === side) ?? match.records[0]
+  selectBodyMesh(record.mesh, { synchronizeSide: false })
+  if (searchInput) searchInput.value = match.label
+  clearSearchResults()
 }
 
 function updateSearchResultsFromInput() {
   if (!searchInput) return
   const value = searchInput.value.trim()
-  if (!value) {
-    clearSearchResults()
-    return
-  }
   renderSearchResults(value)
 }
 
@@ -670,6 +667,7 @@ camera.position.copy(defaultCamPos)
 controls.saveState()
 
 if (searchInput) {
+  searchInput.addEventListener('focus', updateSearchResultsFromInput)
   searchInput.addEventListener('input', updateSearchResultsFromInput)
   searchInput.addEventListener('keydown', (event) => {
     const items = searchResults ? [...searchResults.querySelectorAll('.search-result-item')] : []
