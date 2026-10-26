@@ -6,7 +6,8 @@ export function initializeBodyAreaControls(doc = document, store = bodyMapStore)
   if (!root) return () => {}
   const choices = doc.getElementById('bodyAreaChoices')
   const status = doc.getElementById('bodyAreaStatus')
-  const input = doc.getElementById('selectedBodyArea')
+  const input1 = doc.getElementById('selectedBodyArea')
+  const input2 = doc.getElementById('selectedMuscle')
   const clear = doc.getElementById('clearBodyArea')
   const buttons = []
 
@@ -29,7 +30,9 @@ export function initializeBodyAreaControls(doc = document, store = bodyMapStore)
 
   const unsubscribe = store.subscribe(state => {
     const area = SUPPORTED_BODY_AREAS.find(item => item.id === state.areaId)
-    input.value = area?.id ?? ''
+    input1.value = area?.id ?? ''
+    const muscle = (state.optionsByArea[state.areaId] ?? []).find(item => item.id === state.muscleId)
+    if (input2) input2.value = muscle?.name ?? ''
     for (const button of buttons) {
       button.setAttribute('aria-pressed', String(button.dataset.area === area?.id))
     }
