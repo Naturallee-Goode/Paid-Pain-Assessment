@@ -9,9 +9,9 @@ const json=JSON.parse(model.subarray(20,20+model.readUInt32LE(12)))
 const entries=json.nodes.flatMap(n=>n.mesh===undefined?[]:json.meshes[n.mesh].primitives.map(p=>({mesh:{isMesh:true},sourceName:n.name,materialName:json.materials[p.material]?.name})))
 const catalog=buildMuscleCatalog(entries)
 
-test('real catalog yields seventeen nonempty, sorted groups with distinct back lists',()=>{
+test('real catalog yields fifteen nonempty, sorted groups with distinct back lists',()=>{
  const {byArea,unmapped}=mapMusclesToAreas(catalog,{warn:()=>{}})
- assert.equal(Object.keys(byArea).length,17)
+ assert.equal(Object.keys(byArea).length,15)
  for(const records of Object.values(byArea)) {
   assert(records.length>0)
   assert.deepEqual(records.map(r=>r.displayName),records.map(r=>r.displayName).sort((a,b)=>a.localeCompare(b)))
@@ -55,11 +55,13 @@ test('physical-location lists do not include remote joint movers',()=>{
  assert(!byArea.foot.some(r=>/hallucis longus|digitorum longus/i.test(r.sourceName)))
 })
 
-test('Arm and Leg include limb muscles by location and preserve both sides', () => {
+test('refined limb areas include muscles by location and preserve both sides', () => {
  const {byArea, unmapped}=mapMusclesToAreas(catalog,{warn:()=>{}})
  for (const [area,names] of Object.entries({
-  arm:['Long head of biceps brachii','Lateral head of triceps brachii','Flexor digitorum profundus','Extensor carpi radialis longus','Pronator quadratus'],
-  leg:['Rectus femoris muscle','Semitendinosus muscle','Soleus muscle','Tibialis anterior muscle','Fibularis tertius muscle'],
+  shoulder:['Long head of biceps brachii','Lateral head of triceps brachii'],
+  forearm:['Flexor digitorum profundus','Extensor carpi radialis longus','Pronator quadratus'],
+  thigh:['Rectus femoris muscle','Semitendinosus muscle'],
+  'lower-leg':['Soleus muscle','Tibialis anterior muscle','Fibularis tertius muscle'],
  })) {
   for (const name of names) {
    const records=byArea[area].filter(r=>r.sourceName.replace(/\.[a-z]$/i,'')===name)
@@ -67,8 +69,8 @@ test('Arm and Leg include limb muscles by location and preserve both sides', () 
    assert(records.every(r=>!unmapped.includes(r)))
   }
  }
- assert(!byArea.arm.some(r=>/pectoralis|of hand/i.test(r.sourceName)))
- assert(!byArea.leg.some(r=>/gluteus|of foot|of hand|carpi|pollicis/i.test(r.sourceName)))
+ assert(!byArea.forearm.some(r=>/pectoralis|of hand/i.test(r.sourceName)))
+ assert(!byArea.thigh.some(r=>/gluteus|of foot|of hand|carpi|pollicis/i.test(r.sourceName)))
 })
 
 test('sponsor reference regions preserve confirmed shared memberships and boundaries', () => {

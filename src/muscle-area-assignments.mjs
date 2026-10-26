@@ -57,7 +57,8 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
     "upper-back"
   ],
   "Brachialis muscle": [
-    "arm"
+    "arm",
+    "shoulder"
   ],
   "Brachioradialis muscle": [
     "arm",
@@ -70,7 +71,8 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
     "shoulder"
   ],
   "Coracobrachialis muscle": [
-    "arm"
+    "arm",
+    "shoulder"
   ],
   "Deep head of flexor pollicis brevis": [
     "wrist-hand"
@@ -255,7 +257,8 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
     "lower-leg"
   ],
   "Lateral head of triceps brachii": [
-    "arm"
+    "arm",
+    "shoulder"
   ],
   "Latissimus dorsi muscle": [
     "shoulder",
@@ -273,14 +276,16 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
     "upper-back"
   ],
   "Long head of biceps brachii": [
-    "arm"
+    "arm",
+    "shoulder"
   ],
   "Long head of biceps femoris": [
     "leg",
     "thigh"
   ],
   "Long head of triceps brachii": [
-    "arm"
+    "arm",
+    "shoulder"
   ],
   "Longissimus capitis muscle": [
     "neck"
@@ -311,7 +316,8 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
     "lower-leg"
   ],
   "Medial head of triceps brachii": [
-    "arm"
+    "arm",
+    "shoulder"
   ],
   "Middle pharyngeal constrictor": [
     "neck"
@@ -482,7 +488,8 @@ export const MUSCLE_AREA_ASSIGNMENTS = {
     "chest"
   ],
   "Short head of biceps brachii": [
-    "arm"
+    "arm",
+    "shoulder"
   ],
   "Short head of biceps femoris": [
     "leg",

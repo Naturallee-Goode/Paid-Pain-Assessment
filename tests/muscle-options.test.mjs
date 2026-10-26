@@ -34,7 +34,7 @@ test('logical options are stable, sorted, unique, and retain side records privat
 test('multi-area muscles keep one area-neutral ID', () => {
   const { optionsByArea } = buildMuscleOptions(mapped)
   const id = createMuscleId('Pronator quadratus')
-  assert(optionsByArea.arm.some(option => option.id === id))
+  assert(optionsByArea.forearm.some(option => option.id === id))
   assert(optionsByArea['wrist-hand'].some(option => option.id === id))
 })
 

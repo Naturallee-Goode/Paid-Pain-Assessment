@@ -8,12 +8,10 @@ export const SUPPORTED_BODY_AREAS = Object.freeze([
   createBodyArea('upper-back', 'Upper Back'),
   createBodyArea('lower-back', 'Lower Back'),
   createBodyArea('abdomen', 'Abdomen'),
-  createBodyArea('arm', 'Arm'),
   createBodyArea('elbow', 'Elbow'),
   createBodyArea('forearm', 'Forearm'),
   createBodyArea('wrist-hand', 'Wrist/Hand'),
   createBodyArea('hip', 'Hip'),
-  createBodyArea('leg', 'Leg'),
   createBodyArea('thigh', 'Thigh'),
   createBodyArea('knee', 'Knee'),
   createBodyArea('lower-leg', 'Lower Leg'),
@@ -34,7 +32,7 @@ export function getSupportedBodyAreaForRegion(region, verticalPosition) {
     return getSupportedBodyArea('wrist-hand')
   }
   if (region === 'upperarm') {
-    return getSupportedBodyArea('arm')
+    return getSupportedBodyArea('shoulder')
   }
   if (region === 'calf' || region === 'lowerleg') {
     return getSupportedBodyArea('lower-leg')

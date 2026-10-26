@@ -10,7 +10,7 @@ let doc=`# Muscle-to-area assignments — #45
 
 Status: anatomical review completed and confirmed by Lily Oswald.
 
-The explicit table in src/muscle-area-assignments.mjs uses original GLB base names, shared by the left and right catalog records. The mapper preserves the original records and mesh references. A muscle may appear in more than one area. Grouping uses physical location only. Broad Arm and Leg selections coexist with the sponsor-requested Forearm, Thigh, and Lower Leg refinements. Muscles are not assigned to a distant joint simply because they move it. It is not a diagnosis or a pain-source prediction.
+The explicit table in src/muscle-area-assignments.mjs uses original GLB base names, shared by the left and right catalog records. The mapper preserves the original records and mesh references. A muscle may appear in more than one area. Grouping uses physical location only. The sponsor-requested Forearm, Thigh, and Lower Leg regions replace overlapping broad Arm and Leg selectors. Muscles are not assigned to a distant joint simply because they move it. It is not a diagnosis or a pain-source prediction.
 
 General anatomy references used for orientation (the product-specific assignments are not a classification prescribed by these sources):
 
@@ -28,7 +28,7 @@ General anatomy references used for orientation (the product-specific assignment
 
 ## Implementation and tests
 
-The viewer builds these groups from Girwan's muscle-only catalog after loading. getMusclesForArea(areaId) returns a copy of the area's array for future list UI (#48); this change does not implement that UI. All seventeen focus controls use spatial regions, independently of the muscle lists. One aggregate console warning lists unmapped records. Unknown assignment area IDs throw a configuration error. Tests check exclusions through the catalog pipeline, side preservation, real-model name coverage, nonempty lists, ordering, deduplication, and unknown/unmapped handling.
+The viewer builds these groups from Girwan's muscle-only catalog after loading. getMusclesForArea(areaId) returns a copy of the area's array for future list UI (#48); this change does not implement that UI. All fifteen focus controls use spatial regions, independently of the muscle lists. One aggregate console warning lists unmapped records. Unknown assignment area IDs throw a configuration error. Tests check exclusions through the catalog pipeline, side preservation, real-model name coverage, nonempty lists, ordering, deduplication, and unknown/unmapped handling.
 
 Run npm run report:muscle-areas to display current counts. Regenerate this review worksheet with npm run report:muscle-areas -- --write (overwrites this generated worksheet; keep reviewer decisions separately). Run npm run test:body-map, npm run lint:html, and npm run test:browser (see body-area-progress.md for Chrome setup). Tests demonstrate software behavior, not anatomical approval.
 `;

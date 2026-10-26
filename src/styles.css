@@ -1163,35 +1163,6 @@ input[type="range"]::-moz-range-thumb:hover {
     position: relative;
     background: var(--color-background);
     border-top: 2px solid var(--color-primary);
-    display: flex;
-    align-items: stretch;
-    transition: max-height 0.3s ease;
-    max-height: 300px;
-    overflow: hidden;
-}
-
-.viewer-info-panel.collapsed {
-    max-height: 42px;
-}
-
-.panel-toggle {
-    flex-shrink: 0;
-    width: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--color-primary);
-    color: #fff;
-    font-size: 18px;
-    cursor: pointer;
-    user-select: none;
-    border-right: 1px solid var(--color-primary-dark);
-    writing-mode: vertical-lr;
-    letter-spacing: 2px;
-}
-
-.panel-toggle:hover {
-    background: var(--color-primary-dark);
 }
 
 .viewer-info-content {
