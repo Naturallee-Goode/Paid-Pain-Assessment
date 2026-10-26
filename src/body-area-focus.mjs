@@ -4,14 +4,17 @@ import { SUPPORTED_BODY_AREAS } from './body-areas.js'
 const regions = [
   { id: 'neck', y: [1.31, 1.46], x: [0, .14] },
   { id: 'shoulder', y: [1.25, 1.55], x: [.14, 1] },
+  { id: 'chest', y: [1.10, 1.42], x: [0, .18], front: true },
   { id: 'upper-back', y: [1.25, 1.42], x: [0, .14], back: true },
   { id: 'lower-back', y: [1.04, 1.25], x: [0, .14], back: true },
-  { id: 'arm', y: [.85, 1.35], x: [.14, 1] },
+  { id: 'abdomen', y: [.70, 1.10], x: [0, .18], front: true },
   { id: 'elbow', y: [1.02, 1.14], x: [.14, 1] },
+  { id: 'forearm', y: [.70, 1.10], x: [.14, .40] },
   { id: 'wrist-hand', y: [.62, 1.02], x: [.26, 1] },
   { id: 'hip', y: [.75, 1.04], x: [0, .20] },
-  { id: 'leg', y: [.08, .90], x: [0, .26] },
+  { id: 'thigh', y: [.50, .90], x: [0, .26] },
   { id: 'knee', y: [.40, .50], x: [0, 1] },
+  { id: 'lower-leg', y: [.08, .40], x: [0, .26] },
   { id: 'ankle', y: [.08, .18], x: [0, 1] },
   { id: 'foot', y: [-.10, .08], x: [0, 1] },
 ]
@@ -24,6 +27,7 @@ export function isWithinArea(point, area) {
   return point.y >= area.y[0] && point.y < area.y[1]
     && Math.abs(point.x) >= area.x[0] && Math.abs(point.x) < area.x[1]
     && (!area.back || point.z <= 0)
+    && (!area.front || point.z > 0)
 }
 
 // Fit both width and height, leaving room for the nearest face of the box.

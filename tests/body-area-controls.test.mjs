@@ -14,10 +14,10 @@ function setup() {
   return { dom, doc, store, unsubscribe, buttons: [...doc.querySelectorAll('[data-area]')], input: doc.getElementById('selectedBodyArea') }
 }
 
-test('all twelve controls select exclusively and never submit', () => {
+test('all fifteen controls select exclusively and never submit', () => {
   const { doc, store, buttons, input } = setup()
-  assert.equal(buttons.length, 12)
-  assert.equal(new Set(SUPPORTED_BODY_AREAS.map(area => area.id)).size, 12)
+  assert.equal(buttons.length, 15)
+  assert.equal(new Set(SUPPORTED_BODY_AREAS.map(area => area.id)).size, 15)
   let submissions = 0
   doc.getElementById('intakeForm').addEventListener('submit', event => { event.preventDefault(); submissions++ })
   for (const button of buttons) {

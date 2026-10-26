@@ -48,7 +48,7 @@ test('sponsor-reviewed Elbow content replaces tendon irritation and preserves ot
   assert.match(content, /outside of the elbow/)
   assert.match(content, /Bursitis/)
   assert.doesNotMatch(content, /Tendon irritation|tendonitis/i)
-  for (const area of ['arm', 'leg']) {
+  for (const area of ['forearm', 'thigh']) {
     assert(getPossibleIssues(area).some(issue => issue.name === 'Tendon irritation (tendonitis)'))
   }
   assert.deepEqual(getPossibleIssues('shoulder').map(issue => issue.name), [
