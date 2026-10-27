@@ -696,6 +696,7 @@ controls.saveState()
 
 if (searchInput) {
   searchInput.addEventListener('focus', updateSearchResultsFromInput)
+  searchInput.addEventListener('click', updateSearchResultsFromInput)
   searchInput.addEventListener('input', updateSearchResultsFromInput)
   searchInput.addEventListener('keydown', (event) => {
     const items = searchResults ? [...searchResults.querySelectorAll('.search-result-item')] : []
@@ -718,7 +719,8 @@ if (searchInput) {
 
 document.addEventListener('click', (event) => {
   if (!searchResults || !searchInput) return
-  if (event.target === searchInput || searchResults.contains(event.target)) return
+  if (event.target === searchInput || searchResults.contains(event.target)
+    || document.getElementById('toggleMuscleView')?.contains(event.target)) return
   clearSearchResults()
 })
 
