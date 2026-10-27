@@ -1,0 +1,26 @@
+Title	URL	Assignees	Status	Linked pull requests	Sub-issues progress
+[PBI] Show possible body issues for the selected area before muscle selection	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/74	Lily-oswald	Done	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/79	
+[SPIKE] Investigate HIPAA compliance	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/77	gcbon	Done	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/78	
+create planning doc	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/97	girwandhakal	Done	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/99, https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/100	
+[STAND-UP] 13	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/98		Done		
+[PBI] Prepare and review common-issue content for supported body areas	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/81	girwandhakal	In Progress		
+[PBI] Verify and complete area-information edge cases after #74	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/82	girwandhakal	Done	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/109, https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/110	
+[PBI] Select familiar body areas through clicks on the 3D model	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/83	girwandhakal	Done	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/119	
+[PBI] Add simple client and optional advanced muscle views	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/84	girwandhakal	Done	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/118	
+[PBI] Browse, search, and select area muscles in advanced mode	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/85	Jayyk09	Done	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/124	
+[PBI] Preserve body-map selections and optional side in the intake	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/86	gcbon, Jayyk09	Done		
+[PBI] Verify the integrated body-map workflow across devices and input methods	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/87	Jayyk09	Done		
+[PBI] Correct Neck and Arm highlighting against agreed boundaries	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/88	Jayyk09	Done		
+[PBI] Verify the existing Leg fix and correct Lower Back highlighting	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/89	Lily-oswald	Done		
+[PBI] Replace duplicate controls with one Reset Body Map button	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/90	Lily-oswald	Done		
+[PBI] Keep side selection optional and understandable	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/91	Lily-oswald	Todo		
+[PBI] Remove panel collapse and improve advanced search layout	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/92	Lily-oswald	Done	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/114	
+[PBI] Stabilize the intake submit button during loading	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/93	gcbon	Done	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/106	
+[PBI] Confirm body-area choices and boundaries with the sponsor	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/96	gcbon	Done		
+Keep side selection optional and understandable	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/101		Done		
+[STAND-UP] 14	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/102		Done		
+Share regional issue descriptions across area and muscle details (#81)	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/105	girwandhakal	In Progress		
+[PBI] Alter Calendly integration to take into account selected appointment time	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/107	gcbon	Done	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/113	
+[PBI] Replace Elbow tendon irritation with Tennis Elbow per sponsor feedback	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/111	girwandhakal	Done	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/110	
+[PBI] Align body-area muscle mappings with sponsor anatomy references	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/121	Lily-oswald	Done	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/122	
+Fix intake radio formatting, session durations, and consent border	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/128	girwandhakal	In Progress		

@@ -1,0 +1,10 @@
+Title	URL	Assignees	Status	Linked pull requests	Sub-issues progress
+[BUG] Form submission always fails	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/5	gcbon	In Progress		3 / 4 (75%)
+[SPIKE] Figure out how site is hosted	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/68	gcbon, Jayyk09	Todo		
+[SPIKE] Investigate HIPAA compliance	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/77	gcbon	Done	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/78	
+create planning doc	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/97	girwandhakal	Done	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/99, https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/100	
+[PBI] Verify the integrated body-map workflow across devices and input methods	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/87	Jayyk09	Done		
+[PBI] Correct Neck and Arm highlighting against agreed boundaries	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/88	Jayyk09	Done		
+[PBI] Verify the existing Leg fix and correct Lower Back highlighting	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/89	Lily-oswald	Done		
+[PBI] Stabilize the intake submit button during loading	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/93	gcbon	Done	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/106	
+Fix intake radio formatting, session duration layout, and consent border	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/127	girwandhakal	In Progress	https://github.com/Naturallee-Goode/Paid-Pain-Assessment/pull/128	
