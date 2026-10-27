@@ -48,12 +48,12 @@ async function main() {
       await page.route('**/*.glb', route => scenario.modelFailed
         ? route.abort()
         : route.fulfill({ body: model, contentType: 'model/gltf-binary' }))
-      if (scenario.keyboard) {
-        await page.route('**/viewer.js*', async route => {
-          const response = await route.fetch()
-          await route.fulfill({ response, body: `${await response.text()}\nsetViewerRenderLoopPaused(true);` })
-        })
-      }
+      // The separate body-area browser suite exercises live rendering and
+      // camera motion. Keep this intake matrix focused on form interactions.
+      await page.route('**/viewer.js*', async route => {
+        const response = await route.fetch()
+        await route.fulfill({ response, body: `${await response.text()}\nsetViewerRenderLoopPaused(true);` })
+      })
       await page.goto(`http://127.0.0.1:${server.address().port}`, { waitUntil: 'domcontentloaded' })
       const tabTo = async (selector, { reverse = false } = {}) => {
         const target = page.locator(selector).first()
