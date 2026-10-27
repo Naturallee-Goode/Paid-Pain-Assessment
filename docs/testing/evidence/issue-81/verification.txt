@@ -1,8 +1,10 @@
-Verified October 20, 2026 on feature/issue-81, integrating main b38b9e6.
-Unit/DOM/source tests: 48 passed, 0 failed.
+Verified October 26, 2026 in isolated PR #105 worktree, integrating main 4aa1e1b into feature/issue-81.
+Unit/DOM/source tests: 54 passed, 0 failed. Main baseline: 52 passed before integration.
 HTML validation: 3 pages passed.
-JavaScript syntax: 18 source JS/MJS files passed.
-Browser suite: PASS. Every configured area was checked through Continue and real muscle search; both rendered lists match. Existing selection, repeat-click/Enter, side, camera, keyboard, reset, three-width layout, delayed/failed model, unavailable viewer, and missing-content scenarios passed. No intake submitted.
-Screenshot evidence: shoulder-area.png, shoulder-muscle.png, shoulder-mobile.png, elbow-area.png, unavailable-content.png. Missing content is a browser-only Foot fixture, not a production data change.
-Desktop and phone captures inspected. The existing capped/scrolling detail panel remains; #114 owns its layout and collapse changes.
+JavaScript syntax: all 18 source JS/MJS files passed.
+Browser suite: PASS. All 15 configured areas were checked through advanced view and real muscle search; both rendered lists match. Existing selection, repeat-click/Enter, side, camera, keyboard, simple/advanced switching, reset, three-width layout, delayed/failed model, unavailable viewer, and missing-content scenarios passed. No intake submitted.
+Screenshot evidence regenerated: shoulder-area.png, shoulder-muscle.png, shoulder-mobile.png, elbow-area.png, unavailable-content.png. Missing content is a browser-only Foot fixture, not a production data change.
+Desktop and phone captures inspected. Main's merged non-collapsing panel/search layout is preserved.
+Main's body-area IDs, muscle assignments, store, form script, and submission helper are unchanged relative to 4aa1e1b. No region-boundary changes belong to this PR.
 Content approval: Elbow label revision implemented; new description and full current-copy approval remain unconfirmed. No approval fixture is presented as sponsor evidence.
+Codex assisted with conflict resolution, verification, screenshots, and documentation; human content review remains outstanding.

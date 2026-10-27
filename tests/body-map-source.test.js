@@ -6,6 +6,7 @@ const path = require('node:path')
 const sourceDirectory = path.resolve(__dirname, '..', 'src')
 const indexHtml = fs.readFileSync(path.join(sourceDirectory, 'index.html'), 'utf8')
 const viewerJavaScript = fs.readFileSync(path.join(sourceDirectory, 'viewer.js'), 'utf8')
+const stylesCss = fs.readFileSync(path.join(sourceDirectory, 'styles.css'), 'utf8')
 const bodyAreasJavaScript = fs.readFileSync(path.join(sourceDirectory, 'body-areas.js'), 'utf8')
 
 // Load the browser module without changing the CommonJS test setup.
@@ -14,14 +15,17 @@ const bodyAreasModule = import(`data:text/javascript;base64,${Buffer.from(bodyAr
 const expectedBodyAreas = [
   { id: 'neck', label: 'Neck' },
   { id: 'shoulder', label: 'Shoulder' },
+  { id: 'chest', label: 'Chest' },
   { id: 'upper-back', label: 'Upper Back' },
   { id: 'lower-back', label: 'Lower Back' },
-  { id: 'arm', label: 'Arm' },
+  { id: 'abdomen', label: 'Abdomen' },
   { id: 'elbow', label: 'Elbow' },
+  { id: 'forearm', label: 'Forearm' },
   { id: 'wrist-hand', label: 'Wrist/Hand' },
   { id: 'hip', label: 'Hip' },
-  { id: 'leg', label: 'Leg' },
+  { id: 'thigh', label: 'Thigh' },
   { id: 'knee', label: 'Knee' },
+  { id: 'lower-leg', label: 'Lower Leg' },
   { id: 'ankle', label: 'Ankle' },
   { id: 'foot', label: 'Foot' },
 ]
@@ -33,6 +37,18 @@ test('index.html loads one body-map entry point and external form assets', () =>
   assert.match(indexHtml, /<link rel="stylesheet" href="styles\.css">/)
   assert.doesNotMatch(indexHtml, /<style>/)
   assert.doesNotMatch(indexHtml, /<script type="module">/)
+  assert.doesNotMatch(indexHtml, /id="panelToggle"|Collapse info panel/)
+})
+
+test('body-map information and advanced search use an accessible non-collapsing layout', () => {
+  assert.doesNotMatch(indexHtml, /id="panelToggle"/)
+  assert.doesNotMatch(stylesCss, /\.viewer-info-panel\.collapsed/)
+  assert.doesNotMatch(stylesCss, /\.panel-toggle/)
+  assert.match(indexHtml, /id="searchInput"[^>]*role="combobox"/)
+  assert.match(indexHtml, /id="searchResults"[^>]*role="listbox"/)
+  assert.match(viewerJavaScript, /event\.key === 'ArrowDown'/)
+  assert.match(viewerJavaScript, /event\.key === 'ArrowUp'/)
+  assert.match(viewerJavaScript, /event\.key === 'Escape'/)
 })
 
 test('viewer.js retains the body-map dependencies and interactions', () => {
@@ -47,7 +63,7 @@ test('viewer.js retains the body-map dependencies and interactions', () => {
   assert.match(viewerJavaScript, /buildMuscleCatalog\(catalogEntries\)/)
 })
 
-test('body-map data defines the twelve supported areas with stable IDs and labels', async () => {
+test('body-map data defines the fifteen non-overlapping supported areas', async () => {
   const { SUPPORTED_BODY_AREAS } = await bodyAreasModule
 
   assert.deepEqual(SUPPORTED_BODY_AREAS, expectedBodyAreas)
@@ -66,10 +82,12 @@ test('body-area lookup preserves IDs while selections change', async () => {
   assert.strictEqual(getSupportedBodyAreaForRegion('knee', 0.45), getSupportedBodyArea('knee'))
   assert.strictEqual(getSupportedBodyAreaForRegion('wrist', 0.8), getSupportedBodyArea('wrist-hand'))
   assert.strictEqual(getSupportedBodyAreaForRegion('hand', 0.7), getSupportedBodyArea('wrist-hand'))
-  assert.strictEqual(getSupportedBodyAreaForRegion('upperarm', 1.1), getSupportedBodyArea('arm'))
-  assert.strictEqual(getSupportedBodyAreaForRegion('forearm', 0.9), getSupportedBodyArea('arm'))
-  assert.strictEqual(getSupportedBodyAreaForRegion('thigh', 0.6), getSupportedBodyArea('leg'))
-  assert.strictEqual(getSupportedBodyAreaForRegion('calf', 0.3), getSupportedBodyArea('leg'))
+  assert.strictEqual(getSupportedBodyAreaForRegion('upperarm', 1.1), getSupportedBodyArea('shoulder'))
+  assert.strictEqual(getSupportedBodyAreaForRegion('forearm', 0.9), getSupportedBodyArea('forearm'))
+  assert.strictEqual(getSupportedBodyAreaForRegion('thigh', 0.6), getSupportedBodyArea('thigh'))
+  assert.strictEqual(getSupportedBodyAreaForRegion('calf', 0.3), getSupportedBodyArea('lower-leg'))
+  assert.strictEqual(getSupportedBodyAreaForRegion('chest', 1.2), getSupportedBodyArea('chest'))
+  assert.strictEqual(getSupportedBodyAreaForRegion('abdomen', 0.9), getSupportedBodyArea('abdomen'))
   assert.strictEqual(getSupportedBodyAreaForRegion('back', 1.3), getSupportedBodyArea('upper-back'))
   assert.strictEqual(getSupportedBodyAreaForRegion('back', 1.2), getSupportedBodyArea('lower-back'))
 })

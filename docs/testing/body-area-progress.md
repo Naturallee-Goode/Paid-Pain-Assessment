@@ -1,8 +1,8 @@
 # Body-area controls — issue #46
 
-The controls provide twelve body-area choices, one pressed state at a time, a live selection announcement, and one Clear Selection action. Clear Selection resets the body map and returns keyboard focus to the first area button without submitting the form or changing unrelated intake answers. It remains available when no area is selected so a rotated or zoomed model can always be restored.
+The controls provide fifteen non-overlapping body-area choices, one pressed state at a time, a live selection announcement, and one Clear Selection action. The five sponsor-reference additions are Chest, Abdomen, Forearm, Thigh, and Lower Leg; the overlapping broad Arm and Leg controls are retired. Clear Selection resets the body map and returns keyboard focus to the first area button without submitting the form or changing unrelated intake answers. It remains available when no area is selected so a rotated or zoomed model can always be restored.
 
-The controls run independently of the 3D viewer so they remain usable while the model loads or when viewer initialization fails. Changing areas restores any previously highlighted mesh and clears stale search/panel content. Legacy model selections still update the controls; areas outside the twelve supported choices retain their existing form values without falsely pressing an area button.
+The controls run independently of the 3D viewer so they remain usable while the model loads or when viewer initialization fails. Changing areas restores any previously highlighted mesh and clears stale search/panel content. Legacy model selections map into the closest refined region; areas outside the fifteen supported choices retain their existing form values without falsely pressing an area button.
 
 ## Scope and integration
 
@@ -28,7 +28,7 @@ Browser checks start and stop their own local server. Install the test browser o
 CHROME_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npm run test:browser
 ```
 
-The browser suite checks all twelve choices, including full spatial-region highlighting for Arm and Leg, previous mesh-material restoration, search cleanup, keyboard Enter/Space, reset, phone/tablet/desktop widths, touch-target height, delayed and failed model loading, and unavailable viewer code. The checked-in GLB is served as a test fixture in place of the existing remote model URL. CDN JavaScript dependencies still require network access. Viewer test hooks exist only in intercepted browser-test responses. No form submissions or live emails are sent. Browser checks are run separately from CI.
+The browser suite checks all fifteen choices, including anterior Chest/Abdomen focus, refined Forearm/Thigh/Lower Leg focus, previous mesh-material restoration, search cleanup, keyboard Enter/Space, reset, phone/tablet/desktop widths, touch-target height, delayed and failed model loading, and unavailable viewer code. The checked-in GLB is served as a test fixture in place of the existing remote model URL. CDN JavaScript dependencies still require network access. Viewer test hooks exist only in intercepted browser-test responses. No form submissions or live emails are sent. Browser checks are run separately from CI.
 
 ## Follow-up work: issue #47
 

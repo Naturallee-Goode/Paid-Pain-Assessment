@@ -15,13 +15,13 @@ test('store publishes coherent area, muscle, side, and reset transitions', () =>
 
   store.setCatalog(options)
   store.selectArea('elbow')
-  store.continueToMuscles()
+  store.setAdvanced(true)
   store.selectMuscle('muscle.anconeus-muscle')
   store.setSide('right')
   assert.deepEqual(store.getState(), {
     areaId: 'elbow',
     muscleId: 'muscle.anconeus-muscle',
-    issuesReviewed: true,
+    advanced: true,
     side: 'right',
     catalogStatus: 'ready',
     optionsByArea: options,
@@ -31,8 +31,28 @@ test('store publishes coherent area, muscle, side, and reset transitions', () =>
   assert.equal(store.getState().areaId, 'knee')
   assert.equal(store.getState().muscleId, null)
   assert.equal(store.getState().side, null)
+  assert.equal(store.getState().advanced, true)
   store.reset()
   assert.equal(store.getState().areaId, null)
+  assert.equal(store.getState().advanced, false)
+})
+
+test('simple view prevents muscle selection and returning to it preserves area and side', () => {
+  const store = createBodyMapStore()
+  store.setCatalog(options)
+  store.selectArea('elbow')
+  store.selectMuscle('muscle.anconeus-muscle')
+  assert.equal(store.getState().muscleId, null)
+  store.setAdvanced(true)
+  store.selectMuscle('muscle.anconeus-muscle')
+  assert.equal(store.getState().muscleId, 'muscle.anconeus-muscle')
+  store.setSide('right')
+  store.setAdvanced(false)
+  assert.equal(store.getState().areaId, 'elbow')
+  assert.equal(store.getState().side, 'right')
+  assert.equal(store.getState().muscleId, null)
+  store.setAdvanced(true)
+  assert.equal(store.getState().muscleId, null)
 })
 
 test('store rejects invalid area, muscle, and side values', () => {

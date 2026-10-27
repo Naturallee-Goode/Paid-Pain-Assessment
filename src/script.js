@@ -345,6 +345,9 @@ function populateConfirmationScreen(data) {
     const summaryName = document.getElementById('summaryName');
     const summaryEmail = document.getElementById('summaryEmail');
     const summaryPhone = document.getElementById('summaryPhone');
+    const summaryBodyArea = document.getElementById('summaryBodyArea');
+    const summaryMuscle = document.getElementById('summaryMuscle');
+    const summarySide = document.getElementById('summarySide');
     const summaryPainLevel = document.getElementById('summaryPainLevel');
     const summaryWellnessGoal = document.getElementById('summaryWellnessGoal');
     const summarySessions = document.getElementById('summarySessions');
@@ -359,6 +362,18 @@ function populateConfirmationScreen(data) {
 
     if (summaryPhone) {
         summaryPhone.textContent = data.phone || 'Not provided';
+    }
+
+    if (summaryBodyArea) {
+        summaryBodyArea.textContent = data.selectedBodyArea || 'Not provided';
+    }
+
+    if (summaryMuscle) {
+        summaryMuscle.textContent = data.selectedMuscle || 'Not provided';
+    }
+
+    if (summarySide) {
+        summarySide.textContent = data.painSide || 'Not provided';
     }
 
     const painLevel = data.painLevel || 'Not provided';
@@ -397,7 +412,7 @@ function populateConfirmationScreen(data) {
         summarySessions.textContent = sessionDisplay;
     }
 
-    initializeCalendly();
+    initializeCalendly(data.consultationPreference);
 }
 
 function getPainLevelEmoji(painLevel) {
@@ -410,8 +425,17 @@ function getPainLevelEmoji(painLevel) {
     return '😫';
 }
 
-function initializeCalendly() {
-    const CALENDLY_URL = 'https://calendly.com/goode-naturalleegoode/ortho-pain-assessment-call';
+function initializeCalendly(consultationPreference) {
+    const CALENDLY_URLS = {
+        'quick-check': 'https://calendly.com/griffen-bon/quick-pain-check',
+        'movement-relief': 'https://calendly.com/griffen-bon/movement-and-relief-session',
+        'full-assessment': 'https://calendly.com/griffen-bon/full-wellness-assessment'
+    };
+    const CALENDLY_URL = CALENDLY_URLS[consultationPreference];
+    if (!CALENDLY_URL) {
+        console.error('Unknown Calendly meeting type:', type);
+        return;
+    }
 
     const container = document.getElementById('calendlyContainer');
     if (!container) return;

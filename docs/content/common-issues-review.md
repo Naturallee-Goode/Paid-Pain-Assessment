@@ -1,6 +1,6 @@
 # Common-issue content review — #81
 
-Updated October 20, 2026 after #79 and #110 merged. The single content source is `src/possible-issues-data.mjs`; both area information and selected-muscle details use it. Sources are editorial references and are not displayed as client links.
+Updated October 26, 2026 while integrating main at `4aa1e1b`, including #118, #114, and #122. The single content source is `src/possible-issues-data.mjs`; both area information and selected-muscle details use it. Sources are editorial references and are not displayed as client links.
 
 ## Recorded sponsor decision
 
@@ -14,14 +14,17 @@ The four Shoulder entries and other regions retain the content integrated by #11
 | --- | --- | --- | --- |
 | `neck` | Neck | Position-related neck pain; Pinched nerve | Pending |
 | `shoulder` | Shoulder | Rotator cuff tear or tendon irritation; Shoulder impingement; Frozen shoulder; Shoulder bursitis | Pending |
+| `chest` | Chest | Muscle strain; Tendon irritation (tendonitis) | Pending |
 | `upper-back` | Upper Back | Muscle strain | Pending |
 | `lower-back` | Lower Back | Muscle strain | Pending |
-| `arm` | Arm | Muscle strain; Tendon irritation (tendonitis) | Pending |
+| `abdomen` | Abdomen | Muscle strain | Pending |
 | `elbow` | Elbow | Tennis Elbow; Bursitis | Revision applied; description review pending |
+| `forearm` | Forearm | Muscle strain; Tendon irritation (tendonitis) | Pending |
 | `wrist-hand` | Wrist/Hand | Joint sprain; Carpal tunnel syndrome | Pending |
 | `hip` | Hip | Bursitis; Arthritis | Pending |
-| `leg` | Leg | Muscle strain; Tendon irritation (tendonitis) | Pending |
+| `thigh` | Thigh | Muscle strain; Tendon irritation (tendonitis) | Pending |
 | `knee` | Knee | Joint sprain; Bursitis | Pending |
+| `lower-leg` | Lower Leg | Muscle strain; Tendon irritation (tendonitis) | Pending |
 | `ankle` | Ankle | Joint sprain; Achilles tendon irritation | Pending |
 | `foot` | Foot | Muscle strain; Plantar fasciitis | Pending |
 
@@ -29,7 +32,7 @@ The four Shoulder entries and other regions retain the content integrated by #11
 
 ## Sources
 
-These references were carried forward from the integrated #79/#110 content; they were not newly researched in this update.
+These references were carried forward from the integrated #79/#110/#122 content; they were not newly researched in this update.
 
 - [Source](https://www.nhs.uk/symptoms/neck-pain-and-stiff-neck/)
 - [Source](https://orthoinfo.aaos.org/en/diseases--conditions/rotator-cuff-tears/)
@@ -48,7 +51,7 @@ These references were carried forward from the integrated #79/#110 content; they
 
 Record Mia's decisions against the exact current names, descriptions, and area assignments. Her Elbow label request is implemented; approval of its new description and the remaining copy is not established by the available evidence. Keep #81 open and this PR in draft until the content acceptance criterion is resolved. The UI retains the existing educational examples without adding a review label, as previously requested; it makes no sponsor-approval claim.
 
-The current configured area IDs remain the baseline. [#96](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/96) tracks boundary decisions; this PR does not change boundaries or subdivide Arm/Leg. If configuration changes, update content and review coverage together.
+The fifteen configured area IDs from merged #122 remain the baseline. [#96](https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/96) tracks boundary decisions; this PR preserves those boundaries and the retirement of the broad Arm/Leg selectors. New regional content from main remains pending review. If configuration changes, update content and review coverage together.
 
 ## Recording later decisions
 

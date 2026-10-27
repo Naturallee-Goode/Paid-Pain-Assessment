@@ -16,4 +16,6 @@
 .common-issues-list li + li { margin-top: .25rem; }
 .common-issues-list li p { margin: .25rem 0; }
 .common-issues-disclaimer { font-size: .9rem; font-style: italic; }
-#possibleIssues[hidden], #continueToMuscles[hidden], #muscleSelection[hidden], #muscleSelectionHint[hidden] { display: none; }
+#possibleIssues[hidden], #infoPanel[hidden], #muscleSelection[hidden], #muscleSelectionHint[hidden] { display: none; }
+#toggleMuscleView { margin-bottom: 1rem; white-space: normal; }
+#toggleMuscleView:focus-visible { outline: 3px solid #174ba0; outline-offset: 3px; }

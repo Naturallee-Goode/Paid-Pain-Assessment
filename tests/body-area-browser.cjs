@@ -30,6 +30,10 @@ const server = http.createServer(async (req, res) => {
     if (issue82EvidenceDir) await fs.mkdir(issue82EvidenceDir, { recursive: true });
     if (evidenceDir) await fs.mkdir(evidenceDir, { recursive: true });
     const page = await browser.newPage({ reducedMotion: 'reduce' });
+    const openAdvanced = async () => {
+      const toggle = page.locator('#toggleMuscleView');
+      if (await toggle.getAttribute('aria-expanded') === 'false') await toggle.click();
+    };
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     // Use the checked-in model as a fixture without changing the production URL.
@@ -42,6 +46,14 @@ const server = http.createServer(async (req, res) => {
     await page.goto(url);
     await page.waitForFunction(() => window.__viewerTest?.bodyMeshes.length > 0, null, { timeout: 60000 });
     await page.locator('#loadingOverlay').waitFor({ state: 'hidden' });
+    // The view switch is usable before choosing an area and does not require a side.
+    await page.locator('#toggleMuscleView').press('Enter');
+    assert.equal(await page.locator('#toggleMuscleView').getAttribute('aria-expanded'), 'true');
+    assert.equal(await page.locator('#muscleSelection').isVisible(), false);
+    assert.match(await page.locator('#muscleSelectionHint').textContent(), /Choose a body area/);
+    await page.locator('#toggleMuscleView').press('Space');
+    assert.equal(await page.locator('#infoPanel').isVisible(), false);
+    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().advanced), false);
     await page.evaluate(() => window.__viewerTest.setRenderLoopPaused(true));
     const captureContent = async name => {
       if (!issue81EvidenceDir) return;
@@ -58,10 +70,10 @@ const server = http.createServer(async (req, res) => {
       const areaId = await button.getAttribute('data-area');
       assert.equal(await page.locator('#possibleIssuesTitle').textContent(), `Common ${label} issues`);
       const items = await page.locator('#possibleIssuesList li').allTextContents();
-      await page.locator('#continueToMuscles').click();
+      await openAdvanced();
       const name = await page.evaluate(id => window.__viewerTest.getMusclesForArea(id)[0].displayName, areaId);
       await page.locator('#searchInput').fill(name);
-      await page.locator('#searchResults .search-result-item').first().click();
+      await page.getByRole('option', { name, exact: true }).click();
       assert.equal(await page.locator('#partTitle').textContent(), name);
       assert.equal(await page.locator('#partDescription > strong').textContent(), `Common ${label} issues`);
       assert.deepEqual(await page.locator('#partDescription li').allTextContents(), items);
@@ -71,7 +83,7 @@ const server = http.createServer(async (req, res) => {
     await page.locator('#clearBodyArea').click();
     await page.locator('[data-area="shoulder"]').click();
     await captureContent('shoulder-area');
-    await page.locator('#continueToMuscles').click();
+    await openAdvanced();
     await page.locator('#searchInput').fill('acromial');
     await page.locator('#searchResults .search-result-item', { hasText: 'Acromial Part Of Deltoid Muscle' }).click();
     await captureContent('shoulder-muscle');
@@ -139,7 +151,7 @@ const server = http.createServer(async (req, res) => {
     // Regression: a muscle assigned to multiple areas must remain in the
     // currently selected catalog area instead of switching by mesh position.
     await page.locator('[data-area="upper-back"]').click();
-    await page.locator('#continueToMuscles').click();
+    await openAdvanced();
     await page.locator('#searchInput').fill('latissimus');
     await page.locator('#searchResults .search-result-item', { hasText: 'Latissimus Dorsi Muscle' }).click();
     assert.equal(await page.locator('#selectedBodyArea').inputValue(), 'upper-back');
@@ -150,7 +162,7 @@ const server = http.createServer(async (req, res) => {
     // Regression: selecting a new muscle must honor a side chosen first.
     await page.locator('[data-area="shoulder"]').click();
     await page.locator('input[name="painSide"][value="right"]').check();
-    await page.locator('#continueToMuscles').click();
+    await openAdvanced();
     await page.locator('#searchInput').fill('acromial');
     await page.locator('#searchResults .search-result-item', { hasText: 'Acromial Part Of Deltoid Muscle' }).click();
     assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().side), 'right');
@@ -183,7 +195,7 @@ const server = http.createServer(async (req, res) => {
       await page.locator('#clearBodyArea').click();
       await page.locator('[data-area="shoulder"]').click();
       if (side) await page.locator(`input[name="painSide"][value="${side}"]`).check();
-      await page.locator('#continueToMuscles').click();
+      await openAdvanced();
       await page.locator('#searchInput').fill('acromial');
       await page.locator('#searchResults .search-result-item', { hasText: 'Acromial Part Of Deltoid Muscle' }).click();
       const initialState = await captureSelectionState();
@@ -235,7 +247,7 @@ const server = http.createServer(async (req, res) => {
     }), 'Both must highlight muscles on both sides of the selected area');
     assert((await page.evaluate(() => window.__viewerTest.areaHighlights.size)) > leftCount);
     await page.locator('#clearBodyArea').click();
-    // A model click first chooses an area; the next click can select a muscle without Continue.
+    // Simple clicks select only areas; muscle interaction requires explicit advanced mode.
     await page.evaluate(() => {
       const v = window.__viewerTest;
       const record = v.muscleCatalog.find(candidate => {
@@ -249,6 +261,10 @@ const server = http.createServer(async (req, res) => {
     });
     assert.equal(await page.locator('#selectedBodyArea').inputValue(), 'shoulder');
     assert.equal(await page.evaluate(() => window.__viewerTest.selected()), null);
+    await page.evaluate(() => window.__viewerTest.selectBodyMesh(window.__testMesh));
+    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().muscleId), null);
+    assert.equal(await page.locator('#infoPanel').isVisible(), false);
+    await openAdvanced();
     await page.evaluate(() => window.__viewerTest.selectBodyMesh(window.__testMesh));
     assert.equal(await page.evaluate(() => window.__viewerTest.selected() === window.__testMesh), true);
     assert.match(await page.locator('#partDescription').textContent(), /Common Shoulder issues/);
@@ -297,14 +313,64 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().side), null);
     assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().muscleId !== null), true);
     assert.equal(await page.locator('input[name="painSide"][value="left"]').evaluate(el => el === document.activeElement), true);
-    await page.locator('#continueToMuscles').focus();
+    await page.locator('#toggleMuscleView').focus();
     await page.keyboard.press('Enter');
+    assert.equal(await page.locator('#toggleMuscleView').getAttribute('aria-expanded'), 'false');
+    assert.equal(await page.locator('#infoPanel').isVisible(), false);
+    assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().muscleId), null);
+    assert.equal(await page.locator('#selectedBodyArea').inputValue(), 'shoulder');
+    assert.equal(await page.evaluate(() => {
+      const v = window.__viewerTest;
+      const expected = new Set(v.getMusclesForArea('shoulder').map(record => record.mesh));
+      return v.selected() === null && expected.size === v.areaHighlights.size
+        && [...expected].every(mesh => v.areaHighlights.has(mesh));
+    }), true, 'Returning to simple must restore area highlighting');
+    assert.equal(await page.locator('#toggleMuscleView').evaluate(el => el === document.activeElement), true);
+    await page.keyboard.press('Space');
+    assert.equal(await page.locator('#toggleMuscleView').getAttribute('aria-expanded'), 'true');
     assert.equal(await page.locator('#searchInput').evaluate(el => el === document.activeElement), true);
+    await page.evaluate(() => window.__viewerTest.selectBodyMesh(window.__testMesh));
     assert.equal(await page.locator('#partTitle').textContent(), selectedMuscleTitle);
+    assert.equal(await page.locator('#panelToggle').count(), 0, 'The obsolete collapse control must be removed');
+    await page.locator('#searchInput').fill('a');
+    assert.equal(await page.locator('#searchResults').isVisible(), true);
+    assert.equal(await page.locator('#searchInput').getAttribute('aria-expanded'), 'true');
+    assert.equal(await page.locator('#searchResults').evaluate(element => getComputedStyle(element).position), 'static');
+    assert.equal(await page.locator('.viewer-info-content').evaluate(element => getComputedStyle(element).overflowY), 'visible');
+    const searchBox = await page.locator('#searchInput').boundingBox();
+    const resultsBox = await page.locator('#searchResults').boundingBox();
+    assert(resultsBox.y >= searchBox.y + searchBox.height, 'Search results must appear below the input in normal page flow');
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    if (evidenceDir) await page.locator('#infoPanel').screenshot({ path: path.join(evidenceDir, 'advanced-search-desktop.png') });
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    assert.equal(await page.locator('#searchResults').evaluate(element => getComputedStyle(element).overflowY), 'visible');
+    if (evidenceDir) await page.locator('#infoPanel').screenshot({ path: path.join(evidenceDir, 'advanced-search-phone.png') });
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.keyboard.press('ArrowDown');
+    assert.equal(await page.locator('#searchResults [aria-selected="true"]').count(), 1);
+    assert(await page.locator('#searchInput').getAttribute('aria-activedescendant'));
+    assert.equal(await page.locator('#searchResults .search-result-item[tabindex="0"]').count(), 0);
+    await page.keyboard.press('Tab');
+    assert.equal(await page.evaluate(() => document.querySelector('#searchResults').contains(document.activeElement)), false, 'Tab must skip search results');
+
+    await page.locator('#searchInput').focus();
+    await page.locator('#searchInput').fill('Clavicular Part Of Deltoid Muscle');
+    await page.keyboard.press('ArrowDown');
+    const activeResultLabel = await page.locator('#searchResults [aria-selected="true"]').textContent();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('#partTitle').textContent(), activeResultLabel);
+    assert.equal(await page.locator('#searchResults').isVisible(), false);
+
+    await page.locator('#searchInput').fill('a');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('#searchResults').isVisible(), false);
+    assert.equal(await page.locator('#searchInput').getAttribute('aria-expanded'), 'false');
     await page.evaluate(() => {
       document.querySelector('#searchInput').value = 'old search';
     });
-    assert.equal(await page.evaluate(() => window.__viewerTest.selected() === window.__testMesh), true);
+    assert.equal(await page.evaluate(() => window.__viewerTest.selected() !== null), true);
     await page.locator('[data-area="foot"]').click();
     assert.equal(await page.evaluate(() => window.__testMesh.material === window.__viewerTest.highlightMat), false);
     assert.equal(await page.locator('#searchInput').inputValue(), '');
@@ -389,6 +455,7 @@ const server = http.createServer(async (req, res) => {
     assert.deepEqual(await page.evaluate(() => window.__viewerTest.controls.target.toArray()), [0, 0.85, 0]);
     // Reproducible issue evidence: two different areas and a mobile layout.
     for (const [area, width] of [['shoulder', 1280], ['foot', 1280], ['shoulder', 390]]) {
+      await page.locator('#clearBodyArea').click();
       await page.setViewportSize({ width, height: 960 });
       await page.locator(`[data-area="${area}"]`).click();
       const content = await page.locator('#possibleIssuesList').textContent();
@@ -399,8 +466,9 @@ const server = http.createServer(async (req, res) => {
         await page.locator('#bodyAreaControls').scrollIntoViewIfNeeded();
         await page.screenshot({ path: path.join(evidenceDir, `${area}-${width}.png`) });
       }
-      await page.locator('#continueToMuscles').click();
+      await openAdvanced();
       assert.equal(await page.locator('#muscleSelection').isVisible(), true);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     }
     assert.deepEqual(errors, []);
 
