@@ -24,8 +24,10 @@ const server = http.createServer(async (req, res) => {
     browser = await chromium.launch({ ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}), headless: true });
     const url = `http://127.0.0.1:${server.address().port}`;
     const evidenceDir = process.env.EVIDENCE_DIR;
+    const issue85EvidenceDir = process.env.ISSUE85_EVIDENCE_DIR;
     const issue82EvidenceDir = process.env.ISSUE82_EVIDENCE_DIR;
     if (issue82EvidenceDir) await fs.mkdir(issue82EvidenceDir, { recursive: true });
+    if (issue85EvidenceDir) await fs.mkdir(issue85EvidenceDir, { recursive: true });
     if (evidenceDir) await fs.mkdir(evidenceDir, { recursive: true });
     const page = await browser.newPage({ reducedMotion: 'reduce' });
     const openAdvanced = async () => {
@@ -107,6 +109,34 @@ const server = http.createServer(async (req, res) => {
     }
     assert(backTargets['upper-back'][1] > backTargets['lower-back'][1]);
 
+    // Opening advanced mode must keep the browse list visible after the
+    // toggle click bubbles to the document-level outside-click handler.
+    await page.locator('[data-area="shoulder"]').click();
+    await page.locator('#toggleMuscleView').click();
+    assert.equal(await page.locator('#searchInput').evaluate(input => input === document.activeElement), true);
+    assert(await page.locator('#searchResults .search-result-item').count() > 0);
+    await page.locator('#searchInput').fill('biceps');
+    assert(await page.locator('#searchResults .search-result-item').count() > 0);
+    assert.equal(await page.locator('#searchResults .search-result-item', { hasText: 'Femoris' }).count(), 0);
+    await page.locator('#searchInput').fill('');
+    assert(await page.locator('#searchResults .search-result-item').count() > 0);
+    await page.locator('#bodyAreaStatus').click();
+    assert.equal(await page.locator('#searchResults').isVisible(), false);
+    await page.locator('#searchInput').click();
+    assert(await page.locator('#searchResults .search-result-item').count() > 0);
+    await page.locator('#toggleMuscleView').click();
+    assert.equal(await page.locator('#muscleSelection').isVisible(), false);
+    await page.locator('#toggleMuscleView').focus();
+    await page.keyboard.press('Enter');
+    assert(await page.locator('#searchResults .search-result-item').count() > 0);
+    await page.locator('[data-area="thigh"]').click();
+    assert.equal(await page.locator('#searchInput').inputValue(), '');
+    await page.locator('#searchInput').click();
+    assert(await page.locator('#searchResults .search-result-item', { hasText: 'Femoris' }).count() > 0);
+    await page.locator('#toggleMuscleView').focus();
+    await page.keyboard.press('Space');
+    assert.equal(await page.locator('#muscleSelection').isVisible(), false);
+
     // Regression: a muscle assigned to multiple areas must remain in the
     // currently selected catalog area instead of switching by mesh position.
     await page.locator('[data-area="upper-back"]').click();
@@ -120,8 +150,22 @@ const server = http.createServer(async (req, res) => {
 
     // Regression: selecting a new muscle must honor a side chosen first.
     await page.locator('[data-area="shoulder"]').click();
-    await page.locator('input[name="painSide"][value="right"]').check();
     await openAdvanced();
+    await page.locator('#searchInput').focus();
+    assert(await page.locator('#searchResults .search-result-item').count() > 0, 'Advanced mode must allow browsing the selected area');
+    await page.locator('#searchInput').fill('BiCePs');
+    assert(await page.locator('#searchResults .search-result-item').count() > 0, 'Upper-arm biceps must remain searchable in Shoulder');
+    assert.equal(await page.locator('#searchResults .search-result-item', { hasText: 'Femoris' }).count(), 0, 'Leg muscles must not appear in Shoulder');
+    if (issue85EvidenceDir) await page.locator('#infoPanel').screenshot({ path: path.join(issue85EvidenceDir, 'shoulder-biceps.png') });
+    await page.locator('[data-area="thigh"]').click();
+    await page.locator('#searchInput').fill('biceps');
+    assert(await page.locator('#searchResults .search-result-item', { hasText: 'Femoris' }).count() > 0, 'Biceps femoris belongs in Thigh');
+    assert.equal(await page.locator('#searchResults .search-result-item', { hasText: 'Brachii' }).count(), 0, 'Upper-arm biceps must not appear in Thigh');
+    if (issue85EvidenceDir) await page.locator('#infoPanel').screenshot({ path: path.join(issue85EvidenceDir, 'thigh-biceps.png') });
+    await page.locator('[data-area="shoulder"]').click();
+    await page.locator('#searchInput').fill('femoris');
+    assert.match(await page.locator('#searchResults').textContent(), /No muscles found in this area/);
+    await page.locator('input[name="painSide"][value="right"]').check();
     await page.locator('#searchInput').fill('acromial');
     await page.locator('#searchResults .search-result-item', { hasText: 'Acromial Part Of Deltoid Muscle' }).click();
     assert.equal(await page.evaluate(() => window.__viewerTest.bodyMapStore.getState().side), 'right');
