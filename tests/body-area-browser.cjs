@@ -25,9 +25,11 @@ const server = http.createServer(async (req, res) => {
     const url = `http://127.0.0.1:${server.address().port}`;
     const evidenceDir = process.env.EVIDENCE_DIR;
     const issue85EvidenceDir = process.env.ISSUE85_EVIDENCE_DIR;
+    const issue88EvidenceDir = process.env.ISSUE88_EVIDENCE_DIR;
     const issue82EvidenceDir = process.env.ISSUE82_EVIDENCE_DIR;
     if (issue82EvidenceDir) await fs.mkdir(issue82EvidenceDir, { recursive: true });
     if (issue85EvidenceDir) await fs.mkdir(issue85EvidenceDir, { recursive: true });
+    if (issue88EvidenceDir) await fs.mkdir(issue88EvidenceDir, { recursive: true });
     if (evidenceDir) await fs.mkdir(evidenceDir, { recursive: true });
     const page = await browser.newPage({ reducedMotion: 'reduce' });
     const openAdvanced = async () => {
@@ -46,6 +48,53 @@ const server = http.createServer(async (req, res) => {
     await page.goto(url);
     await page.waitForFunction(() => window.__viewerTest?.bodyMeshes.length > 0, null, { timeout: 60000 });
     await page.locator('#loadingOverlay').waitFor({ state: 'hidden' });
+    if (issue88EvidenceDir) {
+      await page.setViewportSize({ width: 1280, height: 960 });
+      await page.evaluate(() => {
+        const v = window.__viewerTest;
+        window.__issue88Materials = new Map(v.bodyMeshes.map(mesh => [mesh, mesh.material]));
+      });
+      for (const area of ['neck', 'shoulder', 'forearm'].filter(name => !process.env.ISSUE88_AREAS || process.env.ISSUE88_AREAS.split(',').includes(name))) {
+        await page.locator(`[data-area="${area}"]`).click();
+        await page.waitForFunction(() => !window.__viewerTest.animating());
+        const coverage = await page.evaluate(areaId => {
+          const v = window.__viewerTest;
+          const own = new Set(v.getMusclesForArea(areaId).map(record => record.mesh));
+          const chest = new Set(v.getMusclesForArea('chest').map(record => record.mesh));
+          const highlighted = new Set(v.areaHighlights.keys());
+          return {
+            expected: own.size,
+            highlighted: highlighted.size,
+            correct: [...highlighted].every(mesh => own.has(mesh)),
+            chestOnlyHighlighted: [...highlighted].filter(mesh => chest.has(mesh) && !own.has(mesh)).length,
+            clipped: [...highlighted].every(mesh => mesh.material.clippingPlanes?.length >= 4),
+          };
+        }, area);
+        assert.equal(coverage.correct, true, `${area} highlighted an unrelated model structure`);
+        assert.equal(coverage.highlighted, coverage.expected, `${area} did not restore and select its full reviewed list`);
+        assert.equal(coverage.chestOnlyHighlighted, 0, `${area} highlighted chest-only structures`);
+        assert.equal(coverage.clipped, true, `${area} must clip whole meshes to the reviewed region`);
+        for (const angle of ['front', 'back', 'side'].filter(name => !process.env.ISSUE88_ANGLES || process.env.ISSUE88_ANGLES.split(',').includes(name))) {
+          await page.evaluate(view => {
+            const { camera, controls } = window.__viewerTest;
+            const target = controls.target;
+            const radius = Math.max(0.8, camera.position.distanceTo(target));
+            if (view === 'front') camera.position.set(target.x, target.y, target.z + radius);
+            if (view === 'back') camera.position.set(target.x, target.y, target.z - radius);
+            if (view === 'side') camera.position.set(target.x + radius, target.y, target.z);
+            controls.update();
+          }, angle);
+          await page.waitForTimeout(100);
+          await page.locator('#viewer').screenshot({ path: path.join(issue88EvidenceDir, `${area}-${angle}.png`) });
+        }
+      }
+      await page.locator('#clearBodyArea').click();
+      assert.equal(await page.evaluate(() => {
+        const v = window.__viewerTest;
+        return v.areaHighlights.size === 0
+          && [...window.__issue88Materials].every(([mesh, material]) => mesh.material === material);
+      }), true, 'Reset must restore every highlighted material');
+    }
     // The view switch is usable before choosing an area and does not require a side.
     await page.locator('#toggleMuscleView').press('Enter');
     assert.equal(await page.locator('#toggleMuscleView').getAttribute('aria-expanded'), 'true');
