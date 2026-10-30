@@ -23,6 +23,7 @@ const getContainerHeight = () => Math.max(1, viewerContainer.clientHeight || vie
 
 const camera = new THREE.PerspectiveCamera(75, getContainerWidth() / getContainerHeight(), 0.1, 1000)
 const renderer = new THREE.WebGLRenderer({antialias: true, alpha: true})
+renderer.localClippingEnabled = true
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
 renderer.setSize(getContainerWidth(), getContainerHeight())
 renderer.domElement.style.display = "block"
@@ -241,6 +242,33 @@ const highlightMat = new THREE.MeshPhysicalMaterial({
   roughness: 0.4, metalness: 0.1, depthTest: false, depthWrite: false, transparent: true, opacity: 0.95
 })
 
+const areaHighlightMaterials = new Map()
+function getAreaHighlightMaterial(area, box) {
+  // These reviewed regions have reported whole-mesh spill. Keep other area
+  // highlights unchanged while their boundaries are reviewed separately.
+  if (!['neck', 'shoulder', 'forearm'].includes(area.id)) return highlightMat
+  const side = area.x[0] > 0 && box.getCenter(new THREE.Vector3()).x < 0 ? -1 : 1
+  const key = `${area.id}:${side}`
+  if (areaHighlightMaterials.has(key)) return areaHighlightMaterials.get(key)
+  const planes = [
+    new THREE.Plane(new THREE.Vector3(0, 1, 0), -area.y[0]),
+    new THREE.Plane(new THREE.Vector3(0, -1, 0), area.y[1]),
+  ]
+  if (area.x[0] > 0) {
+    planes.push(new THREE.Plane(new THREE.Vector3(side, 0, 0), -area.x[0]))
+    planes.push(new THREE.Plane(new THREE.Vector3(-side, 0, 0), area.x[1]))
+  } else {
+    planes.push(new THREE.Plane(new THREE.Vector3(1, 0, 0), area.x[1]))
+    planes.push(new THREE.Plane(new THREE.Vector3(-1, 0, 0), area.x[1]))
+  }
+  if (area.front) planes.push(new THREE.Plane(new THREE.Vector3(0, 0, 1), 0))
+  if (area.back) planes.push(new THREE.Plane(new THREE.Vector3(0, 0, -1), 0))
+  const material = highlightMat.clone()
+  material.clippingPlanes = planes
+  areaHighlightMaterials.set(key, material)
+  return material
+}
+
 const areaHighlights = new Map()
 function restoreAreaHighlights() {
   for (const [mesh, original] of areaHighlights) {
@@ -300,7 +328,7 @@ function focusBodyArea(id) {
     highlightedMeshes.add(mesh)
     const box = new THREE.Box3().setFromObject(mesh)
     areaHighlights.set(mesh, { material: mesh.material, renderOrder: mesh.renderOrder })
-    mesh.material = highlightMat
+    mesh.material = getAreaHighlightMaterial(area, box)
     mesh.renderOrder = 999
     bounds.union(box)
   }
