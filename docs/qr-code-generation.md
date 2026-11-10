@@ -6,7 +6,9 @@ Use [QRCode Monkey](https://www.qrcode-monkey.com/) to generate QR codes for the
 
 ## Current Asset
 
-The approved QR code is stored at [`assets/qr-codes/project-qr-code.png`](../assets/qr-codes/project-qr-code.png).
+The approved QR code is available as a
+[`PNG`](../assets/qr-codes/project-qr-code.png) for digital use and an
+[`SVG`](../assets/qr-codes/project-qr-code.svg) for print use.
 
 **Verification:** Successfully scanned on an iPhone and confirmed to open the intended destination on November 10, 2026.
 
