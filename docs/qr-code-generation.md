@@ -8,6 +8,8 @@ Use [QRCode Monkey](https://www.qrcode-monkey.com/) to generate QR codes for the
 
 The approved QR code is stored at [`assets/qr-codes/project-qr-code.png`](../assets/qr-codes/project-qr-code.png).
 
+**Verification:** Successfully scanned on an iPhone and confirmed to open the intended destination on November 10, 2026.
+
 ## Rationale
 
 - Free for personal and commercial use
