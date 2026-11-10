@@ -10,7 +10,10 @@ The approved QR code is available as a
 [`PNG`](../assets/qr-codes/project-qr-code.png) for digital use and an
 [`SVG`](../assets/qr-codes/project-qr-code.svg) for print use.
 
-**Verification:** Successfully scanned on an iPhone and confirmed to open the intended destination on November 10, 2026.
+## Verification
+
+- Successfully scanned on an iPhone and confirmed to open the intended destination on November 10, 2026.
+- Android verification completed with assistance from Girwan Dhakal on November 10, 2026. The QR code opened the correct live production pain-assessment form.
 
 ## Rationale
 
