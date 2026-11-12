@@ -15,6 +15,7 @@ The approved QR code is available as a
 - Successfully scanned on an iPhone and confirmed to open the intended destination on November 10, 2026.
 - Verified with the standard iOS camera that the QR code resolves to `naturalleegoode.com`. See [iOS decoded-URL evidence](testing/evidence/issue-136/ios-qr-decoded-url.png).
 - Android verification completed with assistance from Girwan Dhakal on November 10, 2026. The QR code opened the correct live production pain-assessment form.
+- On November 12, 2026, Girwan Dhakal supplied an Android camera screenshot showing the QR code recognized with `naturalleegoode.com` as its destination. See [Android decoded-URL evidence](testing/evidence/issue-136/android-qr-decoded-url.jpg).
 - Successfully scanned from a printed copy and confirmed to open the correct live production pain-assessment form on November 12, 2026.
 
 ## Rationale
