@@ -1,0 +1,41 @@
+# QR Code Generation
+
+## Decision
+
+Use [QRCode Monkey](https://www.qrcode-monkey.com/) to generate QR codes for the project.
+
+## Current Asset
+
+The approved QR code is available as a
+[`PNG`](../assets/qr-codes/project-qr-code.png) for digital use and an
+[`SVG`](../assets/qr-codes/project-qr-code.svg) for print use.
+
+## Verification
+
+- Successfully scanned on an iPhone and confirmed to open the intended destination on November 10, 2026.
+- Verified with the standard iOS camera that the QR code resolves to `naturalleegoode.com`. See [iOS decoded-URL evidence](testing/evidence/issue-136/ios-qr-decoded-url.png).
+- Android verification completed with assistance from Girwan Dhakal on November 10, 2026. The QR code opened the correct live production pain-assessment form.
+- On November 12, 2026, Girwan Dhakal supplied an Android camera screenshot showing the QR code recognized with `naturalleegoode.com` as its destination. See [Android decoded-URL evidence](testing/evidence/issue-136/android-qr-decoded-url.jpg).
+- Successfully scanned from a printed copy and confirmed to open the correct live production pain-assessment form on November 12, 2026.
+
+## Rationale
+
+- Free for personal and commercial use
+- Static QR codes do not expire and have no scan limit
+- Supports high-resolution PNG and SVG downloads, custom colors, and logos
+- Does not require a paid subscription for the project's current needs
+
+## Limitations
+
+- Generated codes are static: the destination cannot be changed after creation
+- Scan analytics and other dynamic-code features are not included
+- QRCode Monkey states that generated image files may be cached on its servers for 24 hours, so sensitive data should not be encoded
+
+## Usage
+
+1. Confirm the final destination URL before generating the code.
+2. Generate and download an SVG for print use (or PNG for digital use).
+3. Test the downloaded code on multiple devices before publishing.
+4. Replace the repository asset only after the new code passes testing.
+
+_Reviewed: November 12, 2026. Reconfirm service terms before future production use._
