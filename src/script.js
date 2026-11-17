@@ -18,6 +18,17 @@ const EMAILJS_CONFIG = {
 };
 
 // ==============================================================================
+// CALENDLY CONFIGURATION
+// ==============================================================================
+// Replace these with your actual Calendly links
+
+const CALENDLY_URLS = {
+    'quick-check': 'https://calendly.com/griffen-bon/quick-pain-check',
+    'movement-relief': 'https://calendly.com/griffen-bon/movement-and-relief-session',
+    'full-assessment': 'https://calendly.com/griffen-bon/full-wellness-assessment'
+};
+
+// ==============================================================================
 // FORM VALIDATION RULES
 // ==============================================================================
 
@@ -431,11 +442,6 @@ function getPainLevelEmoji(painLevel) {
 }
 
 function initializeCalendly(consultationPreference) {
-    const CALENDLY_URLS = {
-        'quick-check': 'https://calendly.com/griffen-bon/quick-pain-check',
-        'movement-relief': 'https://calendly.com/griffen-bon/movement-and-relief-session',
-        'full-assessment': 'https://calendly.com/griffen-bon/full-wellness-assessment'
-    };
     const CALENDLY_URL = CALENDLY_URLS[consultationPreference];
     if (!CALENDLY_URL) {
         console.error('Unknown Calendly meeting type:', type);
