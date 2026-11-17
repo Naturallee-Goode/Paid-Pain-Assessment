@@ -22,7 +22,7 @@ For the best experience:
 
 Open the live assessment using its direct link or scan the approved QR code with your phone's standard camera.
 
-The QR code opens a blank intake form on the live production site. It does not contain or display client health information.
+The QR code opens a blank intake form on the production site.
 
 ## Completing the Intake Form
 
@@ -31,6 +31,8 @@ Fields marked with an asterisk (`*`) are required.
 ### 1. Contact Information
 
 Enter your full name, email address, and phone number. Make sure the information is correct so the wellness provider can contact you.
+
+![Blank contact-information fields](ContactInformation.png)
 
 ### 2. Interactive Body Map
 
@@ -43,6 +45,8 @@ The body map begins in simple view.
 
 The possible-issues information is educational and is not a diagnosis.
 
+![Body-area selection controls](AreaSelection.png)
+
 #### Provider-Assisted Muscle Selection
 
 The **Explore muscles (advanced)** feature is optional. If a wellness provider is assisting you, they may use it to select a specific muscle and review additional educational information.
@@ -50,6 +54,10 @@ The **Explore muscles (advanced)** feature is optional. If a wellness provider i
 You do not need to select a muscle to complete the intake form.
 
 Select **Return to simple view** to close the advanced view. Returning to simple view keeps the selected body area and side but clears the optional muscle selection. Switching body areas clears the previous muscle and side selections.
+
+To use provider-assisted muscle selection, first choose a body area. Then search for a specific muscle or select one on the model.
+
+![Advanced muscle-selection view](Advanced.png)
 
 ### 3. Pain Details
 
@@ -61,9 +69,19 @@ Provide information about:
 
 You may select more than one description, such as **Tight / Stiff**, **Sore / Achy**, or **Sharp**.
 
+Pain Level (0-10) is an interactive slider to select your pain level. Moving the slider to the left indicates lower pain and moving the slider to the right indicates a higher pain level.
+
+![Pain-details fields and pain-level slider](PainDetails.png)
+
 ### 4. Triggers and Daily Factors
 
 Select any activities that make the discomfort worse. You may also enter optional notes about your work, activity level, or daily routine.
+
+Multiple triggers may be selected.
+
+Select the optional notes field and enter any relevant information about your work, activity level, or daily routine.
+
+![Triggers and optional daily-routine notes](Triggers.png)
 
 ### 5. Wellness Goal
 
