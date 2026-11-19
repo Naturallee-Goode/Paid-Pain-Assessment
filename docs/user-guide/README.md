@@ -8,6 +8,46 @@ No account or sign-in is required.
 
 > This tool provides wellness education, movement support, and self-care guidance. It does not provide medical diagnosis or treatment.
 
+## Who This Guide Is For
+
+This guide is primarily for people completing the Paid Pain Assessment on a phone, tablet, or computer. It also explains the optional steps a wellness provider may assist with, including advanced muscle selection.
+
+Technical maintainers should use the repository's development and deployment guides for installation, configuration, and service-account instructions.
+
+## User Roles and Permissions
+
+The application does not use accounts, sign-in, or role-based access controls.
+
+| Role | What the person can do | Access needed |
+| --- | --- | --- |
+| Assessment participant | Open and complete the intake, use the body map, optionally use a movement scan, submit responses, and schedule a consultation | Public form link or QR code; camera permission only for an optional movement scan |
+| Wellness provider | Help a participant use the form or advanced muscle selection and receive submitted intake information through the configured email service | No special in-app role; access to received submissions is managed outside the application |
+
+Do not share mailbox, scheduling-service, or other administrative credentials with assessment participants.
+
+## Quick Start
+
+1. Open the live assessment link or scan its approved QR code.
+2. Enter the required contact information.
+3. Choose a body area and optionally add side or muscle details.
+4. Complete the pain, trigger, wellness-goal, consultation, product-support, and consent sections.
+5. Submit the form and review the confirmation screen.
+6. Use the displayed calendar to schedule a consultation.
+
+## Guide Contents
+
+- [Before You Begin](#before-you-begin)
+- [Opening the Assessment](#opening-the-assessment)
+- [Completing the Intake Form](#completing-the-intake-form)
+- [Optional Movement Scans](#optional-movement-scans)
+- [Submitting the Form](#submitting-the-form)
+- [Scheduling a Consultation](#scheduling-a-consultation)
+- [Clearing or Restarting the Form](#clearing-or-restarting-the-form)
+- [Keyboard Access](#keyboard-access)
+- [Troubleshooting](#troubleshooting)
+- [Privacy](#privacy)
+- [Support](#support)
+
 ## Before You Begin
 
 For the best experience:
@@ -24,9 +64,13 @@ Open the live assessment using its direct link or scan the approved QR code with
 
 The QR code opens a blank intake form on the production site.
 
+Your answers are not saved for later. Complete the form in one session, and avoid refreshing or closing the page before submission.
+
 ## Completing the Intake Form
 
 Fields marked with an asterisk (`*`) are required.
+
+Body-area, side, muscle, trigger, routine-note, and product-support selections are optional unless the form marks them as required. You must provide the required contact information, pain level, wellness goal, consultation preference, and consent before submitting.
 
 ### 1. Contact Information
 
