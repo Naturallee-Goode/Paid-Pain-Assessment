@@ -63,6 +63,9 @@ jobs:
       - name: Verify body-map browser workflow
         run: npm run test:browser
 
+      - name: Verify integrated intake selections
+        run: npm run test:intake
+
       - name: Verify required site files
         run: |
           source_dir=.
