@@ -93,6 +93,8 @@ Select one or more areas where you would like support:
 - Recovering from daily activity or workouts
 - Supporting long-term comfort and mobility
 
+![Wellness-goal options](WellnessGoal.png)
+
 ### 6. Consultation Preference
 
 Choose one consultation type:
@@ -107,9 +109,13 @@ Your selection determines which scheduling calendar appears after submission.
 
 Indicate whether you are interested in learning about plant-based pain-support products.
 
+![Product-support interest options](ProductSupport.png)
+
 ### 8. Consent and Disclaimer
 
 Read and accept the required wellness disclaimer before submitting the form.
+
+![Required consent and wellness disclaimer](Disclaimer.png)
 
 ## Optional Movement Scans
 
@@ -153,6 +159,8 @@ After submission, the confirmation screen displays:
 - The next steps for your consultation
 
 The submitted intake is sent to the wellness provider by email.
+
+![Submission confirmation screen](Confirmation.png)
 
 ## Scheduling a Consultation
 
