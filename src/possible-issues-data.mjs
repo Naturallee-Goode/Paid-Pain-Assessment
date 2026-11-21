@@ -1,5 +1,5 @@
 // Area-level educational content is independent of the model and muscle catalog.
-// Sources and editorial limitations are documented in docs/testing/possible-issues.md.
+// Sources and sponsor decisions: docs/content/common-issues-review.md.
 const issue = (name, description, source) => Object.freeze({ name, description, source })
 const strain = issue('Muscle strain', 'An overstretched or torn muscle can cause soreness, weakness or swelling.', 'https://www.nhs.uk/conditions/sprains-and-strains/')
 const sprain = issue('Joint sprain', 'Stretched or torn ligaments around a joint can cause pain, swelling or bruising.', 'https://www.nhs.uk/conditions/sprains-and-strains/')
@@ -34,5 +34,18 @@ export const POSSIBLE_ISSUES_BY_AREA = Object.freeze(Object.fromEntries(Object.e
 }).map(([area, issues]) => [area, Object.freeze(issues)])))
 
 export function getPossibleIssues(areaId) {
-  return POSSIBLE_ISSUES_BY_AREA[areaId] ?? []
+  return Object.hasOwn(POSSIBLE_ISSUES_BY_AREA, areaId) ? POSSIBLE_ISSUES_BY_AREA[areaId] : []
 }
+
+// Editorial records only; no record asserts approval of the complete current copy.
+const pendingReview = Object.freeze({ status: 'pending', reviewer: null, date: null, evidence: null, requestedChanges: null })
+export const ISSUE_CONTENT_REVIEW_BY_AREA = Object.freeze(Object.fromEntries(
+  Object.keys(POSSIBLE_ISSUES_BY_AREA).map(areaId => [areaId, areaId === 'elbow'
+    ? Object.freeze({
+      status: 'revision-applied', reviewer: 'Mia Miller', date: null, recordedAt: '2026-10-18',
+      evidence: 'https://github.com/Naturallee-Goode/Paid-Pain-Assessment/issues/111',
+      requestedChanges: 'Delete tendon irritation under Elbow and add Tennis Elbow.',
+      limitation: 'The new description was not separately reviewed. The correspondence date was not supplied.',
+    })
+    : pendingReview]),
+))

@@ -11,7 +11,7 @@ import { buildMuscleOptions, createMuscleId } from "./muscle-options.mjs";
 import { buildAreaMuscleSearchIndex, findAreaMuscles } from "./area-muscle-search.mjs";
 import { bodyMapStore } from "./body-map-store.mjs";
 import { easeInOutQuad, getAnimationProgress } from "./animation-timing.mjs";
-import { getPossibleMuscleDiagnoses } from "./muscle-diagnoses.mjs";
+import { renderCommonIssues } from "./possible-issues.mjs?v=5";
 import { filterMuscleRecordsBySide, matchesSelectedSide } from "./body-side-filter.mjs";
 
 const scene = new THREE.Scene()
@@ -586,7 +586,6 @@ function updateInfoPanel(mesh, matName, selectedArea = null) {
 
   const supportedArea = selectedArea ?? resolveAreaForMesh(mesh, bodyMapStore.getState().areaId, center)
   const area = supportedArea?.id ?? 'unknown'
-  const areaLabel = supportedArea?.label ?? 'selected'
 
   console.log("Selected mesh:", mesh.name)
   console.log("Material:", matName)
@@ -596,20 +595,7 @@ function updateInfoPanel(mesh, matName, selectedArea = null) {
   document.getElementById("partTitle").textContent = displayName
 
   const descEl = document.getElementById("partDescription")
-  const diagnoses = getPossibleMuscleDiagnoses(supportedArea?.id)
-  const intro = document.createElement('p')
-  intro.textContent = `Possible diagnoses associated with this muscle in the ${areaLabel.toLowerCase()} area:`
-  const list = document.createElement('ul')
-  list.className = 'muscle-diagnosis-list'
-  diagnoses.forEach((diagnosis) => {
-    const item = document.createElement('li')
-    item.textContent = diagnosis
-    list.appendChild(item)
-  })
-  const disclaimer = document.createElement('p')
-  disclaimer.className = 'muscle-diagnosis-disclaimer'
-  disclaimer.textContent = 'Educational information only. These possibilities are not a medical diagnosis.'
-  descEl.replaceChildren(intro, list, disclaimer)
+  renderCommonIssues(descEl, supportedArea?.id)
 
 }
 

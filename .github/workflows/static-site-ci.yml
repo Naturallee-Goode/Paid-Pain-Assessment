@@ -49,7 +49,6 @@ jobs:
           node --check "$source_dir/muscle-area-mapping.mjs"
           node --check "$source_dir/muscle-area-assignments.mjs"
           node --check "$source_dir/muscle-options.mjs"
-          node --check "$source_dir/muscle-diagnoses.mjs"
           node --check "$source_dir/body-side-filter.mjs"
           node --check "$source_dir/possible-issues.mjs"
           node --check "$source_dir/possible-issues-data.mjs"
